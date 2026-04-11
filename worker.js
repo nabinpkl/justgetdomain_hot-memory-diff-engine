@@ -521,7 +521,7 @@ const LANDING_PAGE = `
     </section>
 
     <center>
-      <p>Connect with me on linkedin: <a href="linkedin.com/in/nabin-pokhrel">Nabin Pokhrel</a></p>
+      <p>Connect with me on linkedin: <a href="https://linkedin.com/in/nabin-pokhrel">Nabin Pokhrel</a></p>
     <center>
     <br />
     <footer>
