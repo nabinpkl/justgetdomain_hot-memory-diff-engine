@@ -17,3 +17,11 @@ Swap happens once, atomically, at the end
 
 The only constraint is memory — you need room for two full indexes simultaneously during the swap window. If the index is 9GB, you need ~18GB during that brief overlap. Fits in 24GB but tight. Worth considering whether you compress the standby copy or whether you accept the peak.
 What's next — how the user-facing query path should work, or how the batch ingestion pipeline flows?
+
+
+#
+
+The Narrative: "I wanted to solve the 'all the good domains are taken' problem for founders, but the real challenge wasn't just the data—it was navigating the minefield of global trademark law as a solo dev."
+
+#
+The Transparency Flex: Mention that you built automated brand-exclusion filters and WIPO/USPTO integration as a "Good Faith" architectural requirement. This proves to any watching recruiter (or brand lawyer) that you are a high-level engineer who understands risk management, not just a "scraper."

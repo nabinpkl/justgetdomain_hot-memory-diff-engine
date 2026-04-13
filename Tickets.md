@@ -32,3 +32,38 @@ https://tmsearch.uspto.gov/search/search-information
 # Avoid apple google sqautting
 
 # build a dict of common brand names
+
+#
+USPTO (US) or WIPO (Global)
+
+#
+The "Report a Brand" Link: Add a small link in the footer: "Brand owner? Request a keyword filter here." This shows you are cooperative, which kills "bad faith" arguments.
+
+#
+External Links: Next to the domains, add a link to the USPTO TESS search. It costs you nothing but proves you are encouraging legal behavior.
+
+#
+Timestamp your Data: Clearly state: "Data last synced from Zone Files on [Date]." This protects you from "False Advertising" claims if a domain was taken an hour ago.
+
+#
+🔬 LAB PROJECT: EXPERIMENTAL DATA DISCOVERY
+
+No Warranty: Data is synced periodically from public Zone Files; availability is not guaranteed.
+
+User Liability: You are 100% responsible for trademark clearance. This tool does not check for legal rights.
+
+Non-Commercial: This is a free resource provided "As-Is" for naming inspiration.
+
+#
+
+The "Discovery Only" Clause: Explicitly state that the product is a "Discovery Engine for available dictionary gaps," not a "Domain Registration Recommender."
+
+Contributory Infringement Waiver: "By using this tool, you agree that the creator is not responsible for any legal actions, including trademark infringement or UDRP proceedings, resulting from your registration of any domain found here."
+
+The "Best Effort" Shield: State that your trademark filters are "Best Effort" and incomplete. This prevents someone from saying, "Your tool didn't filter it out, so I thought it was safe."
+
+#
+Trademark Link	Add a small icon next to every domain that links directly to the WIPO Global Brand Database search for that specific string. This proves you are encouraging legal due diligence.
+"Report Brand"	A footer link: "Are you a brand owner? Click here to request a keyword be added to our exclusion list." This is your "Good Faith" get-out-of-jail-free card.
+No "Buy" Button	Don't have a "Buy Now" button. Have a "Copy to Clipboard" or "Search Registrar" button. This distances you from the actual transaction.
+Zone File Attribution	State: "Data sourced via ICANN CZDS." This proves you obtained the millions of records through the legal, official channel.
