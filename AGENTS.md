@@ -1,4 +1,10 @@
 
+# Must Do's
+- Every backend feature change do docker compose up -d --build at last.
+
+# Don'ts
+- No God component if it makes sense to extract to a component do it
+
 # JustGetDomain.com
 
 # JustGetDomain.com — Build Context

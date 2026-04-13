@@ -2,7 +2,7 @@
 
 export type DomainEntry = {
   name: string;
-  tlds: string[];
+  tld: string;
   length: number;
 };
 
@@ -12,7 +12,8 @@ export const REGISTRARS = [
   { name: "Cloudflare", url: "https://www.cloudflare.com/products/registrar/" },
 ];
 
-export const ALL_TLDS = [".com", ".dev", ".io", ".app", ".sh", ".xyz", ".net", ".org"];
+/** Fallback shown while backend TLD list loads */
+export const FALLBACK_TLDS = [".com", ".dev", ".io", ".ai", ".app", ".sh", ".xyz", ".net", ".org"];
 export const LENGTHS = [3, 4, 5] as const;
 
 export type SortMode = "alpha" | "tlds" | "shortest";

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DomainEntry, SortMode } from "@/components/domain/domain-data";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
 interface SearchResponse {
   total: number;
   results: DomainEntry[];
@@ -27,16 +25,16 @@ function buildSearchUrl(
   offset: number,
   limit: number
 ): string {
-  const url = new URL("/search", API_URL);
-  if (params.query.trim()) url.searchParams.set("q", params.query.trim());
+  const searchParams = new URLSearchParams();
+  if (params.query.trim()) searchParams.set("q", params.query.trim());
   if (params.tlds.size > 0)
-    url.searchParams.set("tlds", [...params.tlds].join(","));
+    searchParams.set("tlds", [...params.tlds].join(","));
   if (params.lengths.size > 0)
-    url.searchParams.set("lengths", [...params.lengths].join(","));
-  url.searchParams.set("sort", params.sort);
-  url.searchParams.set("offset", String(offset));
-  url.searchParams.set("limit", String(limit));
-  return url.toString();
+    searchParams.set("lengths", [...params.lengths].join(","));
+  searchParams.set("sort", params.sort);
+  searchParams.set("offset", String(offset));
+  searchParams.set("limit", String(limit));
+  return `/api/search?${searchParams.toString()}`;
 }
 
 export function useDomainSearch(params: UseDomainSearchParams) {
@@ -44,17 +42,14 @@ export function useDomainSearch(params: UseDomainSearchParams) {
   const [windows, setWindows] = useState<WindowCache>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Ref to track the current abort controller
   const abortRef = useRef<AbortController | null>(null);
-  // Ref to track in-flight window fetches
-  const windowAbortRef = useRef<AbortController | null>(null);
-  // Ref to debounce timer
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ref to track current params for staleness checks
   const paramsRef = useRef(params);
   paramsRef.current = params;
+  const inflightRef = useRef<Set<number>>(new Set());
+  const windowsRef = useRef<WindowCache>({});
+  windowsRef.current = windows;
 
-  // Serialize params for dependency tracking
   const paramsKey = `${params.query}|${[...params.tlds].sort().join(",")}|${[...params.lengths].sort().join(",")}|${params.sort}`;
 
   // Fetch initial window on filter change (debounced)
@@ -62,9 +57,8 @@ export function useDomainSearch(params: UseDomainSearchParams) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
-      // Abort any in-flight requests
       abortRef.current?.abort();
-      windowAbortRef.current?.abort();
+      inflightRef.current.clear();
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -97,42 +91,43 @@ export function useDomainSearch(params: UseDomainSearchParams) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
 
-  // Fetch a specific window (for scroll-driven requests, NOT debounced)
-  const fetchWindow = useCallback(
-    (windowIndex: number) => {
-      setWindows((prev) => {
-        // Already have this window
-        if (prev[windowIndex]) return prev;
+  const fetchWindow = useCallback((windowIndex: number) => {
+    if (inflightRef.current.has(windowIndex)) return;
+    if (windowsRef.current[windowIndex]) return;
 
-        // Abort previous window fetch
-        windowAbortRef.current?.abort();
-        const controller = new AbortController();
-        windowAbortRef.current = controller;
+    inflightRef.current.add(windowIndex);
 
-        const offset = windowIndex * PAGE_SIZE;
-        const url = buildSearchUrl(paramsRef.current, offset, PAGE_SIZE);
+    const offset = windowIndex * PAGE_SIZE;
+    const url = buildSearchUrl(paramsRef.current, offset, PAGE_SIZE);
 
-        fetch(url, { signal: controller.signal })
-          .then((res) => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json() as Promise<SearchResponse>;
-          })
-          .then((data) => {
-            if (controller.signal.aborted) return;
-            setWindows((p) => ({ ...p, [windowIndex]: data.results }));
-          })
-          .catch((err) => {
-            if (err instanceof DOMException && err.name === "AbortError") return;
-            console.error("window fetch failed:", err);
-          });
-
-        return prev;
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<SearchResponse>;
+      })
+      .then((data) => {
+        setWindows((p) => ({ ...p, [windowIndex]: data.results }));
+      })
+      .catch((err) => {
+        console.error("window fetch failed:", err);
+      })
+      .finally(() => {
+        inflightRef.current.delete(windowIndex);
       });
+  }, []);
+
+  const ensureRange = useCallback(
+    (startIndex: number, endIndex: number) => {
+      for (let i = startIndex; i <= endIndex; i++) {
+        const windowIndex = Math.floor(i / PAGE_SIZE);
+        if (!windows[windowIndex]) {
+          fetchWindow(windowIndex);
+        }
+      }
     },
-    []
+    [windows, fetchWindow]
   );
 
-  // Get entries for a range of row indices
   const getRows = useCallback(
     (startIndex: number, endIndex: number): (DomainEntry | null)[] => {
       const rows: (DomainEntry | null)[] = [];
@@ -141,14 +136,11 @@ export function useDomainSearch(params: UseDomainSearchParams) {
         const indexInWindow = i % PAGE_SIZE;
         const window = windows[windowIndex];
         rows.push(window?.[indexInWindow] ?? null);
-
-        // Trigger fetch if window not loaded
-        if (!window) fetchWindow(windowIndex);
       }
       return rows;
     },
-    [windows, fetchWindow]
+    [windows]
   );
 
-  return { total, getRows, isLoading, windows };
+  return { total, getRows, ensureRange, isLoading };
 }

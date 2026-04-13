@@ -89,3 +89,8 @@ like search for red yellow etc.
 generic word like water cloud etc
 avoid apple
 generic dictionary term
+
+
+# we do a quick google check
+
+so no search engine appearance

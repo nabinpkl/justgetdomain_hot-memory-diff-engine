@@ -4,7 +4,14 @@ use tracing::info;
 
 use crate::snapshot::Snapshot;
 
-/// Compact entry — stores only the small registered set, not the huge available set.
+/// TLDs shown individually in the UI, in priority sort order.
+/// Index position = sort rank. Everything else comes after, alphabetically.
+pub const DISPLAY_TLDS: &[&str] = &[
+    ".com", ".dev", ".io", ".ai", ".app", ".sh", ".xyz", ".net", ".org", ".tech", ".studio",
+    ".space", ".academy", ".desgin", ".bio", ".work", ".to", ".tube", ".online", ".one", ".new",
+    ".name", ".me", ".inc", ".host", ".fun", ".fm", ".food",
+];
+
 #[derive(Debug)]
 struct IndexedEntry {
     word: String,
@@ -14,15 +21,10 @@ struct IndexedEntry {
 }
 
 pub struct DomainIndex {
-    /// All entries stored once. Sort orders reference into this by index.
     entries: Vec<IndexedEntry>,
-    /// Every known TLD, dot-prefixed and sorted for consistent output.
     all_tlds: Vec<String>,
-    /// Indices into `entries`, sorted alphabetically by word.
     by_alpha: Vec<usize>,
-    /// Indices sorted by available TLD count descending.
     by_tld_count: Vec<usize>,
-    /// Indices sorted by word length ascending.
     by_shortest: Vec<usize>,
 }
 
@@ -30,6 +32,7 @@ pub struct DomainIndex {
 pub struct SearchParams {
     pub query: Option<String>,
     pub tlds: Option<Vec<String>>,
+    pub tld_prefix: Option<String>,
     pub lengths: Option<Vec<usize>>,
     pub sort: SortMode,
 }
@@ -42,10 +45,11 @@ pub enum SortMode {
     Shortest,
 }
 
+/// One row = one word+TLD pair.
 #[derive(serde::Serialize)]
 pub struct SearchResult {
-    pub word: String,
-    pub tlds: Vec<String>,
+    pub name: String,
+    pub tld: String,
     pub length: usize,
 }
 
@@ -53,13 +57,21 @@ impl DomainIndex {
     pub fn from_snapshot(snapshot: &Snapshot) -> Self {
         let start = Instant::now();
 
-        // Build dot-prefixed, sorted TLD list
-        let mut all_tlds: Vec<String> = snapshot
-            .all_tlds
+        // Build priority map: DISPLAY_TLDS get rank 0..N, everything else gets N+1
+        let priority: rustc_hash::FxHashMap<&str, usize> = DISPLAY_TLDS
             .iter()
-            .map(|t| format!(".{t}"))
+            .enumerate()
+            .map(|(i, tld)| (*tld, i))
             .collect();
-        all_tlds.sort();
+        let fallback_rank = DISPLAY_TLDS.len();
+
+        let mut all_tlds: Vec<String> = snapshot.all_tlds.iter().map(|t| format!(".{t}")).collect();
+        // Sort by priority rank first, then alphabetical within same rank
+        all_tlds.sort_by(|a, b| {
+            let ra = priority.get(a.as_str()).copied().unwrap_or(fallback_rank);
+            let rb = priority.get(b.as_str()).copied().unwrap_or(fallback_rank);
+            ra.cmp(&rb).then_with(|| a.cmp(b))
+        });
 
         let all_tld_set: FxHashSet<&str> = all_tlds.iter().map(|s| s.as_str()).collect();
         let tld_count = all_tlds.len();
@@ -68,7 +80,6 @@ impl DomainIndex {
             .entries
             .iter()
             .filter_map(|entry| {
-                // Store registered TLDs dot-prefixed for easy lookup
                 let registered: FxHashSet<String> = entry
                     .registered_tlds
                     .iter()
@@ -80,7 +91,6 @@ impl DomainIndex {
                     return None;
                 }
 
-                // Data integrity: registered TLDs should be known
                 debug_assert!(
                     registered.iter().all(|t| all_tld_set.contains(t.as_str())),
                     "word '{}' has registered TLD not in all_tlds set",
@@ -96,7 +106,6 @@ impl DomainIndex {
             })
             .collect();
 
-        // Build sort-order index arrays (just Vec<usize>, not cloned entries)
         let mut by_alpha: Vec<usize> = (0..entries.len()).collect();
         by_alpha.sort_by(|&a, &b| entries[a].word.cmp(&entries[b].word));
 
@@ -129,6 +138,11 @@ impl DomainIndex {
         }
     }
 
+    /// Return all TLDs in priority-ranked order.
+    pub fn all_tlds(&self) -> &[String] {
+        &self.all_tlds
+    }
+
     fn sorted_indices(&self, sort: &SortMode) -> &[usize] {
         match sort {
             SortMode::Alpha => &self.by_alpha,
@@ -137,29 +151,39 @@ impl DomainIndex {
         }
     }
 
-    /// Compute available TLDs for an entry, optionally filtered.
-    fn available_tlds(
+    /// Get the list of TLDs to emit for an entry, respecting filters.
+    fn matching_tlds(
         &self,
         entry: &IndexedEntry,
         tld_filter: &Option<FxHashSet<&str>>,
-    ) -> Vec<String> {
-        match tld_filter {
-            Some(filter) => self
-                .all_tlds
-                .iter()
-                .filter(|t| filter.contains(t.as_str()) && !entry.registered_tlds.contains(t.as_str()))
-                .cloned()
-                .collect(),
-            None => self
-                .all_tlds
-                .iter()
-                .filter(|t| !entry.registered_tlds.contains(t.as_str()))
-                .cloned()
-                .collect(),
+        tld_prefix: &Option<String>,
+    ) -> Vec<&str> {
+        let mut result = Vec::new();
+
+        for tld in &self.all_tlds {
+            if entry.registered_tlds.contains(tld) {
+                continue;
+            }
+
+            // TLD prefix filter from dot-query (e.g. ".a" from "helmet.a")
+            if let Some(prefix) = tld_prefix {
+                if !tld.starts_with(prefix.as_str()) {
+                    continue;
+                }
+            }
+
+            if let Some(f) = &tld_filter {
+                if !f.contains(tld.as_str()) {
+                    continue;
+                }
+            }
+
+            result.push(tld.as_str());
         }
+        result
     }
 
-    /// Paginated search: returns (total matching count, windowed results).
+    /// Paginated flat search. Each row = one word+TLD pair.
     pub fn search(
         &self,
         params: &SearchParams,
@@ -172,40 +196,42 @@ impl DomainIndex {
             .tlds
             .as_ref()
             .map(|t| t.iter().map(|s| s.as_str()).collect());
-        let length_filter: Option<FxHashSet<usize>> = params
-            .lengths
-            .as_ref()
-            .map(|l| l.iter().copied().collect());
+        let length_filter: Option<FxHashSet<usize>> =
+            params.lengths.as_ref().map(|l| l.iter().copied().collect());
 
-        // First pass: count total matches
+        // Count total flat rows + collect windowed results in one pass
         let mut total = 0usize;
+        let mut results = Vec::with_capacity(limit);
+        let end = offset + limit;
+
         for &idx in indices {
-            if self.entry_matches(idx, &query_lower, &tld_filter, &length_filter) {
+            let entry = &self.entries[idx];
+
+            if !Self::word_matches(entry, &query_lower, &length_filter) {
+                continue;
+            }
+
+            let tlds = self.matching_tlds(entry, &tld_filter, &params.tld_prefix);
+            if tlds.is_empty() {
+                continue;
+            }
+
+            for tld in &tlds {
+                if total >= offset && total < end {
+                    results.push(SearchResult {
+                        name: format!("{}{}", entry.word, tld),
+                        tld: tld.to_string(),
+                        length: entry.length,
+                    });
+                }
                 total += 1;
             }
         }
 
-        // Second pass: collect the window
-        let results: Vec<SearchResult> = indices
-            .iter()
-            .filter(|&&idx| self.entry_matches(idx, &query_lower, &tld_filter, &length_filter))
-            .skip(offset)
-            .take(limit)
-            .map(|&idx| {
-                let entry = &self.entries[idx];
-                let tlds = self.available_tlds(entry, &tld_filter);
-                SearchResult {
-                    word: entry.word.clone(),
-                    tlds,
-                    length: entry.length,
-                }
-            })
-            .collect();
-
         (total, results)
     }
 
-    /// Streaming search: returns an iterator over all matching results.
+    /// Streaming flat search.
     pub fn search_iter<'a>(
         &'a self,
         params: &'a SearchParams,
@@ -216,54 +242,41 @@ impl DomainIndex {
             .tlds
             .as_ref()
             .map(|t| t.iter().map(|s| s.as_str()).collect());
-        let length_filter: Option<FxHashSet<usize>> = params
-            .lengths
-            .as_ref()
-            .map(|l| l.iter().copied().collect());
+        let length_filter: Option<FxHashSet<usize>> =
+            params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let tld_prefix = &params.tld_prefix;
 
-        let tld_filter_clone = tld_filter.clone();
-        indices
-            .iter()
-            .filter(move |&&idx| self.entry_matches(idx, &query_lower, &tld_filter, &length_filter))
-            .map(move |&idx| {
-                let entry = &self.entries[idx];
-                let tlds = self.available_tlds(entry, &tld_filter_clone);
-                SearchResult {
-                    word: entry.word.clone(),
-                    tlds,
+        indices.iter().flat_map(move |&idx| {
+            let entry = &self.entries[idx];
+            if !Self::word_matches(entry, &query_lower, &length_filter) {
+                return Vec::new();
+            }
+            self.matching_tlds(entry, &tld_filter, tld_prefix)
+                .into_iter()
+                .map(|tld| SearchResult {
+                    name: format!("{}{}", entry.word, tld),
+                    tld: tld.to_string(),
                     length: entry.length,
-                }
-            })
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
-    fn entry_matches(
-        &self,
-        idx: usize,
+    fn word_matches(
+        entry: &IndexedEntry,
         query_lower: &Option<String>,
-        tld_filter: &Option<FxHashSet<&str>>,
         length_filter: &Option<FxHashSet<usize>>,
     ) -> bool {
-        let entry = &self.entries[idx];
-
         if let Some(q) = query_lower {
-            if !entry.word.contains(q.as_str()) {
+            if !entry.word.starts_with(q.as_str()) {
                 return false;
             }
         }
-
         if let Some(lengths) = length_filter {
             if !lengths.contains(&entry.length) {
                 return false;
             }
         }
-
-        // TLD filter: entry must have at least one requested TLD available
-        if let Some(tlds) = tld_filter {
-            if !tlds.iter().any(|t| !entry.registered_tlds.contains(*t)) {
-                return false;
-            }
-        }
-
         true
     }
 }

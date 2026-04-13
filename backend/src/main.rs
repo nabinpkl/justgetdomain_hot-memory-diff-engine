@@ -41,6 +41,12 @@ async fn main() {
         .unwrap_or_else(|_| PathBuf::from("data/snapshot.bin"));
 
     info!(path = %snapshot_path.display(), "loading snapshot");
+    let snapshot_updated_at_ms = std::fs::metadata(&snapshot_path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
     let start = Instant::now();
     let snapshot = snapshot::load(&snapshot_path).expect("failed to load snapshot");
     info!(
@@ -56,6 +62,7 @@ async fn main() {
 
     let state = Arc::new(AppState {
         index: Arc::new(index),
+        snapshot_updated_at_ms,
     });
 
     // CORS
@@ -75,6 +82,8 @@ async fn main() {
         .route("/health", get(health_handler))
         .route("/search", get(handlers::search_handler))
         .route("/stream", get(handlers::stream_handler))
+        .route("/tlds", get(handlers::tlds_handler))
+        .route("/stats", get(handlers::stats_handler))
         .layer(cors)
         .with_state(state);
 

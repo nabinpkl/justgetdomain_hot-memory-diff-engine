@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Search, X, SlidersHorizontal } from "lucide-react";
+import { Search, X, SlidersHorizontal, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TerminalDemo } from "@/components/terminal-demo";
 import { WaitlistForm } from "@/components/waitlist-form";
-import { DomainTile } from "@/components/domain/domain-tile";
+import { REGISTRARS } from "@/components/domain/domain-data";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
+import { UpdatedIndicator } from "@/components/domain/updated-indicator";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 
 const STEPS = [
@@ -47,27 +48,19 @@ const FEATURES = [
   },
 ];
 
-// ─── Virtual scroll constants ──────────────────────────────────────────
-
-const ROW_HEIGHT = 140;
-const COLS_BREAKPOINTS = [
-  { min: 0, cols: 1 },
-  { min: 560, cols: 2 },
-  { min: 840, cols: 3 },
-];
-const OVERSCAN = 8;
+const ROW_HEIGHT = 48;
+const OVERSCAN = 20;
 
 // ─── Main Component ────────────────────────────────────────────────────
 
 export function HomeSearch() {
   const [query, setQuery] = useState("");
-  const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
-  const [cols, setCols] = useState(3);
 
   const {
     activeTlds,
@@ -83,7 +76,7 @@ export function HomeSearch() {
   const isSearching = query.trim().length > 0 || hasActiveFilters;
   const hasAnyActive = hasActiveFilters || query.trim().length > 0;
 
-  const { total, getRows, isLoading } = useDomainSearch({
+  const { total, getRows, ensureRange, isLoading } = useDomainSearch({
     query: isSearching ? query : "",
     tlds: isSearching ? activeTlds : new Set<string>(),
     lengths: isSearching ? activeLengths : new Set<number>(),
@@ -97,21 +90,13 @@ export function HomeSearch() {
   };
 
   useEffect(() => {
-    setExpandedDomain(null);
+    setExpandedRow(null);
   }, [query]);
 
-  // Track results container resize
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-
-    const update = () => {
-      const width = el.clientWidth;
-      setContainerHeight(el.clientHeight);
-      const bp = [...COLS_BREAKPOINTS].reverse().find((b) => width >= b.min);
-      setCols(bp?.cols ?? 1);
-    };
-
+    const update = () => setContainerHeight(el.clientHeight);
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
@@ -119,21 +104,17 @@ export function HomeSearch() {
   }, [isSearching]);
 
   const handleScroll = useCallback(() => {
-    if (scrollRef.current) {
-      setScrollTop(scrollRef.current.scrollTop);
-    }
+    if (scrollRef.current) setScrollTop(scrollRef.current.scrollTop);
   }, []);
 
-  // Virtual scroll calculations
-  const totalRows = Math.ceil(total / cols);
-  const totalHeight = totalRows * ROW_HEIGHT;
+  const totalHeight = total * ROW_HEIGHT;
+  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
+  const visibleCount = Math.ceil(containerHeight / ROW_HEIGHT) + 2 * OVERSCAN;
+  const endIndex = Math.min(total - 1, startIndex + visibleCount);
 
-  const startRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
-  const visibleRows = Math.ceil(containerHeight / ROW_HEIGHT) + 2 * OVERSCAN;
-  const endRow = Math.min(totalRows - 1, startRow + visibleRows);
-
-  const startIndex = startRow * cols;
-  const endIndex = Math.min(total - 1, (endRow + 1) * cols - 1);
+  useEffect(() => {
+    if (isSearching && total > 0) ensureRange(startIndex, endIndex);
+  }, [startIndex, endIndex, total, isSearching, ensureRange]);
 
   const visibleEntries =
     isSearching && total > 0 ? getRows(startIndex, endIndex) : [];
@@ -264,6 +245,19 @@ export function HomeSearch() {
               )}
             </div>
 
+            {/* Explore hint — shown when not actively searching */}
+            {!isSearching && (
+              <p className="mt-5 text-center text-[0.8rem] text-jgd-dim leading-[1.7]">
+                Don&apos;t know what you&apos;re looking for?{" "}
+                <Link
+                  href="/search"
+                  className="text-jgd-accent border-b border-jgd-accent/30 hover:border-jgd-accent transition-colors"
+                >
+                  Explore millions of available domains
+                </Link>
+              </p>
+            )}
+
             {/* Result count + mobile filter toggle */}
             {isSearching && (
               <div className="flex items-center gap-4 mt-3 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
@@ -273,7 +267,7 @@ export function HomeSearch() {
                     : `${total.toLocaleString()} domain${total !== 1 ? "s" : ""} found`}
                 </span>
                 <span className="text-[oklch(0.45_0_0)]">/</span>
-                <span>Updated 4h ago</span>
+                <UpdatedIndicator />
                 <button
                   type="button"
                   className={cn(
@@ -369,54 +363,61 @@ export function HomeSearch() {
                 <div
                   style={{
                     position: "absolute",
-                    top: startRow * ROW_HEIGHT,
+                    top: startIndex * ROW_HEIGHT,
                     left: 0,
                     right: 0,
                   }}
                 >
-                  <div
-                    className="grid"
-                    style={{
-                      gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                    }}
-                  >
-                    {visibleEntries.map((entry, i) => {
-                      const globalIndex = startIndex + i;
-                      if (!entry) {
-                        return (
-                          <div
-                            key={`placeholder-${globalIndex}`}
-                            className="px-5 pt-5 pb-4 border-b border-r border-jgd-border"
-                            style={{ height: ROW_HEIGHT }}
-                          >
-                            <div className="animate-pulse">
-                              <div className="h-6 w-24 bg-jgd-surface rounded mb-3" />
-                              <div className="flex gap-1.5">
-                                <div className="h-5 w-10 bg-jgd-surface rounded" />
-                                <div className="h-5 w-10 bg-jgd-surface rounded" />
-                              </div>
-                              <div className="h-4 w-32 bg-jgd-surface rounded mt-3" />
-                            </div>
-                          </div>
-                        );
-                      }
-
+                  {visibleEntries.map((entry, i) => {
+                    const globalIndex = startIndex + i;
+                    if (!entry) {
                       return (
-                        <DomainTile
-                          key={`${entry.name}-${globalIndex}`}
-                          domain={entry}
-                          index={globalIndex}
-                          activeTlds={activeTlds}
-                          isExpanded={expandedDomain === entry.name}
-                          onToggle={() =>
-                            setExpandedDomain(
-                              expandedDomain === entry.name ? null : entry.name
-                            )
-                          }
-                        />
+                        <div
+                          key={`ph-${globalIndex}`}
+                          className="flex items-center px-5 border-b border-jgd-border animate-pulse"
+                          style={{ height: ROW_HEIGHT }}
+                        >
+                          <div className="h-4 w-40 bg-jgd-surface rounded" />
+                        </div>
                       );
-                    })}
-                  </div>
+                    }
+
+                    const isExpanded = expandedRow === entry.name;
+
+                    return (
+                      <div key={`${entry.name}-${globalIndex}`}>
+                        <div
+                          className="flex items-center gap-4 px-5 cursor-pointer transition-colors hover:bg-jgd-surface/50 border-b border-jgd-border"
+                          style={{ height: ROW_HEIGHT }}
+                          onClick={() => setExpandedRow(isExpanded ? null : entry.name)}
+                        >
+                          <span className="font-serif text-[1.05rem] tracking-[-0.3px] text-jgd-text">
+                            {entry.name}
+                          </span>
+                          <span className="text-[0.72rem] px-2 py-0.5 rounded-sm bg-jgd-accent-dim text-jgd-accent font-sans">
+                            {entry.tld}
+                          </span>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="flex gap-2 px-5 py-3 bg-[oklch(0.22_0.01_142)] border-b border-jgd-border">
+                            {REGISTRARS.map((reg) => (
+                              <a
+                                key={reg.name}
+                                href={`${reg.url}${entry.name}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-[0.76rem] px-3 py-2 rounded transition-all text-jgd-text bg-jgd-accent/4 border border-jgd-accent/8 hover:bg-jgd-accent/10 hover:border-jgd-accent/20"
+                              >
+                                {reg.name}
+                                <ExternalLink size={12} className="text-jgd-dim" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

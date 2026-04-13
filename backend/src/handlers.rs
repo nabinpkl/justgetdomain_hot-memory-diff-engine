@@ -12,6 +12,9 @@ use crate::index::{DomainIndex, SearchParams, SearchResult, SortMode};
 
 pub struct AppState {
     pub index: Arc<DomainIndex>,
+    /// Snapshot file mtime as unix milliseconds. Shown to users so they know
+    /// how stale the availability data is.
+    pub snapshot_updated_at_ms: i64,
 }
 
 // ─── /search (paginated REST) ──────────────────────────────────────────
@@ -80,10 +83,31 @@ pub async fn stream_handler(
         .into_response()
 }
 
+// ─── /tlds (ranked TLD list) ──────────────────────────────────────────
+
+pub async fn tlds_handler(State(state): State<Arc<AppState>>) -> Json<Vec<String>> {
+    Json(state.index.all_tlds().to_vec())
+}
+
+// ─── /stats (snapshot metadata) ────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct StatsResponse {
+    pub updated_at_ms: i64,
+    pub tld_count: usize,
+}
+
+pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResponse> {
+    Json(StatsResponse {
+        updated_at_ms: state.snapshot_updated_at_ms,
+        tld_count: state.index.all_tlds().len(),
+    })
+}
+
 // ─── Shared param parsing ──────────────────────────────────────────────
 
 fn parse_search_params(query: &SearchQuery) -> SearchParams {
-    let tlds = query.tlds.as_ref().map(|t| {
+    let tlds: Option<Vec<String>> = query.tlds.as_ref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
@@ -102,15 +126,42 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
         _ => SortMode::Alpha,
     };
 
-    let q = query
+    let raw_q = query
         .q
         .as_ref()
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty());
 
+    // If query contains a dot, split into word + TLD prefix
+    // e.g. "flux.dev" → word="flux", tld_prefix=".dev"
+    // e.g. "helmet.a" → word="helmet", tld_prefix=".a" (matches .aarp, .app, etc.)
+    let q;
+    let mut tld_prefix: Option<String> = None;
+    if let Some(raw) = raw_q {
+        if let Some(dot_pos) = raw.find('.') {
+            let word_part = &raw[..dot_pos];
+            let tld_part = &raw[dot_pos..]; // includes the dot
+
+            q = if word_part.is_empty() {
+                None
+            } else {
+                Some(word_part.to_string())
+            };
+
+            if tld_part.len() > 1 {
+                tld_prefix = Some(tld_part.to_string());
+            }
+        } else {
+            q = Some(raw);
+        }
+    } else {
+        q = None;
+    }
+
     SearchParams {
         query: q,
         tlds,
+        tld_prefix,
         lengths,
         sort,
     }
