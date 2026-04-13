@@ -22,3 +22,13 @@ That's a real product: scrape and normalize the changelog from 4-5 major diction
 A single API that answers: "What words entered mainstream English this week?"
 ## Spinoff Idea (Product Lab)
 **New Words API** — No one aggregates new dictionary additions (Oxford, Merriam-Webster, Cambridge, Dictionary.com) into a single structured feed with timestamps + metadata. Small TAM (word games, NLP/LLM training, domain search, language learning). JustGetDomain would be its own first customer — new dictionary words are prime Tier 1 candidates nobody else scans for. Parked for later.
+
+
+# Avoding legal issues
+
+Avoid infringe of trademarks / cybersquatting
+https://tmsearch.uspto.gov/search/search-information
+
+# Avoid apple google sqautting
+
+# build a dict of common brand names

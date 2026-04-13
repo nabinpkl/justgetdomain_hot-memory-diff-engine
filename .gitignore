@@ -1,5 +1,6 @@
 
 *.gz
+*.zip
 *.txt
 
 .DS_Store
