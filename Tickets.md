@@ -67,3 +67,17 @@ Trademark Link	Add a small icon next to every domain that links directly to the 
 "Report Brand"	A footer link: "Are you a brand owner? Click here to request a keyword be added to our exclusion list." This is your "Good Faith" get-out-of-jail-free card.
 No "Buy" Button	Don't have a "Buy Now" button. Have a "Copy to Clipboard" or "Search Registrar" button. This distances you from the actual transaction.
 Zone File Attribution	State: "Data sourced via ICANN CZDS." This proves you obtained the millions of records through the legal, official channel.
+
+#
+
+Visualizing Scale: Show a dashboard or terminal log that displays:
+
+Lines Processed: 245,000,000
+
+Time Elapsed: 14.2 seconds
+
+Memory Usage: 450MB
+
+# how to be as fast as possible without trading off accuracy
+
+# Show comparison between cloudfare and vercel

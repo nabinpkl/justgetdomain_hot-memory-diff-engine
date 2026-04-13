@@ -125,8 +125,7 @@ Postgres, Kafka, Temporal, Redis, Nginx, Kubernetes, LLM integration, rate limit
 
 ## Build Order
 1. Rust batch pipeline — read sorted file, diff against dictionary, output available set to terminal
-2. Snapshot serialization — bincode persist + load on startup
-3. HTTP server — Axum with basic query params
+2. Snapshot serialization — binary libary needs to be found out+ persist + load on startup
 4. SSE streaming — stream results to clients
 5. Connection hygiene — Tower middleware
 6. Cloudflare Tunnel — zero open ports
@@ -136,5 +135,3 @@ Postgres, Kafka, Temporal, Redis, Nginx, Kubernetes, LLM integration, rate limit
 10. Exhaustive short strings — 3/4/5-letter enumeration
 11. Keyword mapping — category search without LLM
 12. Double-buffer swap — batch without interrupting serving
-
-
