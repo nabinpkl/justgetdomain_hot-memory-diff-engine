@@ -2,72 +2,14 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Search, X, ExternalLink } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TerminalDemo } from "@/components/terminal-demo";
 import { WaitlistForm } from "@/components/waitlist-form";
-
-// ─── Types & mock data (same as domain-search) ────────────────────────
-type DomainEntry = {
-  name: string;
-  tlds: string[];
-  length: number;
-};
-
-const MOCK_DOMAINS: DomainEntry[] = [
-  { name: "flux", tlds: [".dev", ".sh", ".xyz"], length: 4 },
-  { name: "grit", tlds: [".sh", ".io", ".xyz"], length: 4 },
-  { name: "plow", tlds: [".io", ".dev"], length: 4 },
-  { name: "gleam", tlds: [".dev", ".app", ".sh"], length: 5 },
-  { name: "stoic", tlds: [".sh", ".xyz", ".io"], length: 5 },
-  { name: "bxq", tlds: [".com", ".dev", ".io", ".app"], length: 3 },
-  { name: "fwj", tlds: [".com", ".net", ".xyz"], length: 3 },
-  { name: "vex", tlds: [".dev", ".io"], length: 3 },
-  { name: "elm", tlds: [".sh", ".app"], length: 3 },
-  { name: "crisp", tlds: [".dev", ".sh", ".xyz", ".io"], length: 5 },
-  { name: "bloom", tlds: [".sh", ".xyz"], length: 5 },
-  { name: "drift", tlds: [".dev", ".io", ".app"], length: 5 },
-  { name: "spark", tlds: [".sh", ".xyz", ".io", ".app"], length: 5 },
-  { name: "plume", tlds: [".dev", ".sh"], length: 5 },
-  { name: "oxide", tlds: [".dev", ".sh", ".io"], length: 5 },
-  { name: "zest", tlds: [".dev", ".io", ".sh", ".app"], length: 4 },
-  { name: "wick", tlds: [".dev", ".sh"], length: 4 },
-  { name: "dusk", tlds: [".io", ".xyz", ".app"], length: 4 },
-  { name: "knot", tlds: [".dev", ".sh", ".io"], length: 4 },
-  { name: "palm", tlds: [".sh", ".xyz"], length: 4 },
-  { name: "cove", tlds: [".dev", ".io", ".app", ".sh"], length: 4 },
-  { name: "reef", tlds: [".dev", ".sh", ".xyz"], length: 4 },
-  { name: "bolt", tlds: [".sh", ".io"], length: 4 },
-  { name: "mist", tlds: [".dev", ".xyz", ".io"], length: 4 },
-  { name: "rune", tlds: [".dev", ".sh", ".app"], length: 4 },
-  { name: "vale", tlds: [".dev", ".io"], length: 4 },
-  { name: "pyre", tlds: [".sh", ".xyz"], length: 4 },
-  { name: "haze", tlds: [".dev", ".io", ".app"], length: 4 },
-  { name: "nyx", tlds: [".dev", ".io", ".sh", ".com"], length: 3 },
-  { name: "orb", tlds: [".dev", ".sh"], length: 3 },
-  { name: "zyl", tlds: [".com", ".io", ".dev"], length: 3 },
-  { name: "kvo", tlds: [".dev", ".sh", ".xyz"], length: 3 },
-  { name: "wren", tlds: [".dev", ".io", ".sh", ".app", ".xyz"], length: 4 },
-  { name: "sage", tlds: [".dev", ".sh"], length: 4 },
-  { name: "fern", tlds: [".dev", ".io", ".xyz"], length: 4 },
-  { name: "loom", tlds: [".sh", ".dev", ".io"], length: 4 },
-  { name: "quill", tlds: [".dev", ".sh", ".io"], length: 5 },
-  { name: "forge", tlds: [".dev", ".sh", ".app"], length: 5 },
-  { name: "slate", tlds: [".dev", ".io", ".xyz", ".sh"], length: 5 },
-  { name: "thorn", tlds: [".dev", ".sh"], length: 5 },
-  { name: "briar", tlds: [".dev", ".io", ".sh"], length: 5 },
-  { name: "flint", tlds: [".dev", ".sh", ".xyz", ".app"], length: 5 },
-  { name: "ember", tlds: [".dev", ".io"], length: 5 },
-  { name: "fjord", tlds: [".dev", ".sh", ".io", ".app"], length: 5 },
-  { name: "prism", tlds: [".dev", ".io", ".sh"], length: 5 },
-  { name: "tidal", tlds: [".dev", ".sh", ".xyz"], length: 5 },
-];
-
-const REGISTRARS = [
-  { name: "Namecheap", url: "https://www.namecheap.com/domains/registration/results/?domain=" },
-  { name: "Porkbun", url: "https://porkbun.com/checkout/search?q=" },
-  { name: "Cloudflare", url: "https://www.cloudflare.com/products/registrar/" },
-];
+import { MOCK_DOMAINS } from "@/components/domain/domain-data";
+import { DomainTile } from "@/components/domain/domain-tile";
+import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
+import { EmptyState } from "@/components/domain/empty-state";
 
 const STEPS = [
   {
@@ -110,19 +52,68 @@ const FEATURES = [
 export function HomeSearch() {
   const [query, setQuery] = useState("");
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isSearching = query.trim().length > 0;
+  const {
+    activeTlds,
+    activeLengths,
+    sort,
+    setSort,
+    toggleTld,
+    toggleLength,
+    clearFilters,
+    hasActiveFilters,
+  } = useFilterState();
+
+  const isSearching = query.trim().length > 0 || hasActiveFilters;
+  const hasAnyActive = hasActiveFilters || query.trim().length > 0;
+
+  const clearAll = () => {
+    clearFilters();
+    setQuery("");
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     setExpandedDomain(null);
   }, [query]);
 
   const results = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase().trim();
-    return MOCK_DOMAINS.filter((d) => d.name.includes(q));
-  }, [query]);
+    if (!isSearching) return [];
+
+    let filtered = MOCK_DOMAINS;
+
+    if (query.trim()) {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter((d) => d.name.includes(q));
+    }
+
+    if (activeTlds.size > 0) {
+      filtered = filtered.filter((d) =>
+        d.tlds.some((tld) => activeTlds.has(tld))
+      );
+    }
+
+    if (activeLengths.size > 0) {
+      filtered = filtered.filter((d) => activeLengths.has(d.length));
+    }
+
+    const sorted = [...filtered];
+    switch (sort) {
+      case "alpha":
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "tlds":
+        sorted.sort((a, b) => b.tlds.length - a.tlds.length);
+        break;
+      case "shortest":
+        sorted.sort((a, b) => a.name.length - b.name.length);
+        break;
+    }
+
+    return sorted;
+  }, [query, activeTlds, activeLengths, sort, isSearching]);
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
@@ -250,7 +241,7 @@ export function HomeSearch() {
               )}
             </div>
 
-            {/* Result count */}
+            {/* Result count + mobile filter toggle */}
             {isSearching && (
               <div className="flex items-center gap-4 mt-3 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
                 <span>
@@ -259,6 +250,17 @@ export function HomeSearch() {
                 </span>
                 <span className="text-[oklch(0.45_0_0)]">/</span>
                 <span>Updated 4h ago</span>
+                <button
+                  type="button"
+                  className={cn(
+                    "ml-auto flex items-center gap-1.5 cursor-pointer transition-colors sm:hidden",
+                    showFilters ? "text-jgd-accent" : "text-jgd-dim"
+                  )}
+                  onClick={() => setShowFilters((p) => !p)}
+                >
+                  <SlidersHorizontal size={12} />
+                  Filters
+                </button>
               </div>
             )}
           </div>
@@ -273,17 +275,66 @@ export function HomeSearch() {
         />
       </div>
 
-      {/* ── Results ── */}
+      {/* ── Results with sidebar filters ── */}
       {isSearching && (
-        <div className="px-5 pt-6 pb-20">
-          <div className="max-w-[1200px] mx-auto">
+        <div className="max-w-[1200px] mx-auto w-full flex">
+          {/* Sidebar filters — desktop */}
+          <aside className="hidden sm:block shrink-0 sticky top-[110px] self-start overflow-y-auto w-[200px] max-h-[calc(100vh-110px)] border-r border-jgd-border p-6 pr-5">
+            <FilterPanel
+              activeTlds={activeTlds}
+              activeLengths={activeLengths}
+              sort={sort}
+              onToggleTld={toggleTld}
+              onToggleLength={toggleLength}
+              onSort={setSort}
+              hasActiveFilters={hasAnyActive}
+              onClear={clearAll}
+            />
+          </aside>
+
+          {/* Mobile filter drawer */}
+          {showFilters && (
+            <div
+              className="fixed inset-0 z-40 sm:hidden bg-[oklch(0_0_0/0.7)]"
+              onClick={() => setShowFilters(false)}
+            >
+              <div
+                className="absolute bottom-0 left-0 right-0 p-6 rounded-t-xl bg-jgd-surface border-t border-jgd-border"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <span className="text-[0.7rem] uppercase tracking-[2px] font-bold">
+                    Filters
+                  </span>
+                  <button
+                    type="button"
+                    className="cursor-pointer text-jgd-dim"
+                    onClick={() => setShowFilters(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <FilterPanel
+                  activeTlds={activeTlds}
+                  activeLengths={activeLengths}
+                  sort={sort}
+                  onToggleTld={toggleTld}
+                  onToggleLength={toggleLength}
+                  onSort={setSort}
+                  hasActiveFilters={hasAnyActive}
+                  onClear={clearAll}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Results area */}
+          <main className="flex-1 min-w-0 pt-6 pb-20">
             {results.length === 0 ? (
               <EmptyState
                 query={query}
-                onClear={() => {
-                  setQuery("");
-                  inputRef.current?.focus();
-                }}
+                hasFilters={hasActiveFilters}
+                onClear={clearAll}
               />
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
@@ -292,6 +343,7 @@ export function HomeSearch() {
                     key={domain.name}
                     domain={domain}
                     index={i}
+                    activeTlds={activeTlds}
                     isExpanded={expandedDomain === domain.name}
                     onToggle={() =>
                       setExpandedDomain(
@@ -302,7 +354,7 @@ export function HomeSearch() {
                 ))}
               </div>
             )}
-          </div>
+          </main>
         </div>
       )}
 
@@ -483,114 +535,6 @@ export function HomeSearch() {
           </footer>
         </>
       )}
-    </div>
-  );
-}
-
-// ─── Domain Tile ───────────────────────────────────────────────────────
-
-function DomainTile({
-  domain,
-  index,
-  isExpanded,
-  onToggle,
-}: {
-  domain: DomainEntry;
-  index: number;
-  isExpanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "jgd-tile-in flex flex-col cursor-pointer transition-colors group px-5 pt-5 pb-4 border-b border-r border-jgd-border",
-        isExpanded ? "bg-[oklch(0.22_0.01_142)]" : "bg-jgd-bg"
-      )}
-      style={{ animationDelay: `${Math.min(index * 30, 600)}ms` }}
-      onClick={onToggle}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h2
-          className={cn(
-            "font-serif text-2xl font-normal tracking-[-0.5px] transition-colors",
-            isExpanded ? "text-jgd-accent" : "text-jgd-text"
-          )}
-        >
-          {domain.name}
-        </h2>
-        <span className="text-[0.7rem] uppercase tracking-[1px] shrink-0 text-jgd-dim">
-          {domain.length}L
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 mt-2.5">
-        {domain.tlds.map((tld) => (
-          <span
-            key={tld}
-            className="text-[0.74rem] px-2 py-0.5 rounded-sm bg-jgd-accent-dim text-jgd-accent font-sans"
-          >
-            {tld}
-          </span>
-        ))}
-      </div>
-
-      <p className="mt-3 text-[0.72rem] uppercase tracking-[1.5px] text-jgd-dim">
-        {domain.tlds.length} extension{domain.tlds.length !== 1 ? "s" : ""}{" "}
-        available
-      </p>
-
-      {isExpanded && (
-        <div className="mt-4 pt-4 flex flex-col gap-2 border-t border-jgd-accent/12">
-          <p className="text-[0.7rem] uppercase tracking-[2px] mb-1 text-jgd-dim">
-            Register at
-          </p>
-          {REGISTRARS.map((reg) => (
-            <a
-              key={reg.name}
-              href={`${reg.url}${domain.name}${domain.tlds[0]}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-between text-[0.76rem] px-3 py-2 rounded transition-all text-jgd-text bg-jgd-accent/4 border border-jgd-accent/8 hover:bg-jgd-accent/10 hover:border-jgd-accent/20"
-            >
-              {reg.name}
-              <ExternalLink size={12} className="text-jgd-dim" />
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Empty State ───────────────────────────────────────────────────────
-
-function EmptyState({
-  query,
-  onClear,
-}: {
-  query: string;
-  onClear: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center text-center px-6 py-[120px]">
-      <div className="mb-6 size-16 rounded-full bg-jgd-accent-dim flex items-center justify-center">
-        <Search size={24} className="text-jgd-accent" />
-      </div>
-      <h3 className="mb-2 font-serif text-[1.4rem] font-normal">
-        No matches
-      </h3>
-      <p className="text-[0.8rem] max-w-[360px] mb-6 text-jgd-dim leading-[1.7]">
-        Nothing matched &ldquo;{query.trim()}&rdquo; in the available set. Try
-        a shorter query or different letters.
-      </p>
-      <button
-        type="button"
-        onClick={onClear}
-        className="cursor-pointer text-[0.7rem] uppercase tracking-[2px] px-5 py-2.5 rounded transition-colors text-jgd-accent border border-jgd-accent/20 bg-jgd-accent-dim hover:bg-jgd-accent/15"
-      >
-        Clear search
-      </button>
     </div>
   );
 }
