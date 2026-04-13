@@ -1,0 +1,14 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SNAPSHOT_PATH=${SNAPSHOT_PATH}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - RUST_LOG=${RUST_LOG}
+    volumes:
+      - ./backend/data/snapshot.bin:/data/snapshot.bin:ro

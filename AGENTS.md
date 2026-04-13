@@ -25,7 +25,7 @@ Single-pass streaming set difference:
 5. Output = **available set**: candidate names + their available TLDs. ~3M names, ~500MB-1GB in memory.
 
 ## Available Set
-The only thing that matters. Neither raw TLD file nor full dictionary lives in memory during serving. Only the available set. This is what users query, what gets indexed, what gets streamed over SSE.
+The only thing that matters. Neither raw TLD file nor full dictionary lives in memory during serving. Only the available set. This is what users query, what gets indexed.
 
 ## Double-Buffer Index Swap
 - Active index serves queries. Standby index rebuilt by nightly batch.
@@ -73,7 +73,7 @@ Browser → api.justgetdomain.com → Cloudflare Edge → Tunnel → Rust HTTP (
 ## Backend Rust Service Architecture
 
 ### Decision: Axum
-Axum 0.8.x is the 2026 default. Built on Tokio, first-class SSE via `axum::response::sse`, Tower middleware for connection hygiene. Same runtime for batch (tokio::io file streaming) and serving. Single binary, single process.
+Axum 0.8.x is the 2026 default. Built on Tokio, via Tower middleware for connection hygiene. Same runtime for batch (tokio::io file streaming) and serving. Single binary, single process.
 
 ### Core Crate Stack
 #### All latest
@@ -92,11 +92,10 @@ Serve module queries an abstract `AvailableIndex` trait. Enables swapping implem
 let app = Router::new()
     .route("/health", get(health))
     .route("/stats", get(stats)) (later)
-    .route("/sse", (need to think)
 ```
-No dedicated `/check/{name}` — single-lookup rebuilds the GoDaddy experience we're killing. If someone searches one name via SSE, they get one result back instantly.
+No dedicated `/check/{name}` — single-lookup rebuilds the GoDaddy experience we're killing. If someone searches one name, they get one result back instantly.
 
-### Connection Hygiene (SSE Protection)
+### Connection Hygiene (Outdated later need to be api rate limiting)
 - Max 5 concurrent connections per IP
 - 30s inactivity timeout
 - Max 1000 results per stream, client paginates
@@ -115,10 +114,6 @@ No dedicated `/check/{name}` — single-lookup rebuilds the GoDaddy experience w
 
 ---
 
-## MCP (Future, Not v1)
-MCP now uses "Streamable HTTP" (replaced plain SSE, March 2025 spec). JSON-RPC over HTTP POST/GET with optional SSE streaming. Different protocol from frontend SSE but same index behind trait boundary. Separate route when built.
-
----
 
 ## What to Skip for v1
 Postgres, Kafka, Temporal, Redis, Nginx, Kubernetes, LLM integration, rate limiting, multi-service architecture, MCP endpoint, dedicated single-lookup REST endpoint.
@@ -126,7 +121,6 @@ Postgres, Kafka, Temporal, Redis, Nginx, Kubernetes, LLM integration, rate limit
 ## Build Order
 1. Rust batch pipeline — read sorted file, diff against dictionary, output available set to terminal
 2. Snapshot serialization — binary libary needs to be found out+ persist + load on startup
-4. SSE streaming — stream results to clients
 5. Connection hygiene — Tower middleware
 6. Cloudflare Tunnel — zero open ports
 7. Next.js frontend — static on Pages, EventSource to API

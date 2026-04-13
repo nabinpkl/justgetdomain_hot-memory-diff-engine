@@ -81,3 +81,11 @@ Memory Usage: 450MB
 # how to be as fast as possible without trading off accuracy
 
 # Show comparison between cloudfare and vercel
+
+
+# Use colors for searching
+like search for red yellow etc.
+
+generic word like water cloud etc
+avoid apple
+generic dictionary term

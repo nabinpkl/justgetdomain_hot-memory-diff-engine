@@ -1,6 +1,17 @@
-use axum::{routing::get, Json, Router};
-use serde::Serialize;
 use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Instant;
+
+use axum::routing::get;
+use axum::{Json, Router};
+use serde::Serialize;
+use tower_http::cors::CorsLayer;
+use tracing::info;
+
+use justgetdomain::handlers::{self, AppState};
+use justgetdomain::index::DomainIndex;
+use justgetdomain::snapshot;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -8,23 +19,74 @@ struct HealthResponse {
     version: &'static str,
 }
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new().route("/health", get(health_handler));
-
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("Failed to bind port");
-
-    println!("Server started at http://{}", addr);
-
-    axum::serve(listener, app).await.unwrap();
-}
-
 async fn health_handler() -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "ok",
         version: "0.1.0",
     })
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into()),
+        )
+        .init();
+
+    // Load snapshot
+    let snapshot_path = std::env::var("SNAPSHOT_PATH")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("data/snapshot.bin"));
+
+    info!(path = %snapshot_path.display(), "loading snapshot");
+    let start = Instant::now();
+    let snapshot = snapshot::load(&snapshot_path).expect("failed to load snapshot");
+    info!(
+        entries = snapshot.entries.len(),
+        tlds = snapshot.all_tlds.len(),
+        elapsed_ms = start.elapsed().as_millis(),
+        "snapshot loaded"
+    );
+
+    // Build domain index
+    let index = DomainIndex::from_snapshot(&snapshot);
+    drop(snapshot); // free snapshot memory
+
+    let state = Arc::new(AppState {
+        index: Arc::new(index),
+    });
+
+    // CORS
+    let cors_origin = std::env::var("CORS_ORIGIN").unwrap_or_else(|_| "*".to_string());
+    let cors = if cors_origin == "*" {
+        info!("CORS: allowing all origins (development mode)");
+        CorsLayer::permissive()
+    } else {
+        info!(origin = %cors_origin, "CORS: restricting to origin");
+        CorsLayer::new()
+            .allow_origin(cors_origin.parse::<axum::http::HeaderValue>().expect("invalid CORS_ORIGIN"))
+            .allow_methods([axum::http::Method::GET])
+            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::ACCEPT])
+    };
+
+    let app = Router::new()
+        .route("/health", get(health_handler))
+        .route("/search", get(handlers::search_handler))
+        .route("/stream", get(handlers::stream_handler))
+        .layer(cors)
+        .with_state(state);
+
+    let port: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3001);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("failed to bind port");
+
+    info!(%addr, "server started");
+    axum::serve(listener, app).await.unwrap();
 }

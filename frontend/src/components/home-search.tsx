@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TerminalDemo } from "@/components/terminal-demo";
 import { WaitlistForm } from "@/components/waitlist-form";
-import { MOCK_DOMAINS } from "@/components/domain/domain-data";
 import { DomainTile } from "@/components/domain/domain-tile";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
+import { useDomainSearch } from "@/hooks/use-domain-search";
 
 const STEPS = [
   {
@@ -47,6 +47,16 @@ const FEATURES = [
   },
 ];
 
+// ─── Virtual scroll constants ──────────────────────────────────────────
+
+const ROW_HEIGHT = 140;
+const COLS_BREAKPOINTS = [
+  { min: 0, cols: 1 },
+  { min: 560, cols: 2 },
+  { min: 840, cols: 3 },
+];
+const OVERSCAN = 8;
+
 // ─── Main Component ────────────────────────────────────────────────────
 
 export function HomeSearch() {
@@ -54,6 +64,10 @@ export function HomeSearch() {
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [cols, setCols] = useState(3);
 
   const {
     activeTlds,
@@ -69,6 +83,13 @@ export function HomeSearch() {
   const isSearching = query.trim().length > 0 || hasActiveFilters;
   const hasAnyActive = hasActiveFilters || query.trim().length > 0;
 
+  const { total, getRows, isLoading } = useDomainSearch({
+    query: isSearching ? query : "",
+    tlds: isSearching ? activeTlds : new Set<string>(),
+    lengths: isSearching ? activeLengths : new Set<number>(),
+    sort,
+  });
+
   const clearAll = () => {
     clearFilters();
     setQuery("");
@@ -79,41 +100,43 @@ export function HomeSearch() {
     setExpandedDomain(null);
   }, [query]);
 
-  const results = useMemo(() => {
-    if (!isSearching) return [];
+  // Track results container resize
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
 
-    let filtered = MOCK_DOMAINS;
+    const update = () => {
+      const width = el.clientWidth;
+      setContainerHeight(el.clientHeight);
+      const bp = [...COLS_BREAKPOINTS].reverse().find((b) => width >= b.min);
+      setCols(bp?.cols ?? 1);
+    };
 
-    if (query.trim()) {
-      const q = query.toLowerCase().trim();
-      filtered = filtered.filter((d) => d.name.includes(q));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isSearching]);
+
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current) {
+      setScrollTop(scrollRef.current.scrollTop);
     }
+  }, []);
 
-    if (activeTlds.size > 0) {
-      filtered = filtered.filter((d) =>
-        d.tlds.some((tld) => activeTlds.has(tld))
-      );
-    }
+  // Virtual scroll calculations
+  const totalRows = Math.ceil(total / cols);
+  const totalHeight = totalRows * ROW_HEIGHT;
 
-    if (activeLengths.size > 0) {
-      filtered = filtered.filter((d) => activeLengths.has(d.length));
-    }
+  const startRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
+  const visibleRows = Math.ceil(containerHeight / ROW_HEIGHT) + 2 * OVERSCAN;
+  const endRow = Math.min(totalRows - 1, startRow + visibleRows);
 
-    const sorted = [...filtered];
-    switch (sort) {
-      case "alpha":
-        sorted.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "tlds":
-        sorted.sort((a, b) => b.tlds.length - a.tlds.length);
-        break;
-      case "shortest":
-        sorted.sort((a, b) => a.name.length - b.name.length);
-        break;
-    }
+  const startIndex = startRow * cols;
+  const endIndex = Math.min(total - 1, (endRow + 1) * cols - 1);
 
-    return sorted;
-  }, [query, activeTlds, activeLengths, sort, isSearching]);
+  const visibleEntries =
+    isSearching && total > 0 ? getRows(startIndex, endIndex) : [];
 
   return (
     <div className="overflow-x-hidden min-h-screen bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
@@ -159,7 +182,7 @@ export function HomeSearch() {
           }}
         />
 
-        {/* Top spacer — pushes content to center */}
+        {/* Top spacer */}
         <div
           className={cn(
             "transition-[flex-grow] duration-700 jgd-ease-out",
@@ -167,7 +190,7 @@ export function HomeSearch() {
           )}
         />
 
-        {/* Title block — collapses when searching */}
+        {/* Title block */}
         <div
           className={cn(
             "relative flex flex-col items-center text-center px-6 overflow-hidden transition-all duration-500 jgd-ease-out",
@@ -187,7 +210,7 @@ export function HomeSearch() {
           </p>
         </div>
 
-        {/* ── Search bar — sticky when searching ── */}
+        {/* ── Search bar ── */}
         <div
           className={cn(
             "relative sticky top-[57px] z-40 w-full transition-all duration-500 jgd-ease-out",
@@ -245,8 +268,9 @@ export function HomeSearch() {
             {isSearching && (
               <div className="flex items-center gap-4 mt-3 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
                 <span>
-                  {results.length} domain{results.length !== 1 ? "s" : ""}{" "}
-                  found
+                  {isLoading
+                    ? "Loading..."
+                    : `${total.toLocaleString()} domain${total !== 1 ? "s" : ""} found`}
                 </span>
                 <span className="text-[oklch(0.45_0_0)]">/</span>
                 <span>Updated 4h ago</span>
@@ -266,7 +290,7 @@ export function HomeSearch() {
           </div>
         </div>
 
-        {/* Bottom spacer — for centering in hero mode */}
+        {/* Bottom spacer */}
         <div
           className={cn(
             "transition-[flex-grow] duration-700 jgd-ease-out",
@@ -277,9 +301,9 @@ export function HomeSearch() {
 
       {/* ── Results with sidebar filters ── */}
       {isSearching && (
-        <div className="max-w-[1200px] mx-auto w-full flex">
+        <div className="max-w-[1200px] mx-auto w-full flex" style={{ height: "calc(100vh - 110px)" }}>
           {/* Sidebar filters — desktop */}
-          <aside className="hidden sm:block shrink-0 sticky top-[110px] self-start overflow-y-auto w-[200px] max-h-[calc(100vh-110px)] border-r border-jgd-border p-6 pr-5">
+          <aside className="hidden sm:block shrink-0 overflow-y-auto w-[200px] border-r border-jgd-border p-6 pr-5">
             <FilterPanel
               activeTlds={activeTlds}
               activeLengths={activeLengths}
@@ -328,30 +352,72 @@ export function HomeSearch() {
             </div>
           )}
 
-          {/* Results area */}
-          <main className="flex-1 min-w-0 pt-6 pb-20">
-            {results.length === 0 ? (
+          {/* Virtual scroll results */}
+          <main
+            ref={scrollRef}
+            className="flex-1 min-w-0 overflow-y-auto"
+            onScroll={handleScroll}
+          >
+            {!isLoading && total === 0 ? (
               <EmptyState
                 query={query}
                 hasFilters={hasActiveFilters}
                 onClear={clearAll}
               />
             ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-                {results.map((domain, i) => (
-                  <DomainTile
-                    key={domain.name}
-                    domain={domain}
-                    index={i}
-                    activeTlds={activeTlds}
-                    isExpanded={expandedDomain === domain.name}
-                    onToggle={() =>
-                      setExpandedDomain(
-                        expandedDomain === domain.name ? null : domain.name
-                      )
-                    }
-                  />
-                ))}
+              <div style={{ height: totalHeight, position: "relative" }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: startRow * ROW_HEIGHT,
+                    left: 0,
+                    right: 0,
+                  }}
+                >
+                  <div
+                    className="grid"
+                    style={{
+                      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                    }}
+                  >
+                    {visibleEntries.map((entry, i) => {
+                      const globalIndex = startIndex + i;
+                      if (!entry) {
+                        return (
+                          <div
+                            key={`placeholder-${globalIndex}`}
+                            className="px-5 pt-5 pb-4 border-b border-r border-jgd-border"
+                            style={{ height: ROW_HEIGHT }}
+                          >
+                            <div className="animate-pulse">
+                              <div className="h-6 w-24 bg-jgd-surface rounded mb-3" />
+                              <div className="flex gap-1.5">
+                                <div className="h-5 w-10 bg-jgd-surface rounded" />
+                                <div className="h-5 w-10 bg-jgd-surface rounded" />
+                              </div>
+                              <div className="h-4 w-32 bg-jgd-surface rounded mt-3" />
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <DomainTile
+                          key={`${entry.name}-${globalIndex}`}
+                          domain={entry}
+                          index={globalIndex}
+                          activeTlds={activeTlds}
+                          isExpanded={expandedDomain === entry.name}
+                          onToggle={() =>
+                            setExpandedDomain(
+                              expandedDomain === entry.name ? null : entry.name
+                            )
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
           </main>

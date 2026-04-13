@@ -25,3 +25,6 @@ The Narrative: "I wanted to solve the 'all the good domains are taken' problem f
 
 #
 The Transparency Flex: Mention that you built automated brand-exclusion filters and WIPO/USPTO integration as a "Good Faith" architectural requirement. This proves to any watching recruiter (or brand lawyer) that you are a high-level engineer who understands risk management, not just a "scraper."
+
+# Might be abuseable for data gouger
+# domain resellers
