@@ -62,7 +62,7 @@ export function TerminalDemo() {
         <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--jgd-border)" }} />
         <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--jgd-border)" }} />
         <span
-          className="flex-1 text-center text-[0.65rem] uppercase tracking-[1px]"
+          className="flex-1 text-center text-[0.72rem] uppercase tracking-[1px]"
           style={{ color: "var(--jgd-dim)" }}
         >
           recursive scan

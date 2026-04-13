@@ -125,18 +125,18 @@ export function HomeSearch() {
   }, [query]);
 
   return (
-    <div className="overflow-x-hidden min-h-screen bg-jgd-bg text-jgd-text font-mono leading-[1.7]">
+    <div className="overflow-x-hidden min-h-screen bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
       {/* ── Nav ── */}
       <nav
         role="navigation"
         aria-label="Main"
-        className="fixed top-0 inset-x-0 z-50 flex justify-between items-center px-8 py-4 text-[0.7rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-[oklch(0.02_0_0/0.85)] border-b border-jgd-border"
+        className="fixed top-0 inset-x-0 z-50 flex justify-between items-center px-8 py-4 text-[0.75rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-[oklch(0.16_0_0/0.92)] border-b border-jgd-border"
       >
         <span className="text-jgd-accent font-bold">JustGetDomain</span>
         <div className="flex items-center gap-4">
           <Link
             href="/search"
-            className="text-jgd-dim text-[0.7rem] tracking-[1.5px] uppercase transition-colors hover:text-jgd-accent"
+            className="text-jgd-dim text-[0.75rem] tracking-[1.5px] uppercase transition-colors hover:text-jgd-accent"
           >
             Browse Domains
           </Link>
@@ -162,8 +162,8 @@ export function HomeSearch() {
           )}
           style={{
             background: `
-              radial-gradient(ellipse 600px 400px at 50% 40%, oklch(0.87 0.29 142 / 0.04), transparent),
-              radial-gradient(ellipse 300px 300px at 70% 60%, oklch(0.87 0.29 142 / 0.02), transparent)
+              radial-gradient(ellipse 600px 400px at 50% 40%, oklch(0.75 0.18 142 / 0.04), transparent),
+              radial-gradient(ellipse 300px 300px at 70% 60%, oklch(0.75 0.18 142 / 0.02), transparent)
             `,
           }}
         />
@@ -191,7 +191,7 @@ export function HomeSearch() {
             Domain
             <span className="text-jgd-accent">.</span>
           </h1>
-          <p className="text-[0.72rem] uppercase tracking-[6px] text-jgd-dim">
+          <p className="text-[0.78rem] uppercase tracking-[6px] text-jgd-dim">
             Every available short domain. Already found.
           </p>
         </div>
@@ -201,7 +201,7 @@ export function HomeSearch() {
           className={cn(
             "relative sticky top-[57px] z-40 w-full transition-all duration-500 jgd-ease-out",
             isSearching
-              ? "bg-[oklch(0.02_0_0/0.92)] backdrop-blur-[20px] border-b border-b-jgd-border px-6 py-4"
+              ? "bg-[oklch(0.16_0_0/0.92)] backdrop-blur-[20px] border-b border-b-jgd-border px-6 py-4"
               : "bg-transparent backdrop-blur-none border-b border-b-transparent px-6 py-0"
           )}
         >
@@ -231,7 +231,7 @@ export function HomeSearch() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search available domains..."
                 className={cn(
-                  "flex-1 bg-transparent outline-none placeholder:opacity-40 text-jgd-text font-mono caret-jgd-accent transition-[font-size] duration-300",
+                  "flex-1 bg-transparent outline-none placeholder:opacity-50 text-jgd-text font-sans caret-jgd-accent transition-[font-size] duration-300",
                   isSearching ? "text-[0.88rem]" : "text-[1.1rem]"
                 )}
                 spellCheck={false}
@@ -252,12 +252,12 @@ export function HomeSearch() {
 
             {/* Result count */}
             {isSearching && (
-              <div className="flex items-center gap-4 mt-3 text-[0.65rem] uppercase tracking-[2px] text-jgd-dim">
+              <div className="flex items-center gap-4 mt-3 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
                 <span>
                   {results.length} domain{results.length !== 1 ? "s" : ""}{" "}
                   found
                 </span>
-                <span className="text-jgd-border">/</span>
+                <span className="text-[oklch(0.45_0_0)]">/</span>
                 <span>Updated 4h ago</span>
               </div>
             )}
@@ -286,7 +286,7 @@ export function HomeSearch() {
                 }}
               />
             ) : (
-              <div className="grid gap-px grid-cols-[repeat(auto-fill,minmax(280px,1fr))] bg-jgd-border border border-jgd-border">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                 {results.map((domain, i) => (
                   <DomainTile
                     key={domain.name}
@@ -314,7 +314,7 @@ export function HomeSearch() {
             <TerminalDemo />
           </div>
 
-          <p className="jgd-fade-up text-[0.65rem] text-center px-6 pb-16 [animation-delay:0.6s] text-jgd-dim opacity-50 max-w-[480px] leading-[1.7] mx-auto">
+          <p className="jgd-fade-up text-[0.72rem] text-center px-6 pb-16 [animation-delay:0.6s] text-jgd-dim max-w-[480px] leading-[1.7] mx-auto">
             Availability does not guarantee the right to use a name. Users are
             responsible for ensuring their domain does not infringe on existing
             trademarks.
@@ -323,7 +323,7 @@ export function HomeSearch() {
           {/* ── The Problem ── */}
           <section className="py-[120px] border-t border-jgd-border">
             <div className="max-w-[820px] mx-auto px-6">
-              <p className="text-[0.65rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
+              <p className="text-[0.72rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
                 The problem
               </p>
               <h2 className="mb-8 font-serif text-[clamp(1.8rem,4vw,2.8rem)] font-normal tracking-[-1px] leading-[1.2]">
@@ -362,13 +362,13 @@ export function HomeSearch() {
                   },
                 ].map((a) => (
                   <div key={a.label} className="bg-jgd-bg px-7 py-9">
-                    <p className="text-[0.6rem] uppercase tracking-[3px] mb-4 text-jgd-accent">
+                    <p className="text-[0.7rem] uppercase tracking-[3px] mb-4 text-jgd-accent">
                       {a.label}
                     </p>
                     <h3 className="mb-3 font-serif text-[1.3rem] font-normal">
                       {a.title}
                     </h3>
-                    <p className="text-[0.78rem] text-jgd-dim leading-[1.8]">
+                    <p className="text-[0.84rem] text-jgd-dim leading-[1.8]">
                       {a.desc}
                     </p>
                   </div>
@@ -380,7 +380,7 @@ export function HomeSearch() {
           {/* ── How it works ── */}
           <section className="py-[120px] border-t border-jgd-border">
             <div className="max-w-[820px] mx-auto px-6">
-              <p className="text-[0.65rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
+              <p className="text-[0.72rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
                 How it works
               </p>
               <h2 className="mb-8 font-serif text-[clamp(1.8rem,4vw,2.8rem)] font-normal tracking-[-1px] leading-[1.2]">
@@ -411,7 +411,7 @@ export function HomeSearch() {
                       <h3 className="text-[0.9rem] font-bold tracking-[0.5px] mb-1.5">
                         {step.title}
                       </h3>
-                      <p className="text-[0.78rem] text-jgd-dim leading-[1.7]">
+                      <p className="text-[0.84rem] text-jgd-dim leading-[1.7]">
                         {step.desc}
                       </p>
                     </div>
@@ -424,20 +424,20 @@ export function HomeSearch() {
           {/* ── The Approach ── */}
           <section className="py-[120px] border-t border-jgd-border">
             <div className="max-w-[820px] mx-auto px-6">
-              <p className="text-[0.65rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
+              <p className="text-[0.72rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
                 The approach
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-px mt-14 bg-jgd-border border border-jgd-border">
                 {FEATURES.map((f) => (
                   <article key={f.num} className="bg-jgd-bg px-6 py-8">
-                    <p className="text-[0.6rem] tracking-[2px] mb-3 text-jgd-accent">
+                    <p className="text-[0.7rem] tracking-[2px] mb-3 text-jgd-accent">
                       {f.num}
                     </p>
                     <h3 className="mb-2.5 font-serif text-[1.15rem] font-normal">
                       {f.title}
                     </h3>
-                    <p className="text-[0.78rem] text-jgd-dim leading-[1.7]">
+                    <p className="text-[0.84rem] text-jgd-dim leading-[1.7]">
                       {f.desc}
                     </p>
                   </article>
@@ -452,7 +452,7 @@ export function HomeSearch() {
               className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none size-[400px]"
               style={{
                 background:
-                  "radial-gradient(circle, oklch(0.87 0.29 142 / 0.03), transparent 70%)",
+                  "radial-gradient(circle, oklch(0.75 0.18 142 / 0.03), transparent 70%)",
               }}
             />
             <div className="relative max-w-[820px] mx-auto px-6">
@@ -478,7 +478,7 @@ export function HomeSearch() {
           </div>
 
           {/* ── Footer ── */}
-          <footer className="text-center text-[0.65rem] uppercase tracking-[2px] py-10 text-[oklch(0.50_0_0)] border-t border-jgd-border">
+          <footer className="text-center text-[0.72rem] uppercase tracking-[2px] py-10 text-jgd-dim border-t border-jgd-border">
             &copy; 2026 JustGetDomain
           </footer>
         </>
@@ -503,8 +503,8 @@ function DomainTile({
   return (
     <div
       className={cn(
-        "jgd-tile-in flex flex-col cursor-pointer transition-colors group px-5 pt-5 pb-4",
-        isExpanded ? "bg-[oklch(0.06_0.01_142)]" : "bg-jgd-bg"
+        "jgd-tile-in flex flex-col cursor-pointer transition-colors group px-5 pt-5 pb-4 border-b border-r border-jgd-border",
+        isExpanded ? "bg-[oklch(0.22_0.01_142)]" : "bg-jgd-bg"
       )}
       style={{ animationDelay: `${Math.min(index * 30, 600)}ms` }}
       onClick={onToggle}
@@ -518,7 +518,7 @@ function DomainTile({
         >
           {domain.name}
         </h2>
-        <span className="text-[0.6rem] uppercase tracking-[1px] shrink-0 text-jgd-dim">
+        <span className="text-[0.7rem] uppercase tracking-[1px] shrink-0 text-jgd-dim">
           {domain.length}L
         </span>
       </div>
@@ -527,21 +527,21 @@ function DomainTile({
         {domain.tlds.map((tld) => (
           <span
             key={tld}
-            className="text-[0.68rem] px-2 py-0.5 rounded-sm bg-jgd-accent-dim text-jgd-accent font-mono"
+            className="text-[0.74rem] px-2 py-0.5 rounded-sm bg-jgd-accent-dim text-jgd-accent font-sans"
           >
             {tld}
           </span>
         ))}
       </div>
 
-      <p className="mt-3 text-[0.62rem] uppercase tracking-[1.5px] text-jgd-dim">
+      <p className="mt-3 text-[0.72rem] uppercase tracking-[1.5px] text-jgd-dim">
         {domain.tlds.length} extension{domain.tlds.length !== 1 ? "s" : ""}{" "}
         available
       </p>
 
       {isExpanded && (
         <div className="mt-4 pt-4 flex flex-col gap-2 border-t border-jgd-accent/12">
-          <p className="text-[0.58rem] uppercase tracking-[2px] mb-1 text-jgd-dim">
+          <p className="text-[0.7rem] uppercase tracking-[2px] mb-1 text-jgd-dim">
             Register at
           </p>
           {REGISTRARS.map((reg) => (
@@ -551,7 +551,7 @@ function DomainTile({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-between text-[0.72rem] px-3 py-2 rounded transition-all text-jgd-text bg-jgd-accent/4 border border-jgd-accent/8 font-mono hover:bg-jgd-accent/10 hover:border-jgd-accent/20"
+              className="flex items-center justify-between text-[0.76rem] px-3 py-2 rounded transition-all text-jgd-text bg-jgd-accent/4 border border-jgd-accent/8 hover:bg-jgd-accent/10 hover:border-jgd-accent/20"
             >
               {reg.name}
               <ExternalLink size={12} className="text-jgd-dim" />

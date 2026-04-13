@@ -164,24 +164,24 @@ export function DomainSearch() {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="min-h-screen flex flex-col font-medium"
       style={{
         background: "var(--jgd-bg)",
         color: "var(--jgd-text)",
-        fontFamily: "var(--font-mono), monospace",
+        fontFamily: "var(--font-sans), system-ui, sans-serif",
       }}
     >
       {/* ── Top bar ── */}
       <nav
         className="sticky top-0 z-50 flex items-center gap-4 px-5 py-3 backdrop-blur-2xl"
         style={{
-          background: "oklch(0.02 0 0 / 0.9)",
+          background: "oklch(0.16 0 0 / 0.92)",
           borderBottom: "1px solid var(--jgd-border)",
         }}
       >
         <Link
           href="/"
-          className="flex items-center gap-2 text-[0.7rem] uppercase tracking-[1.5px] transition-colors"
+          className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[1.5px] transition-colors"
           style={{ color: "var(--jgd-dim)" }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "var(--jgd-text)")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "var(--jgd-dim)")}
@@ -199,7 +199,7 @@ export function DomainSearch() {
 
         <div className="ml-auto flex items-center gap-3">
           <span
-            className="text-[0.6rem] uppercase tracking-[2px]"
+            className="text-[0.7rem] uppercase tracking-[2px]"
             style={{ color: "var(--jgd-dim)" }}
           >
             {results.length} found
@@ -219,7 +219,7 @@ export function DomainSearch() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 800px 200px at 50% 100%, oklch(0.87 0.29 142 / 0.03), transparent)",
+              "radial-gradient(ellipse 800px 200px at 50% 100%, oklch(0.75 0.18 142 / 0.06), transparent)",
           }}
         />
 
@@ -271,10 +271,10 @@ export function DomainSearch() {
                 setVisibleCount(24);
               }}
               placeholder="Search by name, pattern, or letters..."
-              className="flex-1 bg-transparent outline-none text-[0.88rem] placeholder:opacity-40"
+              className="flex-1 bg-transparent outline-none text-[0.9rem] placeholder:opacity-50"
               style={{
                 color: "var(--jgd-text)",
-                fontFamily: "var(--font-mono), monospace",
+                fontFamily: "var(--font-sans), system-ui, sans-serif",
                 caretColor: "var(--jgd-accent)",
               }}
               spellCheck={false}
@@ -298,13 +298,13 @@ export function DomainSearch() {
 
           {/* Quick stats */}
           <div
-            className="flex items-center gap-4 mt-4 text-[0.65rem] uppercase tracking-[2px]"
+            className="flex items-center gap-4 mt-4 text-[0.72rem] uppercase tracking-[2px]"
             style={{ color: "var(--jgd-dim)" }}
           >
             <span>
               {results.length.toLocaleString()} domains
             </span>
-            <span style={{ color: "var(--jgd-border)" }}>/</span>
+            <span style={{ color: "oklch(0.45 0 0)" }}>/</span>
             <span>Updated 4h ago</span>
             <button
               type="button"
@@ -347,7 +347,7 @@ export function DomainSearch() {
         {showFilters && (
           <div
             className="fixed inset-0 z-40 sm:hidden"
-            style={{ background: "oklch(0 0 0 / 0.6)" }}
+            style={{ background: "oklch(0 0 0 / 0.7)" }}
             onClick={() => setShowFilters(false)}
           >
             <div
@@ -392,10 +392,9 @@ export function DomainSearch() {
           ) : (
             <>
               <div
-                className="grid gap-px"
+                className="grid"
                 style={{
                   gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                  background: "var(--jgd-border)",
                 }}
               >
                 {displayed.map((domain, i) => (
@@ -418,7 +417,7 @@ export function DomainSearch() {
               {visibleCount < results.length && (
                 <div ref={sentinelRef} className="py-12 text-center">
                   <span
-                    className="text-[0.65rem] uppercase tracking-[3px]"
+                    className="text-[0.72rem] uppercase tracking-[3px]"
                     style={{ color: "var(--jgd-dim)" }}
                   >
                     Loading more...
@@ -459,7 +458,7 @@ function FilterPanel({
       {/* TLD section */}
       <div>
         <p
-          className="text-[0.6rem] uppercase tracking-[3px] mb-3"
+          className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium"
           style={{ color: "var(--jgd-dim)" }}
         >
           Extensions
@@ -472,14 +471,14 @@ function FilterPanel({
                 key={tld}
                 type="button"
                 onClick={() => onToggleTld(tld)}
-                className="cursor-pointer text-[0.72rem] px-2.5 py-1 rounded transition-all"
+                className="cursor-pointer text-[0.76rem] px-2.5 py-1 rounded transition-all"
                 style={{
                   background: active
                     ? "var(--jgd-accent-dim)"
                     : "transparent",
                   color: active ? "var(--jgd-accent)" : "var(--jgd-dim)",
-                  border: `1px solid ${active ? "oklch(0.87 0.29 142 / 0.2)" : "var(--jgd-border)"}`,
-                  fontFamily: "var(--font-mono), monospace",
+                  border: `1px solid ${active ? "oklch(0.75 0.18 142 / 0.2)" : "var(--jgd-border)"}`,
+                  fontFamily: "var(--font-sans), system-ui, sans-serif",
                 }}
               >
                 {tld}
@@ -492,7 +491,7 @@ function FilterPanel({
       {/* Length section */}
       <div>
         <p
-          className="text-[0.6rem] uppercase tracking-[3px] mb-3"
+          className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium"
           style={{ color: "var(--jgd-dim)" }}
         >
           Length
@@ -505,14 +504,14 @@ function FilterPanel({
                 key={len}
                 type="button"
                 onClick={() => onToggleLength(len)}
-                className="cursor-pointer text-[0.72rem] px-3 py-1 rounded transition-all"
+                className="cursor-pointer text-[0.76rem] px-3 py-1 rounded transition-all"
                 style={{
                   background: active
                     ? "var(--jgd-accent-dim)"
                     : "transparent",
                   color: active ? "var(--jgd-accent)" : "var(--jgd-dim)",
-                  border: `1px solid ${active ? "oklch(0.87 0.29 142 / 0.2)" : "var(--jgd-border)"}`,
-                  fontFamily: "var(--font-mono), monospace",
+                  border: `1px solid ${active ? "oklch(0.75 0.18 142 / 0.2)" : "var(--jgd-border)"}`,
+                  fontFamily: "var(--font-sans), system-ui, sans-serif",
                 }}
               >
                 {len}
@@ -525,7 +524,7 @@ function FilterPanel({
       {/* Sort section */}
       <div>
         <p
-          className="text-[0.6rem] uppercase tracking-[3px] mb-3"
+          className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium"
           style={{ color: "var(--jgd-dim)" }}
         >
           Sort by
@@ -540,11 +539,10 @@ function FilterPanel({
               key={mode}
               type="button"
               onClick={() => onSort(mode)}
-              className="cursor-pointer text-left text-[0.72rem] px-2.5 py-1.5 rounded transition-all"
+              className="cursor-pointer text-left text-[0.76rem] px-2.5 py-1.5 rounded transition-all"
               style={{
                 background: sort === mode ? "var(--jgd-accent-dim)" : "transparent",
                 color: sort === mode ? "var(--jgd-accent)" : "var(--jgd-dim)",
-                fontFamily: "var(--font-mono), monospace",
               }}
             >
               {label}
@@ -558,7 +556,7 @@ function FilterPanel({
         <button
           type="button"
           onClick={onClear}
-          className="cursor-pointer text-[0.65rem] uppercase tracking-[2px] py-2 rounded transition-colors"
+          className="cursor-pointer text-[0.72rem] uppercase tracking-[2px] py-2 rounded transition-colors"
           style={{
             color: "var(--jgd-dim)",
             border: "1px solid var(--jgd-border)",
@@ -601,9 +599,9 @@ function DomainTile({
 
   return (
     <div
-      className="jgd-tile-in flex flex-col cursor-pointer transition-colors group"
+      className="jgd-tile-in flex flex-col cursor-pointer transition-colors group border-b border-r border-jgd-border"
       style={{
-        background: isExpanded ? "oklch(0.06 0.01 142)" : "var(--jgd-bg)",
+        background: isExpanded ? "oklch(0.22 0.01 142)" : "var(--jgd-bg)",
         padding: "20px 20px 16px",
         animationDelay: `${Math.min(index * 30, 600)}ms`,
       }}
@@ -624,7 +622,7 @@ function DomainTile({
           {domain.name}
         </h2>
         <span
-          className="text-[0.6rem] uppercase tracking-[1px] shrink-0"
+          className="text-[0.7rem] uppercase tracking-[1px] shrink-0"
           style={{ color: "var(--jgd-dim)" }}
         >
           {domain.length}L
@@ -636,11 +634,11 @@ function DomainTile({
         {tlds.map((tld) => (
           <span
             key={tld}
-            className="text-[0.68rem] px-2 py-0.5 rounded-sm"
+            className="text-[0.74rem] px-2 py-0.5 rounded-sm"
             style={{
               background: "var(--jgd-accent-dim)",
               color: "var(--jgd-accent)",
-              fontFamily: "var(--font-mono), monospace",
+              fontFamily: "var(--font-sans), system-ui, sans-serif",
             }}
           >
             {tld}
@@ -650,7 +648,7 @@ function DomainTile({
 
       {/* Available count */}
       <p
-        className="mt-3 text-[0.62rem] uppercase tracking-[1.5px]"
+        className="mt-3 text-[0.72rem] uppercase tracking-[1.5px]"
         style={{ color: "var(--jgd-dim)" }}
       >
         {tlds.length} extension{tlds.length !== 1 ? "s" : ""} available
@@ -660,10 +658,10 @@ function DomainTile({
       {isExpanded && (
         <div
           className="mt-4 pt-4 flex flex-col gap-2"
-          style={{ borderTop: "1px solid oklch(0.87 0.29 142 / 0.12)" }}
+          style={{ borderTop: "1px solid oklch(0.75 0.18 142 / 0.12)" }}
         >
           <p
-            className="text-[0.58rem] uppercase tracking-[2px] mb-1"
+            className="text-[0.7rem] uppercase tracking-[2px] mb-1"
             style={{ color: "var(--jgd-dim)" }}
           >
             Register at
@@ -675,20 +673,19 @@ function DomainTile({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-between text-[0.72rem] px-3 py-2 rounded transition-all"
+              className="flex items-center justify-between text-[0.76rem] px-3 py-2 rounded transition-all"
               style={{
                 color: "var(--jgd-text)",
-                background: "oklch(0.87 0.29 142 / 0.04)",
-                border: "1px solid oklch(0.87 0.29 142 / 0.08)",
-                fontFamily: "var(--font-mono), monospace",
+                background: "oklch(0.75 0.18 142 / 0.04)",
+                border: "1px solid oklch(0.75 0.18 142 / 0.08)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "oklch(0.87 0.29 142 / 0.1)";
-                e.currentTarget.style.borderColor = "oklch(0.87 0.29 142 / 0.2)";
+                e.currentTarget.style.background = "oklch(0.75 0.18 142 / 0.1)";
+                e.currentTarget.style.borderColor = "oklch(0.75 0.18 142 / 0.2)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "oklch(0.87 0.29 142 / 0.04)";
-                e.currentTarget.style.borderColor = "oklch(0.87 0.29 142 / 0.08)";
+                e.currentTarget.style.background = "oklch(0.75 0.18 142 / 0.04)";
+                e.currentTarget.style.borderColor = "oklch(0.75 0.18 142 / 0.08)";
               }}
             >
               {reg.name}
@@ -753,11 +750,11 @@ function EmptyState({
         className="cursor-pointer text-[0.7rem] uppercase tracking-[2px] px-5 py-2.5 rounded transition-colors"
         style={{
           color: "var(--jgd-accent)",
-          border: "1px solid oklch(0.87 0.29 142 / 0.2)",
+          border: "1px solid oklch(0.75 0.18 142 / 0.2)",
           background: "var(--jgd-accent-dim)",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "oklch(0.87 0.29 142 / 0.15)";
+          e.currentTarget.style.background = "oklch(0.75 0.18 142 / 0.15)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = "var(--jgd-accent-dim)";

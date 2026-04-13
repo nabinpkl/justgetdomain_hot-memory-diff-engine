@@ -17,7 +17,7 @@ export function WaitlistForm() {
         style={{
           background: "var(--jgd-surface)",
           color: "var(--jgd-text)",
-          fontFamily: "var(--font-mono), monospace",
+          fontFamily: "var(--font-sans), system-ui, sans-serif",
           border: "none",
         }}
       />
@@ -27,7 +27,7 @@ export function WaitlistForm() {
         style={{
           background: "var(--jgd-accent)",
           color: "#000",
-          fontFamily: "var(--font-mono), monospace",
+          fontFamily: "var(--font-sans), system-ui, sans-serif",
           border: "none",
         }}
         onMouseEnter={(e) => {

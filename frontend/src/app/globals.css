@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono), monospace;
+  --font-mono: monospace;
   --font-serif: var(--font-serif), Georgia, serif;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -90,15 +90,17 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* JustGetDomain brand tokens — all oklch */
-  --jgd-bg: oklch(0.02 0 0);
-  --jgd-surface: oklch(0.04 0 0);
-  --jgd-text: oklch(0.96 0 0);
+  /* JustGetDomain brand tokens — all oklch
+     Dark mode floor: L 0.15 (Material). Text: L 0.93 (no glare).
+     Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
+  --jgd-bg: oklch(0.16 0 0);
+  --jgd-surface: oklch(0.20 0 0);
+  --jgd-text: oklch(0.93 0 0);
   --jgd-dim: oklch(0.72 0 0);
-  --jgd-accent: oklch(0.87 0.29 142);
-  --jgd-accent-dim: oklch(0.87 0.29 142 / 0.08);
-  --jgd-accent-mid: oklch(0.87 0.29 142 / 0.25);
-  --jgd-border: oklch(0.18 0 0);
+  --jgd-accent: oklch(0.75 0.18 142);
+  --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
+  --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
+  --jgd-border: oklch(0.27 0 0);
 }
 
 .dark {
