@@ -80,13 +80,6 @@ export function DomainSearch() {
     <div className="flex flex-col font-medium bg-jgd-bg text-jgd-text font-sans">
       {/* ── Search hero ── */}
       <div className="relative border-b border-jgd-border">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 800px 200px at 50% 100%, oklch(0.75 0.18 142 / 0.06), transparent)",
-          }}
-        />
         <div className="relative max-w-[1200px] mx-auto px-5 pt-6 pb-8 sm:pt-8 sm:pb-10">
           <DisclaimerCard className="mb-6" />
           <h1 className="mb-6 font-serif text-[clamp(1.6rem,4vw,2.6rem)] font-normal tracking-[-1px] leading-[1.1]">

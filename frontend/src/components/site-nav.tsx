@@ -30,6 +30,16 @@ export function SiteNav() {
             Browse Domains
           </Link>
         )}
+        {onDomains && (
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLScVOEVfQqP1EOf2cES6-LjWBXxc30bBahL5xc85uAUHpgS7Jw/viewform?usp=dialog"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-jgd-dim transition-colors hover:text-jgd-accent"
+          >
+            Request Word Removal
+          </a>
+        )}
         <span className="hidden sm:flex items-center gap-2 text-jgd-dim">
           <span
             aria-hidden

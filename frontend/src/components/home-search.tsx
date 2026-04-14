@@ -129,20 +129,6 @@ export function HomeSearch() {
           isSearching ? "min-h-0" : "min-h-[calc(100vh-3.5rem)]"
         )}
       >
-        {/* Ambient glow */}
-        <div
-          className={cn(
-            "absolute inset-0 pointer-events-none transition-opacity duration-500",
-            isSearching ? "opacity-0" : "opacity-100"
-          )}
-          style={{
-            background: `
-              radial-gradient(ellipse 600px 400px at 50% 40%, oklch(0.75 0.18 142 / 0.04), transparent),
-              radial-gradient(ellipse 300px 300px at 70% 60%, oklch(0.75 0.18 142 / 0.02), transparent)
-            `,
-          }}
-        />
-
         {/* Top spacer */}
         <div
           className={cn(
@@ -545,13 +531,6 @@ export function HomeSearch() {
 
           {/* ── CTA ── */}
           <section className="text-center relative py-[140px] border-t border-jgd-border">
-            <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none size-[400px]"
-              style={{
-                background:
-                  "radial-gradient(circle, oklch(0.75 0.18 142 / 0.03), transparent 70%)",
-              }}
-            />
             <div className="relative max-w-[820px] mx-auto px-6">
               <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.8rem)] font-normal tracking-[-1px] leading-[1.2]">
                 Get early access
