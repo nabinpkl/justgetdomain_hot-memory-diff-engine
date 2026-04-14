@@ -10,6 +10,7 @@ import { REGISTRARS } from "@/components/domain/domain-data";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
 import { UpdatedIndicator } from "@/components/domain/updated-indicator";
+import { DisclaimerCard } from "@/components/disclaimer-card";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 
 const STEPS = [
@@ -186,7 +187,7 @@ export function HomeSearch() {
             Domain
             <span className="text-jgd-accent">.</span>
           </h1>
-          <p className="text-[0.78rem] uppercase tracking-[6px] text-jgd-dim">
+          <p className="text-[0.88rem] uppercase tracking-[6px] text-jgd-dim">
             Every available short domain. Already found.
           </p>
         </div>
@@ -247,7 +248,7 @@ export function HomeSearch() {
 
             {/* Explore hint — shown when not actively searching */}
             {!isSearching && (
-              <p className="mt-5 text-center text-[0.8rem] text-jgd-dim leading-[1.7]">
+              <p className="mt-5 text-center text-[0.95rem] text-jgd-dim leading-[1.7]">
                 Don&apos;t know what you&apos;re looking for?{" "}
                 <Link
                   href="/search"
@@ -297,7 +298,7 @@ export function HomeSearch() {
       {isSearching && (
         <div className="max-w-[1200px] mx-auto w-full flex" style={{ height: "calc(100vh - 110px)" }}>
           {/* Sidebar filters — desktop */}
-          <aside className="hidden sm:block shrink-0 overflow-y-auto w-[200px] border-r border-jgd-border p-6 pr-5">
+          <aside className="hidden sm:block shrink-0 w-[200px] border-r border-jgd-border p-6 pr-5">
             <FilterPanel
               activeTlds={activeTlds}
               activeLengths={activeLengths}
@@ -433,11 +434,9 @@ export function HomeSearch() {
             <TerminalDemo />
           </div>
 
-          <p className="jgd-fade-up text-[0.72rem] text-center px-6 pb-16 [animation-delay:0.6s] text-jgd-dim max-w-[480px] leading-[1.7] mx-auto">
-            Availability does not guarantee the right to use a name. Users are
-            responsible for ensuring their domain does not infringe on existing
-            trademarks.
-          </p>
+          <div className="jgd-fade-up px-6 pb-16 max-w-[640px] mx-auto [animation-delay:0.6s]">
+            <DisclaimerCard />
+          </div>
 
           {/* ── The Problem ── */}
           <section className="py-[120px] border-t border-jgd-border">
@@ -450,7 +449,7 @@ export function HomeSearch() {
                 <br />
                 guess domain names
               </h2>
-              <p className="text-[0.88rem] max-w-[600px] text-jgd-dim leading-[1.9]">
+              <p className="text-[1rem] max-w-[600px] text-jgd-dim leading-[1.9]">
                 The current workflow is broken. You think of a name, type it
                 into a registrar, see &quot;taken,&quot; think of another, see
                 &quot;taken&quot; again, repeat forty times, settle for something
@@ -458,7 +457,7 @@ export function HomeSearch() {
                 better &mdash; they&apos;ll happily suggest names that have been
                 registered since 2004.
               </p>
-              <p className="text-[0.88rem] max-w-[600px] mt-5 text-jgd-dim leading-[1.9]">
+              <p className="text-[1rem] max-w-[600px] mt-5 text-jgd-dim leading-[1.9]">
                 <strong className="text-jgd-text font-normal">
                   JustGetDomain inverts the process.
                 </strong>{" "}
@@ -487,7 +486,7 @@ export function HomeSearch() {
                     <h3 className="mb-3 font-serif text-[1.3rem] font-normal">
                       {a.title}
                     </h3>
-                    <p className="text-[0.84rem] text-jgd-dim leading-[1.8]">
+                    <p className="text-[0.95rem] text-jgd-dim leading-[1.8]">
                       {a.desc}
                     </p>
                   </div>
@@ -507,7 +506,7 @@ export function HomeSearch() {
                 <br />
                 not blind search
               </h2>
-              <p className="text-[0.88rem] max-w-[600px] text-jgd-dim leading-[1.9]">
+              <p className="text-[1rem] max-w-[600px] text-jgd-dim leading-[1.9]">
                 We start at short letters and work outward. Every combination
                 gets checked. Taken names get discarded. What&apos;s left is
                 yours to browse &mdash; an exhaustive, living index of domains
@@ -530,7 +529,7 @@ export function HomeSearch() {
                       <h3 className="text-[0.9rem] font-bold tracking-[0.5px] mb-1.5">
                         {step.title}
                       </h3>
-                      <p className="text-[0.84rem] text-jgd-dim leading-[1.7]">
+                      <p className="text-[0.95rem] text-jgd-dim leading-[1.7]">
                         {step.desc}
                       </p>
                     </div>
@@ -556,7 +555,7 @@ export function HomeSearch() {
                     <h3 className="mb-2.5 font-serif text-[1.15rem] font-normal">
                       {f.title}
                     </h3>
-                    <p className="text-[0.84rem] text-jgd-dim leading-[1.7]">
+                    <p className="text-[0.95rem] text-jgd-dim leading-[1.7]">
                       {f.desc}
                     </p>
                   </article>
@@ -586,7 +585,7 @@ export function HomeSearch() {
           </section>
 
           {/* ── LinkedIn ── */}
-          <div className="text-center py-4 text-[0.78rem] text-jgd-dim">
+          <div className="text-center py-4 text-[0.9rem] text-jgd-dim">
             Connect with me on LinkedIn:{" "}
             <a
               href="https://linkedin.com/in/nabin-pokhrel"
@@ -597,7 +596,7 @@ export function HomeSearch() {
           </div>
 
           {/* ── Footer ── */}
-          <footer className="text-center text-[0.72rem] uppercase tracking-[2px] py-10 text-jgd-dim border-t border-jgd-border">
+          <footer className="text-center text-[0.8rem] uppercase tracking-[2px] py-10 text-jgd-dim border-t border-jgd-border">
             &copy; 2026 JustGetDomain
           </footer>
         </>

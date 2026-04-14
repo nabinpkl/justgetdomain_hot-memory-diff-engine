@@ -2,6 +2,7 @@
 *.gz
 *.zip
 *.txt
+!backend/data/words_selective.txt
 
 .DS_Store
 

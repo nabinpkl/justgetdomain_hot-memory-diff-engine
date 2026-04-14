@@ -10,5 +10,6 @@ services:
       - SNAPSHOT_PATH=${SNAPSHOT_PATH}
       - CORS_ORIGIN=${CORS_ORIGIN}
       - RUST_LOG=${RUST_LOG}
+      - JGD_WORDLIST=${JGD_WORDLIST:-selective}
     volumes:
       - ./backend/data/snapshot.bin:/data/snapshot.bin:ro

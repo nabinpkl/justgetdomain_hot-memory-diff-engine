@@ -4,8 +4,60 @@ import { useEffect, useRef, useState } from "react";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function formatRelative(ms: number): string {
-  const diff = Date.now() - ms;
+// Daily refresh runs 00:00–01:00 Europe/Berlin (CET/CEST). Anchor freshness to
+// the end of that window so the "ago" delta is the same physical duration for
+// every viewer, regardless of their local timezone.
+const REFRESH_TZ = "Europe/Berlin";
+const REFRESH_END_HOUR = 1;
+
+function zonedPartsToUtcMs(year: number, month: number, day: number, hour: number): number {
+  const guess = Date.UTC(year, month - 1, day, hour);
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: REFRESH_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date(guess));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value);
+  const zonedAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"));
+  const offset = zonedAsUtc - guess;
+  return guess - offset;
+}
+
+function lastRefreshMs(now: number): number {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: REFRESH_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date(now));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value);
+  let y = get("year");
+  let m = get("month");
+  let d = get("day");
+  const h = get("hour") % 24;
+
+  let candidate = zonedPartsToUtcMs(y, m, d, REFRESH_END_HOUR);
+  if (h < REFRESH_END_HOUR || candidate > now) {
+    const prev = new Date(Date.UTC(y, m - 1, d));
+    prev.setUTCDate(prev.getUTCDate() - 1);
+    y = prev.getUTCFullYear();
+    m = prev.getUTCMonth() + 1;
+    d = prev.getUTCDate();
+    candidate = zonedPartsToUtcMs(y, m, d, REFRESH_END_HOUR);
+  }
+  return candidate;
+}
+
+function formatRelative(ms: number, now: number): string {
+  const diff = now - ms;
   if (diff < 0 || diff < 60_000) return "just now";
   const m = Math.floor(diff / 60_000);
   if (m < 60) return `${m}m ago`;
@@ -27,23 +79,16 @@ function formatAbsolute(ms: number): string {
 }
 
 export function UpdatedIndicator({ className }: { className?: string }) {
-  const [updatedAtMs, setUpdatedAtMs] = useState<number | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    fetch("/api/stats")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<{ updated_at_ms: number }>;
-      })
-      .then((data) => {
-        if (data.updated_at_ms > 0) setUpdatedAtMs(data.updated_at_ms);
-      })
-      .catch(() => {
-        /* silent */
-      });
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
   }, []);
+
+  const updatedAtMs = lastRefreshMs(now);
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +101,7 @@ export function UpdatedIndicator({ className }: { className?: string }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const label = updatedAtMs ? `Updated ${formatRelative(updatedAtMs)}` : "Updated recently";
+  const label = `Updated ${formatRelative(updatedAtMs, now)}`;
 
   return (
     <span ref={ref} className={cn("inline-flex items-center gap-1.5 relative", className)}>
@@ -83,7 +128,7 @@ export function UpdatedIndicator({ className }: { className?: string }) {
           className="absolute left-0 top-full mt-2 z-50 w-[260px] rounded-md border border-jgd-border bg-jgd-bg p-3 text-[0.7rem] leading-[1.6] tracking-normal normal-case text-jgd-text shadow-lg"
         >
           <span className="block text-jgd-dim mb-1.5">
-            {updatedAtMs ? `Last updated ${formatAbsolute(updatedAtMs)}.` : "Update time unknown."}
+            {`Last updated ${formatAbsolute(updatedAtMs)}.`}
           </span>
           <span className="block">
             Availability may have changed since this scan. Always verify with a registrar before purchase.

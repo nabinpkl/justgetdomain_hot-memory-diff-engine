@@ -46,6 +46,7 @@
   --color-jgd-dim: var(--jgd-dim);
   --color-jgd-accent: var(--jgd-accent);
   --color-jgd-accent-dim: var(--jgd-accent-dim);
+  --color-jgd-warn: var(--jgd-warn);
   --color-jgd-border: var(--jgd-border);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -100,6 +101,7 @@
   --jgd-accent: oklch(0.75 0.18 142);
   --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
   --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
+  --jgd-warn: oklch(0.92 0.2 105);
   --jgd-border: oklch(0.27 0 0);
 }
 

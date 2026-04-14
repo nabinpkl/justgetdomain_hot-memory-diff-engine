@@ -10,7 +10,7 @@ RUN mkdir -p src/bin data && \
     echo 'fn main() {}' > src/main.rs && \
     echo 'fn main() {}' > src/bin/batch.rs && \
     echo '' > src/lib.rs && \
-    touch data/words.txt && \
+    touch data/words_full.txt data/words_selective.txt && \
     cargo build --release --bin server 2>/dev/null || true && \
     rm -rf src data && \
     rm -rf target/release/.fingerprint/justgetdomain-* \
@@ -19,7 +19,8 @@ RUN mkdir -p src/bin data && \
 
 # Copy real source and data needed at compile time
 COPY src/ src/
-COPY data/words.txt data/words.txt
+COPY data/words_full.txt data/words_full.txt
+COPY data/words_selective.txt data/words_selective.txt
 
 RUN cargo build --release --bin server
 

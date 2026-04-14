@@ -7,6 +7,7 @@ import { REGISTRARS } from "@/components/domain/domain-data";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
 import { UpdatedIndicator } from "@/components/domain/updated-indicator";
+import { DisclaimerCard } from "@/components/disclaimer-card";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 
 const ROW_HEIGHT = 48;
@@ -108,7 +109,8 @@ export function DomainSearch() {
               "radial-gradient(ellipse 800px 200px at 50% 100%, oklch(0.75 0.18 142 / 0.06), transparent)",
           }}
         />
-        <div className="relative max-w-[1200px] mx-auto px-5 pt-10 pb-8 sm:pt-14 sm:pb-10">
+        <div className="relative max-w-[1200px] mx-auto px-5 pt-6 pb-8 sm:pt-8 sm:pb-10">
+          <DisclaimerCard className="mb-6" />
           <h1 className="mb-6 font-serif text-[clamp(1.6rem,4vw,2.6rem)] font-normal tracking-[-1px] leading-[1.1]">
             {query.trim() ? (
               <>
@@ -164,13 +166,14 @@ export function DomainSearch() {
               Filters
             </button>
           </div>
+
         </div>
       </div>
 
       {/* ── Main content ── */}
       <div className="flex-1 max-w-[1200px] w-full mx-auto flex min-h-0">
         {/* Sidebar filters — desktop */}
-        <aside className="hidden sm:block shrink-0 sticky top-[53px] self-start overflow-y-auto w-[200px] max-h-[calc(100vh-53px)] border-r border-jgd-border p-6 pr-5">
+        <aside className="hidden sm:block shrink-0 sticky top-[53px] self-start w-[200px] border-r border-jgd-border p-6 pr-5">
           <FilterPanel
             activeTlds={activeTlds}
             activeLengths={activeLengths}
