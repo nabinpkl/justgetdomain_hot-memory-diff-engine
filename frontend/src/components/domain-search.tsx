@@ -103,10 +103,14 @@ export function DomainSearch() {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="max-w-[1200px] w-full mx-auto flex min-h-0 flex-1">
-        {/* Sidebar — desktop */}
-        <aside className="hidden sm:block shrink-0 sticky top-14 self-start w-[220px] border-r border-jgd-border p-6 pr-5 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+      {/* Two-column layout. Fixed height so the main list scrolls within its
+          own container, and the site footer sits cleanly below (revealed by
+          page scroll when the mouse is over the sidebar or outside the list). */}
+      <div className="max-w-[1200px] w-full mx-auto flex min-h-0 h-[calc(100vh-3.5rem)]">
+        {/* Sidebar — desktop. Sticky so it stays visible as the page scrolls
+            to reveal the footer below. No internal overflow: scrolls fall
+            through to the page. */}
+        <aside className="hidden sm:block shrink-0 sticky top-14 self-start w-[220px] border-r border-jgd-border p-6 pr-5">
           <FilterPanel
             activeTlds={activeTlds}
             activeLengths={activeLengths}
@@ -234,11 +238,12 @@ export function DomainSearch() {
             </div>
           </div>
 
-          {/* Virtual scroll list */}
+          {/* Virtual scroll list — fills the remaining height inside the
+              main column and scrolls internally. The page scroll is free to
+              run independently (over the sidebar), revealing the footer. */}
           <div
             ref={scrollRef}
-            className="flex-1 min-w-0 overflow-y-auto"
-            style={{ height: "calc(100vh - 3.5rem)" }}
+            className="flex-1 min-w-0 min-h-0 overflow-y-auto"
             onScroll={handleScroll}
           >
             {!isLoading && total === 0 ? (

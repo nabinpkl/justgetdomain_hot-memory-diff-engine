@@ -4,40 +4,45 @@ import { useEffect, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type DomainEntry, REGISTRARS } from "./domain-data";
+import { TldModal } from "./tld-modal";
 
 const CHIP_CAP = 6;
 
 export function DomainRow({ entry }: { entry: DomainEntry }) {
   const [openTld, setOpenTld] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const visible = showAll ? entry.tlds : entry.tlds.slice(0, CHIP_CAP);
-  const overflow = entry.tlds.length - CHIP_CAP;
+  const visible = entry.tlds.slice(0, CHIP_CAP);
+  const overflow = entry.match_count - visible.length;
 
   return (
-    <div className="px-5 py-3 border-b border-jgd-border">
-      <div className="flex flex-wrap items-center gap-2">
-        {visible.map((tld) => (
-          <DomainChip
-            key={tld}
-            name={entry.name}
-            tld={tld}
-            open={openTld === tld}
-            onToggle={() => setOpenTld((p) => (p === tld ? null : tld))}
-            onClose={() => setOpenTld(null)}
-          />
-        ))}
-        {!showAll && overflow > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="cursor-pointer text-[0.72rem] px-2 py-1 rounded font-sans transition-colors text-jgd-dim border border-jgd-border hover:text-jgd-text hover:border-jgd-muted"
-          >
-            +{overflow} more
-          </button>
-        )}
+    <>
+      <div className="px-5 py-3 border-b border-jgd-border">
+        <div className="flex flex-wrap items-center gap-2">
+          {visible.map((tld) => (
+            <DomainChip
+              key={tld}
+              name={entry.name}
+              tld={tld}
+              open={openTld === tld}
+              onToggle={() => setOpenTld((p) => (p === tld ? null : tld))}
+              onClose={() => setOpenTld(null)}
+            />
+          ))}
+          {overflow > 0 && (
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="cursor-pointer text-[0.72rem] px-2 py-1 rounded font-sans transition-colors text-jgd-dim border border-jgd-border hover:text-jgd-text hover:border-jgd-muted"
+            >
+              +{overflow.toLocaleString()} more
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+
+      {modalOpen && <TldModal name={entry.name} onClose={() => setModalOpen(false)} />}
+    </>
   );
 }
 

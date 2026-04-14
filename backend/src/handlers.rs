@@ -90,6 +90,41 @@ pub async fn tlds_handler(State(state): State<Arc<AppState>>) -> Json<Vec<String
     Json(state.index.all_tlds().to_vec())
 }
 
+// ─── /tlds-for (paginated TLDs available for a single name) ──────────
+
+#[derive(Debug, Deserialize)]
+pub struct TldsForQuery {
+    pub name: String,
+    pub offset: Option<usize>,
+    pub limit: Option<usize>,
+}
+
+#[derive(Serialize)]
+pub struct TldsForResponse {
+    pub name: String,
+    pub total: usize,
+    pub tlds: Vec<String>,
+}
+
+pub async fn tlds_for_handler(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<TldsForQuery>,
+) -> Json<TldsForResponse> {
+    let offset = query.offset.unwrap_or(0);
+    let limit = query.limit.unwrap_or(100).min(500);
+
+    let (total, tlds) = state
+        .index
+        .tlds_for(&query.name, offset, limit)
+        .unwrap_or((0, Vec::new()));
+
+    Json(TldsForResponse {
+        name: query.name,
+        total,
+        tlds,
+    })
+}
+
 // ─── /stats (snapshot metadata) ────────────────────────────────────────
 
 #[derive(Serialize)]

@@ -1,8 +1,8 @@
 export type DomainEntry = {
   name: string;
-  tlds: string[];
+  tlds: string[]; // capped by the backend (MAX_TLDS_PER_RESULT)
   length: number;
-  available_count: number;
+  match_count: number; // true count of matching TLDs; drives the "+N more" overflow
 };
 
 export const REGISTRARS = [

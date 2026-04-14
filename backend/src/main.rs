@@ -83,6 +83,7 @@ async fn main() {
         .route("/search", get(handlers::search_handler))
         .route("/stream", get(handlers::stream_handler))
         .route("/tlds", get(handlers::tlds_handler))
+        .route("/tlds-for", get(handlers::tlds_for_handler))
         .route("/stats", get(handlers::stats_handler))
         .layer(cors)
         .with_state(state);

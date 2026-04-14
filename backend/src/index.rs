@@ -53,14 +53,18 @@ pub enum AvailableBand {
     Many,   // 4+
 }
 
-/// One row = one name with all available TLDs (post-filter).
+/// One row = one name with its matching TLDs, capped at MAX_TLDS_PER_RESULT.
+/// `match_count` is the true post-filter count so the UI can render "+N more"
+/// without shipping the full list (some names have 900+ available TLDs).
 #[derive(serde::Serialize)]
 pub struct SearchResult {
     pub name: String,
     pub tlds: Vec<String>,
     pub length: usize,
-    pub available_count: usize,
+    pub match_count: usize,
 }
+
+pub const MAX_TLDS_PER_RESULT: usize = 12;
 
 impl DomainIndex {
     pub fn from_snapshot(snapshot: &Snapshot) -> Self {
@@ -229,11 +233,17 @@ impl DomainIndex {
             }
 
             if total >= offset && total < end {
+                let match_count = tlds.len();
+                let capped: Vec<String> = tlds
+                    .into_iter()
+                    .take(MAX_TLDS_PER_RESULT)
+                    .map(|t| t.to_string())
+                    .collect();
                 results.push(SearchResult {
                     name: entry.word.clone(),
-                    tlds: tlds.into_iter().map(|t| t.to_string()).collect(),
+                    tlds: capped,
                     length: entry.length,
-                    available_count: entry.available_count,
+                    match_count,
                 });
             }
             total += 1;
@@ -270,13 +280,39 @@ impl DomainIndex {
             if !band_matches(tlds.len(), band) {
                 return None;
             }
+            let match_count = tlds.len();
+            let capped: Vec<String> = tlds
+                .into_iter()
+                .take(MAX_TLDS_PER_RESULT)
+                .map(|t| t.to_string())
+                .collect();
             Some(SearchResult {
                 name: entry.word.clone(),
-                tlds: tlds.into_iter().map(|t| t.to_string()).collect(),
+                tlds: capped,
                 length: entry.length,
-                available_count: entry.available_count,
+                match_count,
             })
         })
+    }
+
+    /// Paginated list of every available TLD for a single name.
+    /// Powers the "+N more" modal on the frontend. Linear scan is fine here;
+    /// the dictionary is ~10K entries and this is called only on explicit drill-in.
+    pub fn tlds_for(&self, name: &str, offset: usize, limit: usize) -> Option<(usize, Vec<String>)> {
+        let entry = self.entries.iter().find(|e| e.word == name)?;
+        let available: Vec<&String> = self
+            .all_tlds
+            .iter()
+            .filter(|tld| !entry.registered_tlds.contains(tld.as_str()))
+            .collect();
+        let total = available.len();
+        let end = (offset + limit).min(total);
+        let slice = if offset >= total {
+            Vec::new()
+        } else {
+            available[offset..end].iter().map(|s| s.to_string()).collect()
+        };
+        Some((total, slice))
     }
 
     fn word_matches(
