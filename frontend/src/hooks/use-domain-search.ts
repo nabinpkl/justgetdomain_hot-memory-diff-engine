@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { DomainEntry, SortMode } from "@/components/domain/domain-data";
+import type { AvailableBand, DomainEntry, SortMode } from "@/components/domain/domain-data";
 
 interface SearchResponse {
   total: number;
@@ -10,6 +10,8 @@ interface UseDomainSearchParams {
   query: string;
   tlds: Set<string>;
   lengths: Set<number>;
+  startsWith: string | null;
+  availableBand: AvailableBand | null;
   sort: SortMode;
 }
 
@@ -26,11 +28,16 @@ function buildSearchUrl(
   limit: number
 ): string {
   const searchParams = new URLSearchParams();
-  if (params.query.trim()) searchParams.set("q", params.query.trim());
-  if (params.tlds.size > 0)
-    searchParams.set("tlds", [...params.tlds].join(","));
-  if (params.lengths.size > 0)
-    searchParams.set("lengths", [...params.lengths].join(","));
+  const text = params.query.trim();
+  if (text) {
+    searchParams.set("q", text);
+  } else if (params.startsWith) {
+    // A-Z grid acts as a prefix filter when the user hasn't typed anything.
+    searchParams.set("q", params.startsWith.toLowerCase());
+  }
+  if (params.tlds.size > 0) searchParams.set("tlds", [...params.tlds].join(","));
+  if (params.lengths.size > 0) searchParams.set("lengths", [...params.lengths].join(","));
+  if (params.availableBand) searchParams.set("available", params.availableBand);
   searchParams.set("sort", params.sort);
   searchParams.set("offset", String(offset));
   searchParams.set("limit", String(limit));
@@ -50,9 +57,15 @@ export function useDomainSearch(params: UseDomainSearchParams) {
   const windowsRef = useRef<WindowCache>({});
   windowsRef.current = windows;
 
-  const paramsKey = `${params.query}|${[...params.tlds].sort().join(",")}|${[...params.lengths].sort().join(",")}|${params.sort}`;
+  const paramsKey = [
+    params.query,
+    [...params.tlds].sort().join(","),
+    [...params.lengths].sort().join(","),
+    params.startsWith ?? "",
+    params.availableBand ?? "",
+    params.sort,
+  ].join("|");
 
-  // Fetch initial window on filter change (debounced)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 

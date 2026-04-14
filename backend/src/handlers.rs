@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 
-use crate::index::{DomainIndex, SearchParams, SearchResult, SortMode};
+use crate::index::{AvailableBand, DomainIndex, SearchParams, SearchResult, SortMode};
 
 pub struct AppState {
     pub index: Arc<DomainIndex>,
@@ -24,6 +24,7 @@ pub struct SearchQuery {
     pub q: Option<String>,
     pub tlds: Option<String>,
     pub lengths: Option<String>,
+    pub available: Option<String>,
     pub sort: Option<String>,
     pub offset: Option<usize>,
     pub limit: Option<usize>,
@@ -158,11 +159,19 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
         q = None;
     }
 
+    let available_band = query.available.as_deref().and_then(|v| match v {
+        "1" => Some(AvailableBand::Single),
+        "2-3" => Some(AvailableBand::Few),
+        "4+" => Some(AvailableBand::Many),
+        _ => None,
+    });
+
     SearchParams {
         query: q,
         tlds,
         tld_prefix,
         lengths,
+        available_band,
         sort,
     }
 }

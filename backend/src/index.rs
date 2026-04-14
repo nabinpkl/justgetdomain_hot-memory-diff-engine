@@ -34,6 +34,7 @@ pub struct SearchParams {
     pub tlds: Option<Vec<String>>,
     pub tld_prefix: Option<String>,
     pub lengths: Option<Vec<usize>>,
+    pub available_band: Option<AvailableBand>,
     pub sort: SortMode,
 }
 
@@ -45,12 +46,20 @@ pub enum SortMode {
     Shortest,
 }
 
-/// One row = one word+TLD pair.
+#[derive(Debug, Clone, Copy)]
+pub enum AvailableBand {
+    Single, // exactly 1 TLD available (after TLD filter)
+    Few,    // 2-3
+    Many,   // 4+
+}
+
+/// One row = one name with all available TLDs (post-filter).
 #[derive(serde::Serialize)]
 pub struct SearchResult {
     pub name: String,
-    pub tld: String,
+    pub tlds: Vec<String>,
     pub length: usize,
+    pub available_count: usize,
 }
 
 impl DomainIndex {
@@ -183,7 +192,7 @@ impl DomainIndex {
         result
     }
 
-    /// Paginated flat search. Each row = one word+TLD pair.
+    /// Paginated grouped search. Each row = one name with its available TLDs.
     pub fn search(
         &self,
         params: &SearchParams,
@@ -199,7 +208,6 @@ impl DomainIndex {
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
 
-        // Count total flat rows + collect windowed results in one pass
         let mut total = 0usize;
         let mut results = Vec::with_capacity(limit);
         let end = offset + limit;
@@ -216,22 +224,25 @@ impl DomainIndex {
                 continue;
             }
 
-            for tld in &tlds {
-                if total >= offset && total < end {
-                    results.push(SearchResult {
-                        name: format!("{}{}", entry.word, tld),
-                        tld: tld.to_string(),
-                        length: entry.length,
-                    });
-                }
-                total += 1;
+            if !band_matches(tlds.len(), &params.available_band) {
+                continue;
             }
+
+            if total >= offset && total < end {
+                results.push(SearchResult {
+                    name: entry.word.clone(),
+                    tlds: tlds.into_iter().map(|t| t.to_string()).collect(),
+                    length: entry.length,
+                    available_count: entry.available_count,
+                });
+            }
+            total += 1;
         }
 
         (total, results)
     }
 
-    /// Streaming flat search.
+    /// Streaming grouped search.
     pub fn search_iter<'a>(
         &'a self,
         params: &'a SearchParams,
@@ -245,20 +256,26 @@ impl DomainIndex {
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
         let tld_prefix = &params.tld_prefix;
+        let band = &params.available_band;
 
-        indices.iter().flat_map(move |&idx| {
+        indices.iter().filter_map(move |&idx| {
             let entry = &self.entries[idx];
             if !Self::word_matches(entry, &query_lower, &length_filter) {
-                return Vec::new();
+                return None;
             }
-            self.matching_tlds(entry, &tld_filter, tld_prefix)
-                .into_iter()
-                .map(|tld| SearchResult {
-                    name: format!("{}{}", entry.word, tld),
-                    tld: tld.to_string(),
-                    length: entry.length,
-                })
-                .collect::<Vec<_>>()
+            let tlds = self.matching_tlds(entry, &tld_filter, tld_prefix);
+            if tlds.is_empty() {
+                return None;
+            }
+            if !band_matches(tlds.len(), band) {
+                return None;
+            }
+            Some(SearchResult {
+                name: entry.word.clone(),
+                tlds: tlds.into_iter().map(|t| t.to_string()).collect(),
+                length: entry.length,
+                available_count: entry.available_count,
+            })
         })
     }
 
@@ -273,10 +290,24 @@ impl DomainIndex {
             }
         }
         if let Some(lengths) = length_filter {
-            if !lengths.contains(&entry.length) {
+            // Highest selected length acts as ">=" so the UI's "8+" bucket
+            // captures all longer words without enumerating each length.
+            let max = lengths.iter().copied().max().unwrap_or(0);
+            let in_set = lengths.contains(&entry.length);
+            let in_tail = entry.length > max;
+            if !(in_set || in_tail) {
                 return false;
             }
         }
         true
+    }
+}
+
+fn band_matches(count: usize, band: &Option<AvailableBand>) -> bool {
+    match band {
+        None => true,
+        Some(AvailableBand::Single) => count == 1,
+        Some(AvailableBand::Few) => count >= 2 && count <= 3,
+        Some(AvailableBand::Many) => count >= 4,
     }
 }

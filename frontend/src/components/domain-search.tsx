@@ -1,21 +1,28 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, SlidersHorizontal, X, ExternalLink } from "lucide-react";
-import { REGISTRARS } from "@/components/domain/domain-data";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { SortMode } from "@/components/domain/domain-data";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
 import { UpdatedIndicator } from "@/components/domain/updated-indicator";
 import { DisclaimerCard } from "@/components/disclaimer-card";
+import { DomainRow } from "@/components/domain/domain-row";
 import { useDomainSearch } from "@/hooks/use-domain-search";
 
-const ROW_HEIGHT = 48;
-const OVERSCAN = 20;
+const ROW_HEIGHT = 64;
+const OVERSCAN = 16;
+
+const SORT_CHIPS: { mode: SortMode; label: string }[] = [
+  { mode: "alpha", label: "A-Z" },
+  { mode: "shortest", label: "Shortest" },
+  { mode: "tlds", label: "Most TLDs" },
+];
 
 export function DomainSearch() {
   const [query, setQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -24,10 +31,14 @@ export function DomainSearch() {
   const {
     activeTlds,
     activeLengths,
+    startsWith,
+    availableBand,
     sort,
     setSort,
     toggleTld,
     toggleLength,
+    setStartsWith,
+    setAvailableBand,
     clearFilters,
     hasActiveFilters,
   } = useFilterState();
@@ -36,20 +47,18 @@ export function DomainSearch() {
     query,
     tlds: activeTlds,
     lengths: activeLengths,
+    startsWith,
+    availableBand,
     sort,
   });
 
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     clearFilters();
     setQuery("");
     inputRef.current?.focus();
-  };
+  }, [clearFilters]);
 
   const hasAnyActive = hasActiveFilters || query.trim().length > 0;
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -76,189 +85,197 @@ export function DomainSearch() {
 
   const visibleEntries = total > 0 ? getRows(startIndex, endIndex) : [];
 
+  // First-letter band shown above the visible window. Gives the scroll a sense
+  // of "where am I" without needing per-row sticky headers.
+  const currentLetter = useMemo(() => {
+    for (const entry of visibleEntries) {
+      if (entry?.name) return entry.name[0]?.toUpperCase() ?? "";
+    }
+    return "";
+  }, [visibleEntries]);
+
   return (
     <div className="flex flex-col font-medium bg-jgd-bg text-jgd-text font-sans">
-      {/* ── Search hero ── */}
-      <div className="relative border-b border-jgd-border">
-        <div className="relative max-w-[1200px] mx-auto px-5 pt-6 pb-8 sm:pt-8 sm:pb-10">
-          <DisclaimerCard className="mb-6" />
-          <h1 className="mb-6 font-serif text-[clamp(1.6rem,4vw,2.6rem)] font-normal tracking-[-1px] leading-[1.1]">
-            {query.trim() ? (
-              <>
-                Results for{" "}
-                <span className="text-jgd-accent">
-                  &ldquo;{query.trim()}&rdquo;
-                </span>
-              </>
-            ) : (
-              <>
-                Browse available domains
-                <span className="text-jgd-accent">.</span>
-              </>
-            )}
-          </h1>
-
-          <div
-            className="flex items-center gap-3 px-4 py-3 transition-all bg-jgd-surface border border-jgd-border rounded-[6px]"
-            onClick={() => inputRef.current?.focus()}
-          >
-            <Search size={16} className="text-jgd-dim shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, pattern, or letters..."
-              className="flex-1 bg-transparent outline-none text-[0.9rem] placeholder:opacity-50 text-jgd-text font-sans caret-jgd-accent"
-              spellCheck={false}
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-                className="transition-colors cursor-pointer text-jgd-dim hover:text-jgd-text"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4 mt-4 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
-            <span>{total.toLocaleString()} domains</span>
-            <span className="text-jgd-muted">/</span>
-            <UpdatedIndicator />
-            <button
-              type="button"
-              className="ml-auto flex items-center gap-1.5 cursor-pointer transition-colors sm:hidden"
-              style={{ color: showFilters ? "var(--jgd-accent)" : "var(--jgd-dim)" }}
-              onClick={() => setShowFilters((p) => !p)}
-            >
-              <SlidersHorizontal size={12} />
-              Filters
-            </button>
-          </div>
-
+      {/* Disclaimer */}
+      <div className="border-b border-jgd-border">
+        <div className="max-w-[1200px] mx-auto px-5 pt-6 pb-5">
+          <DisclaimerCard />
         </div>
       </div>
 
-      {/* ── Main content ── */}
-      <div className="flex-1 max-w-[1200px] w-full mx-auto flex min-h-0">
-        {/* Sidebar filters — desktop */}
-        <aside className="hidden sm:block shrink-0 sticky top-14 self-start w-[200px] border-r border-jgd-border p-6 pr-5">
+      {/* Two-column layout */}
+      <div className="max-w-[1200px] w-full mx-auto flex min-h-0 flex-1">
+        {/* Sidebar — desktop */}
+        <aside className="hidden sm:block shrink-0 sticky top-14 self-start w-[220px] border-r border-jgd-border p-6 pr-5 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
           <FilterPanel
             activeTlds={activeTlds}
             activeLengths={activeLengths}
-            sort={sort}
+            startsWith={startsWith}
+            availableBand={availableBand}
             onToggleTld={toggleTld}
             onToggleLength={toggleLength}
-            onSort={setSort}
+            onStartsWith={setStartsWith}
+            onAvailableBand={setAvailableBand}
             hasActiveFilters={hasAnyActive}
             onClear={clearAll}
           />
         </aside>
 
-        {/* Mobile filter drawer */}
-        {showFilters && (
+        {/* Mobile filter sheet */}
+        {showFiltersMobile && (
           <div
-            className="fixed inset-0 z-40 sm:hidden bg-jgd-overlay"
-            onClick={() => setShowFilters(false)}
+            className="fixed inset-0 z-50 sm:hidden bg-jgd-overlay"
+            onClick={() => setShowFiltersMobile(false)}
           >
             <div
-              className="absolute bottom-0 left-0 right-0 p-6 rounded-t-xl bg-jgd-surface border-t border-jgd-border"
+              className="absolute inset-0 bg-jgd-bg overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-5">
-                <span className="text-[0.7rem] uppercase tracking-[2px] font-bold">Filters</span>
-                <button type="button" className="cursor-pointer text-jgd-dim" onClick={() => setShowFilters(false)}>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 bg-jgd-bg border-b border-jgd-border">
+                <span className="text-[0.7rem] uppercase tracking-[2px] font-bold">
+                  Filters
+                </span>
+                <button
+                  type="button"
+                  className="cursor-pointer text-jgd-dim"
+                  onClick={() => setShowFiltersMobile(false)}
+                >
                   <X size={18} />
                 </button>
               </div>
-              <FilterPanel
-                activeTlds={activeTlds}
-                activeLengths={activeLengths}
-                sort={sort}
-                onToggleTld={toggleTld}
-                onToggleLength={toggleLength}
-                onSort={setSort}
-                hasActiveFilters={hasAnyActive}
-                onClear={clearAll}
-              />
+              <div className="px-5 py-6">
+                <FilterPanel
+                  activeTlds={activeTlds}
+                  activeLengths={activeLengths}
+                  startsWith={startsWith}
+                  availableBand={availableBand}
+                  onToggleTld={toggleTld}
+                  onToggleLength={toggleLength}
+                  onStartsWith={setStartsWith}
+                  onAvailableBand={setAvailableBand}
+                  hasActiveFilters={hasAnyActive}
+                  onClear={clearAll}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Virtual scroll list */}
-        <main
-          ref={scrollRef}
-          className="flex-1 min-w-0 overflow-y-auto"
-          style={{ height: "calc(100vh - 3.5rem)" }}
-          onScroll={handleScroll}
-        >
-          {!isLoading && total === 0 ? (
-            <EmptyState query={query} hasFilters={hasActiveFilters} onClear={clearAll} />
-          ) : (
-            <div style={{ height: totalHeight, position: "relative" }}>
+        {/* Main column */}
+        <main className="flex-1 min-w-0 flex flex-col">
+          {/* Sticky top bar */}
+          <div className="sticky top-14 z-20 bg-jgd-nav backdrop-blur-[20px] border-b border-jgd-border">
+            <div className="px-5 py-3 flex flex-wrap items-center gap-3">
               <div
-                style={{
-                  position: "absolute",
-                  top: startIndex * ROW_HEIGHT,
-                  left: 0,
-                  right: 0,
-                }}
+                className="flex items-center gap-2 flex-1 min-w-[200px] px-3 py-1.5 rounded-md bg-jgd-surface border border-jgd-border"
+                onClick={() => inputRef.current?.focus()}
               >
-                {visibleEntries.map((entry, i) => {
-                  const globalIndex = startIndex + i;
-                  if (!entry) {
+                <Search size={14} className="text-jgd-dim shrink-0" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Filter names..."
+                  className="flex-1 bg-transparent outline-none text-[0.85rem] placeholder:opacity-50 text-jgd-text font-sans caret-jgd-accent"
+                  spellCheck={false}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    className="transition-colors cursor-pointer text-jgd-dim hover:text-jgd-text"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
+                {SORT_CHIPS.map((chip) => (
+                  <button
+                    key={chip.mode}
+                    type="button"
+                    onClick={() => setSort(chip.mode)}
+                    className={cn(
+                      "cursor-pointer text-[0.74rem] px-2.5 py-1 rounded font-sans transition-all border",
+                      sort === chip.mode
+                        ? "bg-jgd-text text-jgd-bg border-jgd-text"
+                        : "bg-transparent text-jgd-dim border-jgd-border hover:border-jgd-muted"
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="sm:hidden flex items-center gap-1.5 cursor-pointer text-jgd-dim text-[0.74rem] px-2.5 py-1 rounded border border-jgd-border"
+                onClick={() => setShowFiltersMobile(true)}
+              >
+                <SlidersHorizontal size={12} />
+                Filters
+              </button>
+            </div>
+
+            <div className="px-5 py-2 flex items-center gap-3 text-[0.7rem] uppercase tracking-[2px] text-jgd-dim border-t border-jgd-border">
+              <span>{total.toLocaleString()} names</span>
+              <span className="text-jgd-muted">/</span>
+              <UpdatedIndicator />
+              {currentLetter && (
+                <span className="ml-auto font-serif text-[0.95rem] tracking-normal normal-case text-jgd-accent">
+                  {currentLetter}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Virtual scroll list */}
+          <div
+            ref={scrollRef}
+            className="flex-1 min-w-0 overflow-y-auto"
+            style={{ height: "calc(100vh - 3.5rem)" }}
+            onScroll={handleScroll}
+          >
+            {!isLoading && total === 0 ? (
+              <EmptyState query={query} hasFilters={hasActiveFilters} onClear={clearAll} />
+            ) : (
+              <div style={{ height: totalHeight, position: "relative" }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: startIndex * ROW_HEIGHT,
+                    left: 0,
+                    right: 0,
+                  }}
+                >
+                  {visibleEntries.map((entry, i) => {
+                    const globalIndex = startIndex + i;
+                    if (!entry) {
+                      return (
+                        <div
+                          key={`ph-${globalIndex}`}
+                          className="flex items-center px-5 border-b border-jgd-border animate-pulse"
+                          style={{ height: ROW_HEIGHT }}
+                        >
+                          <div className="h-5 w-40 bg-jgd-surface rounded" />
+                        </div>
+                      );
+                    }
                     return (
-                      <div
-                        key={`ph-${globalIndex}`}
-                        className="flex items-center px-5 border-b border-jgd-border animate-pulse"
-                        style={{ height: ROW_HEIGHT }}
-                      >
-                        <div className="h-4 w-40 bg-jgd-surface rounded" />
+                      <div key={`${entry.name}-${globalIndex}`} style={{ height: ROW_HEIGHT }}>
+                        <DomainRow entry={entry} />
                       </div>
                     );
-                  }
-
-                  const isExpanded = expandedRow === entry.name;
-
-                  return (
-                    <div key={`${entry.name}-${globalIndex}`}>
-                      <div
-                        className="flex items-center gap-4 px-5 cursor-pointer transition-colors hover:bg-jgd-surface/50 border-b border-jgd-border"
-                        style={{ height: ROW_HEIGHT }}
-                        onClick={() => setExpandedRow(isExpanded ? null : entry.name)}
-                      >
-                        <span className="font-serif text-[1.05rem] tracking-[-0.3px] text-jgd-text">
-                          {entry.name}
-                        </span>
-                        <span className="text-[0.72rem] px-2 py-0.5 rounded-sm bg-jgd-accent-dim text-jgd-accent font-sans">
-                          {entry.tld}
-                        </span>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="flex gap-2 px-5 py-3 bg-jgd-row-active border-b border-jgd-border">
-                          {REGISTRARS.map((reg) => (
-                            <a
-                              key={reg.name}
-                              href={`${reg.url}${entry.name}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-[0.76rem] px-3 py-2 rounded transition-all text-jgd-text bg-jgd-accent/4 border border-jgd-accent/8 hover:bg-jgd-accent/10 hover:border-jgd-accent/20"
-                            >
-                              {reg.name}
-                              <ExternalLink size={12} className="text-jgd-dim" />
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
     </div>

@@ -1,9 +1,8 @@
-// ─── Shared types and constants for domain search ────────
-
 export type DomainEntry = {
   name: string;
-  tld: string;
+  tlds: string[];
   length: number;
+  available_count: number;
 };
 
 export const REGISTRARS = [
@@ -12,8 +11,13 @@ export const REGISTRARS = [
   { name: "Cloudflare", url: "https://www.cloudflare.com/products/registrar/" },
 ];
 
-/** Fallback shown while backend TLD list loads */
 export const FALLBACK_TLDS = [".com", ".dev", ".io", ".ai", ".app", ".sh", ".xyz", ".net", ".org"];
-export const LENGTHS = [3, 4, 5] as const;
+
+// Highest entry in this list is treated as ">=" by the backend, so 8 covers 8+.
+export const LENGTHS = [3, 4, 5, 6, 7, 8] as const;
 
 export type SortMode = "alpha" | "tlds" | "shortest";
+
+export type AvailableBand = "1" | "2-3" | "4+";
+
+export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");

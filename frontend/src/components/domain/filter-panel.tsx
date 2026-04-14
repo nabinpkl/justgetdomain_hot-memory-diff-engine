@@ -1,11 +1,25 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FALLBACK_TLDS, LENGTHS, type SortMode } from "./domain-data";
-import { ChevronDown, Search, Check } from "lucide-react";
+import {
+  ALPHABET,
+  type AvailableBand,
+  FALLBACK_TLDS,
+  LENGTHS,
+  type SortMode,
+} from "./domain-data";
+import { TldDropdown } from "./tld-dropdown";
 
-// ─── Fetch TLDs from backend ──────────────────────────────────────────
+const POPULAR_COUNT = 9;
+
+// Bands shown in the "Available on" filter. Labels match the mockup.
+const BANDS: { key: AvailableBand; label: string }[] = [
+  { key: "1", label: "1 TLD" },
+  { key: "2-3", label: "2-3" },
+  { key: "4+", label: "4+" },
+];
 
 function useTldList() {
   const [tlds, setTlds] = useState<string[]>(FALLBACK_TLDS);
@@ -16,7 +30,9 @@ function useTldList() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<string[]>;
       })
-      .then(setTlds)
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setTlds(data);
+      })
       .catch(() => {
         /* keep fallback */
       });
@@ -25,12 +41,13 @@ function useTldList() {
   return tlds;
 }
 
-// ─── Filter state hook ────────────────────────────────────────────────
-
 export function useFilterState() {
   const [activeTlds, setActiveTlds] = useState<Set<string>>(new Set());
   const [activeLengths, setActiveLengths] = useState<Set<number>>(new Set());
-  const [sort, setSort] = useState<SortMode>("tlds");
+  const [startsWith, setStartsWithState] = useState<string | null>(null);
+  const [availableBand, setAvailableBandState] = useState<AvailableBand | null>(null);
+  const [sort, setSort] = useState<SortMode>("alpha");
+
   const toggleTld = useCallback((tld: string) => {
     setActiveTlds((prev) => {
       const next = new Set(prev);
@@ -49,230 +66,209 @@ export function useFilterState() {
     });
   }, []);
 
+  const setStartsWith = useCallback((letter: string | null) => {
+    setStartsWithState((prev) => (prev === letter ? null : letter));
+  }, []);
+
+  const setAvailableBand = useCallback((band: AvailableBand | null) => {
+    setAvailableBandState((prev) => (prev === band ? null : band));
+  }, []);
+
   const clearFilters = useCallback(() => {
     setActiveTlds(new Set());
     setActiveLengths(new Set());
+    setStartsWithState(null);
+    setAvailableBandState(null);
   }, []);
 
-  const hasActiveFilters = activeTlds.size > 0 || activeLengths.size > 0;
+  const hasActiveFilters =
+    activeTlds.size > 0 ||
+    activeLengths.size > 0 ||
+    startsWith !== null ||
+    availableBand !== null;
 
   return {
     activeTlds,
     activeLengths,
+    startsWith,
+    availableBand,
     sort,
     setSort,
     toggleTld,
     toggleLength,
+    setStartsWith,
+    setAvailableBand,
     clearFilters,
     hasActiveFilters,
   };
 }
 
-// ─── TLD Dropdown ─────────────────────────────────────────────────────
-
-function TldDropdown({
-  activeTlds,
-  onToggleTld,
-}: {
-  activeTlds: Set<string>;
-  onToggleTld: (tld: string) => void;
-}) {
-  const allTlds = useTldList();
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  // Close on click outside
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setSearch("");
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  // Focus search on open
-  useEffect(() => {
-    if (open) searchRef.current?.focus();
-  }, [open]);
-
-  const filtered = search
-    ? allTlds.filter((tld) => tld.toLowerCase().includes(search.toLowerCase()))
-    : allTlds;
-
-  const selectedCount = activeTlds.size;
-
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        type="button"
-        onClick={() => { setOpen((p) => !p); setSearch(""); }}
-        className={cn(
-          "w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded text-[0.76rem] font-sans transition-all border cursor-pointer",
-          open || selectedCount > 0
-            ? "bg-jgd-accent-dim text-jgd-accent border-jgd-accent-mid"
-            : "bg-transparent text-jgd-dim border-jgd-border hover:border-jgd-muted"
-        )}
-      >
-        <span>
-          {selectedCount > 0
-            ? `${selectedCount} selected`
-            : "All extensions"}
-        </span>
-        <ChevronDown
-          size={14}
-          className={cn("transition-transform", open && "rotate-180")}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-md border border-jgd-border bg-jgd-bg shadow-lg overflow-hidden">
-          {/* Search input */}
-          <div className="flex items-center gap-2 px-2.5 py-2 border-b border-jgd-border">
-            <Search size={12} className="text-jgd-dim shrink-0" />
-            <input
-              ref={searchRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter..."
-              className="flex-1 bg-transparent outline-none text-[0.76rem] placeholder:opacity-40 text-jgd-text font-sans"
-              spellCheck={false}
-            />
-          </div>
-
-          {/* TLD list */}
-          <div className="max-h-[min(60vh,480px)] overflow-y-auto overscroll-contain">
-            {filtered.map((tld) => {
-              const active = activeTlds.has(tld);
-              return (
-                <button
-                  key={tld}
-                  type="button"
-                  onClick={() => onToggleTld(tld)}
-                  className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-[0.76rem] font-sans transition-colors cursor-pointer",
-                    active
-                      ? "bg-jgd-accent-dim text-jgd-accent"
-                      : "text-jgd-dim hover:bg-jgd-surface/50 hover:text-jgd-text"
-                  )}
-                >
-                  <span className={cn(
-                    "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-colors",
-                    active
-                      ? "bg-jgd-accent border-jgd-accent"
-                      : "border-jgd-border"
-                  )}>
-                    {active && <Check size={10} className="text-jgd-bg" />}
-                  </span>
-                  {tld}
-                </button>
-              );
-            })}
-
-            {filtered.length === 0 && (
-              <div className="px-2.5 py-3 text-[0.72rem] text-jgd-dim text-center">
-                No extensions match
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    <p className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium text-jgd-dim">
+      {children}
+    </p>
   );
 }
 
-// ─── Filter Panel ─────────────────────────────────────────────────────
+function Chip({
+  active,
+  onClick,
+  children,
+  removable = false,
+  size = "sm",
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  removable?: boolean;
+  size?: "sm" | "xs";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "cursor-pointer rounded font-sans transition-all border inline-flex items-center gap-1",
+        size === "sm" ? "text-[0.76rem] px-2.5 py-1" : "text-[0.7rem] px-2 py-0.5",
+        active
+          ? "bg-jgd-accent-dim text-jgd-accent border-jgd-accent-mid"
+          : "bg-transparent text-jgd-dim border-jgd-border hover:border-jgd-muted"
+      )}
+    >
+      {children}
+      {removable && active && <X size={10} />}
+    </button>
+  );
+}
 
 export function FilterPanel({
   activeTlds,
   activeLengths,
-  sort,
+  startsWith,
+  availableBand,
   onToggleTld,
   onToggleLength,
-  onSort,
+  onStartsWith,
+  onAvailableBand,
   hasActiveFilters,
   onClear,
 }: {
   activeTlds: Set<string>;
   activeLengths: Set<number>;
-  sort: SortMode;
+  startsWith: string | null;
+  availableBand: AvailableBand | null;
   onToggleTld: (tld: string) => void;
   onToggleLength: (len: number) => void;
-  onSort: (mode: SortMode) => void;
+  onStartsWith: (letter: string | null) => void;
+  onAvailableBand: (band: AvailableBand | null) => void;
   hasActiveFilters: boolean;
   onClear: () => void;
 }) {
+  const allTlds = useTldList();
+  const popularTlds = allTlds.slice(0, POPULAR_COUNT);
+  const popularSet = new Set(popularTlds);
+
+  // Long-tail TLDs the user has selected via the dropdown — surface them as
+  // chips above the popular row so all active selections are visible at a glance.
+  const extraSelected = [...activeTlds].filter((t) => !popularSet.has(t));
+
   return (
     <div className="flex flex-col gap-7">
-      {/* TLD section */}
+      {/* Extensions */}
       <div>
-        <p className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium text-jgd-dim">
-          Extensions
-        </p>
-        <TldDropdown
-          activeTlds={activeTlds}
-          onToggleTld={onToggleTld}
-        />
+        <SectionLabel>Extensions</SectionLabel>
+
+        {extraSelected.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {extraSelected.map((tld) => (
+              <Chip key={tld} active onClick={() => onToggleTld(tld)} removable>
+                {tld}
+              </Chip>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-1.5">
+          {popularTlds.map((tld) => (
+            <Chip key={tld} active={activeTlds.has(tld)} onClick={() => onToggleTld(tld)}>
+              {tld}
+            </Chip>
+          ))}
+        </div>
+
+        <div className="mt-2">
+          <TldDropdown
+            allTlds={allTlds}
+            popularTlds={popularTlds}
+            activeTlds={activeTlds}
+            onToggleTld={onToggleTld}
+          />
+        </div>
       </div>
 
-      {/* Length section */}
+      {/* Length */}
       <div>
-        <p className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium text-jgd-dim">
-          Length
-        </p>
-        <div className="flex gap-1.5">
-          {LENGTHS.map((len) => {
-            const active = activeLengths.has(len);
+        <SectionLabel>Length</SectionLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {LENGTHS.map((len, i) => {
+            const isLast = i === LENGTHS.length - 1;
+            return (
+              <Chip
+                key={len}
+                active={activeLengths.has(len)}
+                onClick={() => onToggleLength(len)}
+              >
+                {isLast ? `${len}+` : `${len}`}
+              </Chip>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Category — slot reserved; tagging deferred to a follow-up. */}
+
+      {/* Starts with */}
+      <div>
+        <SectionLabel>Starts with</SectionLabel>
+        <div className="grid grid-cols-7 gap-1">
+          {ALPHABET.map((letter) => {
+            const active = startsWith === letter;
             return (
               <button
-                key={len}
+                key={letter}
                 type="button"
-                onClick={() => onToggleLength(len)}
+                onClick={() => onStartsWith(letter)}
                 className={cn(
-                  "cursor-pointer text-[0.76rem] px-3 py-1 rounded font-sans transition-all border",
+                  "cursor-pointer text-[0.7rem] py-1 rounded font-sans transition-all border text-center",
                   active
                     ? "bg-jgd-accent-dim text-jgd-accent border-jgd-accent-mid"
-                    : "bg-transparent text-jgd-dim border-jgd-border"
+                    : "bg-transparent text-jgd-dim border-transparent hover:border-jgd-border"
                 )}
               >
-                {len}L
+                {letter}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Sort section */}
+      {/* Available on */}
       <div>
-        <p className="text-[0.7rem] uppercase tracking-[2px] mb-3 font-medium text-jgd-dim">
-          Sort by
-        </p>
-        <div className="flex flex-col gap-1">
-          {([
-            ["tlds", "Most TLDs"],
-            ["alpha", "A \u2192 Z"],
-            ["shortest", "Shortest"],
-          ] as const).map(([mode, label]) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => onSort(mode)}
-              className={cn(
-                "cursor-pointer text-left text-[0.76rem] px-2.5 py-1.5 rounded transition-all",
-                sort === mode
-                  ? "bg-jgd-accent-dim text-jgd-accent"
-                  : "text-jgd-dim"
-              )}
+        <SectionLabel>Available on</SectionLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {BANDS.map((b) => (
+            <Chip
+              key={b.key}
+              active={availableBand === b.key}
+              onClick={() => onAvailableBand(b.key)}
             >
-              {label}
-            </button>
+              {b.label}
+            </Chip>
           ))}
+          <Chip active={availableBand === null} onClick={() => onAvailableBand(null)}>
+            All
+          </Chip>
         </div>
       </div>
 
