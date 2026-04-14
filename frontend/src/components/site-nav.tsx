@@ -16,8 +16,27 @@ export function SiteNav() {
     >
       <Link
         href="/"
-        className="text-jgd-accent font-bold transition-opacity hover:opacity-80"
+        className="flex items-center gap-1.5 text-jgd-accent font-bold transition-opacity hover:opacity-80"
       >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          className="w-8 h-8 shrink-0"
+          aria-hidden
+        >
+          <text
+            x="105"
+            y="340"
+            fontFamily="sans-serif"
+            fontWeight="700"
+            fontSize="280"
+            fill="currentColor"
+            letterSpacing="-15"
+          >
+            &gt;_
+          </text>
+          <circle cx="385" cy="375" r="20" fill="currentColor" />
+        </svg>
         JustGetDomain
       </Link>
 
@@ -37,7 +56,7 @@ export function SiteNav() {
             rel="noopener noreferrer"
             className="text-jgd-dim transition-colors hover:text-jgd-accent"
           >
-            Request Word Removal
+            Request Removal
           </a>
         )}
         <span className="hidden sm:flex items-center gap-2 text-jgd-dim">
