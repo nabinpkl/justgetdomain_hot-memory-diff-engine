@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { Search, ArrowLeft, SlidersHorizontal, X, ExternalLink } from "lucide-react";
+import { Search, SlidersHorizontal, X, ExternalLink } from "lucide-react";
 import { REGISTRARS } from "@/components/domain/domain-data";
 import { FilterPanel, useFilterState } from "@/components/domain/filter-panel";
 import { EmptyState } from "@/components/domain/empty-state";
@@ -78,28 +77,7 @@ export function DomainSearch() {
   const visibleEntries = total > 0 ? getRows(startIndex, endIndex) : [];
 
   return (
-    <div className="min-h-screen flex flex-col font-medium bg-jgd-bg text-jgd-text font-sans">
-      {/* ── Top bar ── */}
-      <nav className="sticky top-0 z-50 flex items-center gap-4 px-5 py-3 backdrop-blur-2xl bg-[oklch(0.16_0_0/0.92)] border-b border-jgd-border">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[1.5px] transition-colors text-jgd-dim hover:text-jgd-text"
-        >
-          <ArrowLeft size={14} />
-          <span className="hidden sm:inline">Back</span>
-        </Link>
-
-        <span className="text-[0.7rem] font-bold uppercase tracking-[1.5px] text-jgd-accent">
-          JustGetDomain
-        </span>
-
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-[0.7rem] uppercase tracking-[2px] text-jgd-dim">
-            {isLoading ? "Loading..." : `${total.toLocaleString()} found`}
-          </span>
-        </div>
-      </nav>
-
+    <div className="flex flex-col font-medium bg-jgd-bg text-jgd-text font-sans">
       {/* ── Search hero ── */}
       <div className="relative border-b border-jgd-border">
         <div
@@ -154,7 +132,7 @@ export function DomainSearch() {
 
           <div className="flex items-center gap-4 mt-4 text-[0.72rem] uppercase tracking-[2px] text-jgd-dim">
             <span>{total.toLocaleString()} domains</span>
-            <span className="text-[oklch(0.45_0_0)]">/</span>
+            <span className="text-jgd-muted">/</span>
             <UpdatedIndicator />
             <button
               type="button"
@@ -173,7 +151,7 @@ export function DomainSearch() {
       {/* ── Main content ── */}
       <div className="flex-1 max-w-[1200px] w-full mx-auto flex min-h-0">
         {/* Sidebar filters — desktop */}
-        <aside className="hidden sm:block shrink-0 sticky top-[53px] self-start w-[200px] border-r border-jgd-border p-6 pr-5">
+        <aside className="hidden sm:block shrink-0 sticky top-14 self-start w-[200px] border-r border-jgd-border p-6 pr-5">
           <FilterPanel
             activeTlds={activeTlds}
             activeLengths={activeLengths}
@@ -189,7 +167,7 @@ export function DomainSearch() {
         {/* Mobile filter drawer */}
         {showFilters && (
           <div
-            className="fixed inset-0 z-40 sm:hidden bg-[oklch(0_0_0/0.7)]"
+            className="fixed inset-0 z-40 sm:hidden bg-jgd-overlay"
             onClick={() => setShowFilters(false)}
           >
             <div
@@ -220,7 +198,7 @@ export function DomainSearch() {
         <main
           ref={scrollRef}
           className="flex-1 min-w-0 overflow-y-auto"
-          style={{ height: "calc(100vh - 53px)" }}
+          style={{ height: "calc(100vh - 3.5rem)" }}
           onScroll={handleScroll}
         >
           {!isLoading && total === 0 ? (
@@ -267,7 +245,7 @@ export function DomainSearch() {
                       </div>
 
                       {isExpanded && (
-                        <div className="flex gap-2 px-5 py-3 bg-[oklch(0.22_0.01_142)] border-b border-jgd-border">
+                        <div className="flex gap-2 px-5 py-3 bg-jgd-row-active border-b border-jgd-border">
                           {REGISTRARS.map((reg) => (
                             <a
                               key={reg.name}

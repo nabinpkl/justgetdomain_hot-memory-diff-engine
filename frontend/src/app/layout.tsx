@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteNav } from "@/components/site-nav";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,10 +47,20 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${instrumentSerif.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <div className="flex-1">{children}</div>
-        <SiteFooter />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          storageKey="jgd-theme"
+          disableTransitionOnChange
+        >
+          <SiteNav />
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </ThemeProvider>
       </body>
     </html>
   );

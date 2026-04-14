@@ -48,6 +48,10 @@
   --color-jgd-accent-dim: var(--jgd-accent-dim);
   --color-jgd-warn: var(--jgd-warn);
   --color-jgd-border: var(--jgd-border);
+  --color-jgd-nav: var(--jgd-nav);
+  --color-jgd-overlay: var(--jgd-overlay);
+  --color-jgd-row-active: var(--jgd-row-active);
+  --color-jgd-muted: var(--jgd-muted);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -91,18 +95,22 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* JustGetDomain brand tokens — all oklch
-     Dark mode floor: L 0.15 (Material). Text: L 0.93 (no glare).
-     Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
-  --jgd-bg: oklch(0.16 0 0);
-  --jgd-surface: oklch(0.20 0 0);
-  --jgd-text: oklch(0.93 0 0);
-  --jgd-dim: oklch(0.72 0 0);
-  --jgd-accent: oklch(0.75 0.18 142);
-  --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
-  --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
-  --jgd-warn: oklch(0.92 0.2 105);
-  --jgd-border: oklch(0.27 0 0);
+  /* JustGetDomain brand tokens — light mode (default).
+     Surfaces: L 0.99 / L 0.965. Text: L 0.18. Dim: L 0.46.
+     Accent darkened to L 0.52 for AA contrast on white. */
+  --jgd-bg: oklch(0.99 0 0);
+  --jgd-surface: oklch(0.965 0 0);
+  --jgd-text: oklch(0.18 0 0);
+  --jgd-dim: oklch(0.46 0 0);
+  --jgd-muted: oklch(0.62 0 0);
+  --jgd-accent: oklch(0.52 0.17 142);
+  --jgd-accent-dim: oklch(0.52 0.17 142 / 0.10);
+  --jgd-accent-mid: oklch(0.52 0.17 142 / 0.22);
+  --jgd-warn: oklch(0.52 0.18 60);
+  --jgd-border: oklch(0.90 0 0);
+  --jgd-nav: oklch(0.99 0 0 / 0.88);
+  --jgd-overlay: oklch(0.20 0 0 / 0.45);
+  --jgd-row-active: oklch(0.95 0.02 142);
 }
 
 .dark {
@@ -137,6 +145,23 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* JustGetDomain brand tokens — dark mode overrides.
+     Floor: L 0.16 (Material). Text: L 0.93 (no glare).
+     Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
+  --jgd-bg: oklch(0.16 0 0);
+  --jgd-surface: oklch(0.20 0 0);
+  --jgd-text: oklch(0.93 0 0);
+  --jgd-dim: oklch(0.72 0 0);
+  --jgd-muted: oklch(0.45 0 0);
+  --jgd-accent: oklch(0.75 0.18 142);
+  --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
+  --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
+  --jgd-warn: oklch(0.92 0.2 105);
+  --jgd-border: oklch(0.27 0 0);
+  --jgd-nav: oklch(0.16 0 0 / 0.92);
+  --jgd-overlay: oklch(0 0 0 / 0.7);
+  --jgd-row-active: oklch(0.22 0.01 142);
 }
 
 @layer base {
@@ -144,10 +169,18 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-jgd-bg text-jgd-text;
   }
   html {
     @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  html,
+  body {
+    transition: background-color 200ms ease, color 200ms ease;
   }
 }
 

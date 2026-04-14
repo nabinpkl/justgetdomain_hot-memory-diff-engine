@@ -115,8 +115,8 @@ function TldDropdown({
         className={cn(
           "w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded text-[0.76rem] font-sans transition-all border cursor-pointer",
           open || selectedCount > 0
-            ? "bg-jgd-accent-dim text-jgd-accent border-[oklch(0.75_0.18_142/0.2)]"
-            : "bg-transparent text-jgd-dim border-jgd-border hover:border-[oklch(0.45_0_0)]"
+            ? "bg-jgd-accent-dim text-jgd-accent border-jgd-accent-mid"
+            : "bg-transparent text-jgd-dim border-jgd-border hover:border-jgd-muted"
         )}
       >
         <span>
@@ -237,7 +237,7 @@ export function FilterPanel({
                 className={cn(
                   "cursor-pointer text-[0.76rem] px-3 py-1 rounded font-sans transition-all border",
                   active
-                    ? "bg-jgd-accent-dim text-jgd-accent border-[oklch(0.75_0.18_142/0.2)]"
+                    ? "bg-jgd-accent-dim text-jgd-accent border-jgd-accent-mid"
                     : "bg-transparent text-jgd-dim border-jgd-border"
                 )}
               >

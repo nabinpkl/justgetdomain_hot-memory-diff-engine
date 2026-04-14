@@ -15,19 +15,19 @@ export function DisclaimerCard({ className = "" }: { className?: string }) {
     <aside
       role="note"
       aria-label="Project disclaimer"
-      className={`rounded-lg border border-jgd-warn/25 bg-jgd-warn/[0.04] px-5 py-4 text-[0.92rem] leading-[1.65] text-jgd-dim ${className}`}
+      className={`rounded-lg border border-jgd-warn/25 bg-jgd-warn/[0.04] px-4 py-3 text-[0.78rem] leading-[1.55] text-jgd-dim ${className}`}
     >
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-jgd-warn/35 bg-jgd-warn/[0.08] px-2 py-[2px] text-[0.6rem] font-semibold uppercase tracking-[1.8px] text-jgd-warn">
-        <Info size={10} strokeWidth={2.5} aria-hidden />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-jgd-warn/35 bg-jgd-warn/[0.08] px-2 py-[2px] text-[0.56rem] font-semibold uppercase tracking-[1.6px] text-jgd-warn">
+        <Info size={9} strokeWidth={2.5} aria-hidden />
         Portfolio project
       </span>
 
-      <p className="mt-3 text-jgd-text/85">
+      <p className="mt-2 text-jgd-text/85">
         Not a registrar. Built to solve domain{" "}
         <em className="not-italic text-jgd-text">browsability</em>, not to sell domains.
       </p>
 
-      <ul role="list" className="mt-3 space-y-2 border-t border-jgd-warn/15 pt-3">
+      <ul role="list" className="mt-2 space-y-1.5 border-t border-jgd-warn/15 pt-2">
         <li className="relative pl-4">
           {bullet}
           Curated word list - only hand-reviewed dictionary words appear. Brand names,

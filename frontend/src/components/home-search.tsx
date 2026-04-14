@@ -121,33 +121,12 @@ export function HomeSearch() {
     isSearching && total > 0 ? getRows(startIndex, endIndex) : [];
 
   return (
-    <div className="overflow-x-hidden min-h-screen bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
-      {/* ── Nav ── */}
-      <nav
-        role="navigation"
-        aria-label="Main"
-        className="fixed top-0 inset-x-0 z-50 flex justify-between items-center px-8 py-4 text-[0.75rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-[oklch(0.16_0_0/0.92)] border-b border-jgd-border"
-      >
-        <span className="text-jgd-accent font-bold">JustGetDomain</span>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/search"
-            className="text-jgd-dim text-[0.75rem] tracking-[1.5px] uppercase transition-colors hover:text-jgd-accent"
-          >
-            Browse Domains
-          </Link>
-          <span className="flex items-center gap-2 text-jgd-dim">
-            <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent" />
-            Launching Soon
-          </span>
-        </div>
-      </nav>
-
+    <div className="overflow-x-hidden bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
       {/* ── Hero / Search ── */}
       <div
         className={cn(
-          "relative flex flex-col pt-[57px] transition-[min-height] duration-700 jgd-ease-out",
-          isSearching ? "min-h-0" : "min-h-screen"
+          "relative flex flex-col transition-[min-height] duration-700 jgd-ease-out",
+          isSearching ? "min-h-0" : "min-h-[calc(100vh-3.5rem)]"
         )}
       >
         {/* Ambient glow */}
@@ -195,9 +174,9 @@ export function HomeSearch() {
         {/* ── Search bar ── */}
         <div
           className={cn(
-            "relative sticky top-[57px] z-40 w-full transition-all duration-500 jgd-ease-out",
+            "relative sticky top-14 z-40 w-full transition-all duration-500 jgd-ease-out",
             isSearching
-              ? "bg-[oklch(0.16_0_0/0.92)] backdrop-blur-[20px] border-b border-b-jgd-border px-6 py-4"
+              ? "bg-jgd-nav backdrop-blur-[20px] border-b border-b-jgd-border px-6 py-4"
               : "bg-transparent backdrop-blur-none border-b border-b-transparent px-6 py-0"
           )}
         >
@@ -251,7 +230,7 @@ export function HomeSearch() {
               <p className="mt-5 text-center text-[0.95rem] text-jgd-dim leading-[1.7]">
                 Don&apos;t know what you&apos;re looking for?{" "}
                 <Link
-                  href="/search"
+                  href="/domains"
                   className="text-jgd-accent border-b border-jgd-accent/30 hover:border-jgd-accent transition-colors"
                 >
                   Explore millions of available domains
@@ -267,7 +246,7 @@ export function HomeSearch() {
                     ? "Loading..."
                     : `${total.toLocaleString()} domain${total !== 1 ? "s" : ""} found`}
                 </span>
-                <span className="text-[oklch(0.45_0_0)]">/</span>
+                <span className="text-jgd-muted">/</span>
                 <UpdatedIndicator />
                 <button
                   type="button"
@@ -314,7 +293,7 @@ export function HomeSearch() {
           {/* Mobile filter drawer */}
           {showFilters && (
             <div
-              className="fixed inset-0 z-40 sm:hidden bg-[oklch(0_0_0/0.7)]"
+              className="fixed inset-0 z-40 sm:hidden bg-jgd-overlay"
               onClick={() => setShowFilters(false)}
             >
               <div
@@ -401,7 +380,7 @@ export function HomeSearch() {
                         </div>
 
                         {isExpanded && (
-                          <div className="flex gap-2 px-5 py-3 bg-[oklch(0.22_0.01_142)] border-b border-jgd-border">
+                          <div className="flex gap-2 px-5 py-3 bg-jgd-row-active border-b border-jgd-border">
                             {REGISTRARS.map((reg) => (
                               <a
                                 key={reg.name}
