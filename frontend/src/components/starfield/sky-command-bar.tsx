@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, Shuffle, X } from "lucide-react";
 import { MAX_SHORTLIST, useShortlist } from "@/stores/use-shortlist";
 import { useFilterState } from "@/lib/starfield/filter-state";
 import { FiltersTrigger } from "./filters-trigger";
 
-export function SkyCommandBar({ total }: { total: number }) {
+type SkyCommandBarProps = {
+  total: number;
+  onShuffle: () => void;
+  shuffleDisabled?: boolean;
+};
+
+export function SkyCommandBar({ total, onShuffle, shuffleDisabled }: SkyCommandBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { query, setQuery } = useFilterState();
 
@@ -52,12 +58,23 @@ export function SkyCommandBar({ total }: { total: number }) {
 
         <FiltersTrigger total={total} />
 
+        <button
+          type="button"
+          onClick={onShuffle}
+          disabled={shuffleDisabled}
+          aria-label="Shuffle"
+          className="shrink-0 inline-flex items-center gap-2 h-8 px-2.5 rounded-md border border-jgd-border bg-jgd-bg/40 text-[0.76rem] text-jgd-dim hover:text-jgd-accent hover:border-jgd-accent-mid transition-colors cursor-pointer normal-case tracking-normal disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Shuffle size={13} aria-hidden />
+          <span>Shuffle</span>
+        </button>
+
         <div className="hidden sm:block shrink-0 w-px h-6 bg-jgd-border" aria-hidden />
 
         <div className="flex-1 min-w-0 flex items-center">
           {count === 0 ? (
-            <span className="hidden sm:inline text-[0.7rem] uppercase tracking-[2.5px] text-jgd-dim whitespace-nowrap truncate">
-              Click a star to save it
+            <span className="hidden sm:inline text-[0.68rem] uppercase tracking-[2.5px] text-jgd-dim/70 whitespace-nowrap truncate">
+              tap a domain to save
             </span>
           ) : (
             <ul className="flex items-center gap-1.5 overflow-x-auto min-w-0 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">

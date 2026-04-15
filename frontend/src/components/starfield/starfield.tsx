@@ -7,7 +7,6 @@ import { scatter } from "@/lib/starfield/scatter";
 import { useFilterState } from "@/lib/starfield/filter-state";
 import { MAX_SHORTLIST, useShortlist } from "@/stores/use-shortlist";
 import type { DomainEntry } from "./domain-data";
-import { ShuffleButton } from "./shuffle-button";
 import { Star } from "./star";
 
 const MOBILE_BREAKPOINT = 640;
@@ -158,8 +157,6 @@ export function Starfield({
             )}
           </ul>
         ))}
-
-      <ShuffleButton onShuffle={onShuffle} disabled={isLoading} />
     </div>
   );
 }

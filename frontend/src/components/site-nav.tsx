@@ -33,7 +33,9 @@ export function SiteNav() {
           </text>
           <circle cx="385" cy="375" r="20" fill="currentColor" />
         </svg>
-        JustGetDomain
+        <span>
+          JustGetDomain<span className="text-jgd-accent">.</span>
+        </span>
       </Link>
 
       <div className="flex items-center gap-4">
