@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ShortlistSlot } from "@/components/shortlist-slot";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteNav() {
@@ -38,14 +37,6 @@ export function SiteNav() {
       </Link>
 
       <div className="flex items-center gap-4">
-        <span className="hidden md:flex items-center gap-2 text-jgd-dim">
-          <span
-            aria-hidden
-            className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent"
-          />
-          Launching Soon
-        </span>
-        <ShortlistSlot />
         <ThemeToggle />
       </div>
     </nav>

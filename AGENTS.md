@@ -4,6 +4,8 @@
 
 # Don'ts
 - No God component if it makes sense to extract to a component do it
+- No dead code — if something is removed, delete it entirely (files, imports, types, everything referencing it)
+- No backward compatibility layers — this is iteration-based development; just change the code directly
 
 # JustGetDomain.com
 
