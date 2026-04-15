@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -52,9 +53,9 @@ export function HomeHero() {
         </div>
         <p className="mt-5 text-[0.95rem] text-jgd-dim leading-[1.7]">
           Press enter to browse{" "}
-          <span className="text-jgd-accent border-b border-jgd-accent/30">
+          <Link href="/domains" className="text-jgd-accent border-b border-jgd-accent/30 hover:opacity-80 transition-opacity cursor-pointer">
             millions of available domains
-          </span>
+          </Link>
           .
         </p>
       </form>

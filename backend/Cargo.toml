@@ -25,3 +25,11 @@ memmap2 = "0.9"
 tracing = "0.1.44"
 tokio-stream = "0.1"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+arc-swap = "1.7"
+reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls"] }
+futures-util = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+anyhow = "1"
+thiserror = "1"

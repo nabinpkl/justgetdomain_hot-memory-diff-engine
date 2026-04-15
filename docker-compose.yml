@@ -5,11 +5,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - PORT=8000
-      - SNAPSHOT_PATH=${SNAPSHOT_PATH}
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - RUST_LOG=${RUST_LOG}
+      - RUST_LOG=${RUST_LOG:-info}
       - JGD_WORDLIST=${JGD_WORDLIST:-selective}
+      - DATA_DIR=/app/data
+      - SNAPSHOT_PATH=/app/data/snapshot.bin
+      - DOMAINS_TXT_PATH=/app/data/domains.txt
+      - DOMAINS_ZIP_PATH=/app/data/domains.zip
     volumes:
-      - ./backend/data/snapshot.bin:/data/snapshot.bin:ro
+      - ./backend/data:/app/data
+    restart: unless-stopped

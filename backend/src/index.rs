@@ -156,6 +156,11 @@ impl DomainIndex {
         &self.all_tlds
     }
 
+    /// Number of indexed entries (words with at least one available TLD).
+    pub fn entries_len(&self) -> usize {
+        self.entries.len()
+    }
+
     fn sorted_indices(&self, sort: &SortMode) -> &[usize] {
         match sort {
             SortMode::Alpha => &self.by_alpha,

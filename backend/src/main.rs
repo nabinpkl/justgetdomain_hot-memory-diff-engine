@@ -1,30 +1,18 @@
 use std::net::SocketAddr;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
+use axum::Router;
 use axum::routing::get;
-use axum::{Json, Router};
-use serde::Serialize;
 use tower_http::cors::CorsLayer;
-use tracing::info;
+use tracing::{info, warn};
 
-use justgetdomain::handlers::{self, AppState};
+use justgetdomain::config::BatchConfig;
+use justgetdomain::handlers;
 use justgetdomain::index::DomainIndex;
+use justgetdomain::scheduler;
 use justgetdomain::snapshot;
-
-#[derive(Serialize)]
-struct HealthResponse {
-    status: &'static str,
-    version: &'static str,
-}
-
-async fn health_handler() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "ok",
-        version: "0.1.0",
-    })
-}
+use justgetdomain::state::{AppState, now_ms};
 
 #[tokio::main]
 async fn main() {
@@ -35,35 +23,61 @@ async fn main() {
         )
         .init();
 
-    // Load snapshot
-    let snapshot_path = std::env::var("SNAPSHOT_PATH")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("data/snapshot.bin"));
+    let config = match BatchConfig::from_env() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("FATAL: invalid config: {e:#}");
+            std::process::exit(1);
+        }
+    };
 
-    info!(path = %snapshot_path.display(), "loading snapshot");
-    let snapshot_updated_at_ms = std::fs::metadata(&snapshot_path)
-        .and_then(|m| m.modified())
-        .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0);
-    let start = Instant::now();
-    let snapshot = snapshot::load(&snapshot_path).expect("failed to load snapshot");
     info!(
-        entries = snapshot.entries.len(),
-        tlds = snapshot.all_tlds.len(),
-        elapsed_ms = start.elapsed().as_millis(),
-        "snapshot loaded"
+        url = %config.redacted_url(),
+        start_hour = config.start_hour,
+        window_hours = config.window_hours,
+        timezone = %config.timezone,
+        stale_after_hours = config.stale_after_hours,
+        snapshot_path = %config.snapshot_path.display(),
+        "config loaded"
     );
 
-    // Build domain index
-    let index = DomainIndex::from_snapshot(&snapshot);
-    drop(snapshot); // free snapshot memory
+    // Try to load an existing snapshot so we can serve immediately on boot.
+    // A missing snapshot is fine — scheduler will run the first batch.
+    let (initial_index, initial_mtime) = match snapshot::load(&config.snapshot_path) {
+        Ok(snap) => {
+            let start = Instant::now();
+            let entries = snap.entries.len();
+            let tlds = snap.all_tlds.len();
+            let idx = DomainIndex::from_snapshot(&snap);
+            drop(snap);
+            let mtime = std::fs::metadata(&config.snapshot_path)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_millis() as i64);
+            info!(
+                entries,
+                tlds,
+                elapsed_ms = start.elapsed().as_millis(),
+                "loaded existing snapshot"
+            );
+            (Some(Arc::new(idx)), mtime)
+        }
+        Err(e) => {
+            warn!(error = %e, "no snapshot on disk; server will serve 503 until first batch completes");
+            (None, None)
+        }
+    };
 
-    let state = Arc::new(AppState {
-        index: Arc::new(index),
-        snapshot_updated_at_ms,
-    });
+    let state = Arc::new(AppState::new(config, initial_index));
+    if let Some(ts) = initial_mtime {
+        state.update_batch(|s| {
+            s.snapshot_updated_at_ms = Some(ts);
+            // Treat an existing on-disk snapshot as a prior success so the
+            // scheduler waits for the nightly window instead of re-running now.
+            s.last_success_at_ms = Some(ts.min(now_ms()));
+        });
+    }
 
     // CORS
     let cors_origin = std::env::var("CORS_ORIGIN").unwrap_or_else(|_| "*".to_string());
@@ -73,20 +87,25 @@ async fn main() {
     } else {
         info!(origin = %cors_origin, "CORS: restricting to origin");
         CorsLayer::new()
-            .allow_origin(cors_origin.parse::<axum::http::HeaderValue>().expect("invalid CORS_ORIGIN"))
+            .allow_origin(
+                cors_origin
+                    .parse::<axum::http::HeaderValue>()
+                    .expect("invalid CORS_ORIGIN"),
+            )
             .allow_methods([axum::http::Method::GET])
             .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::ACCEPT])
     };
 
     let app = Router::new()
-        .route("/health", get(health_handler))
+        .route("/health", get(handlers::health_handler))
+        .route("/ready", get(handlers::ready_handler))
         .route("/search", get(handlers::search_handler))
         .route("/stream", get(handlers::stream_handler))
         .route("/tlds", get(handlers::tlds_handler))
         .route("/tlds-for", get(handlers::tlds_for_handler))
         .route("/stats", get(handlers::stats_handler))
         .layer(cors)
-        .with_state(state);
+        .with_state(state.clone());
 
     let port: u16 = std::env::var("PORT")
         .ok()
@@ -96,7 +115,14 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .expect("failed to bind port");
-
     info!(%addr, "server started");
+
+    // Scheduler runs in background. It will kick off the first batch
+    // immediately if no snapshot was loaded.
+    let scheduler_state = state.clone();
+    tokio::spawn(async move {
+        scheduler::run(scheduler_state).await;
+    });
+
     axum::serve(listener, app).await.unwrap();
 }
