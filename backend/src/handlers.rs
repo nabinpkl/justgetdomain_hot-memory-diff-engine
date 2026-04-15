@@ -34,6 +34,7 @@ pub struct SearchQuery {
     pub lengths: Option<String>,
     pub available: Option<String>,
     pub sort: Option<String>,
+    pub seed: Option<u64>,
     pub offset: Option<usize>,
     pub limit: Option<usize>,
 }
@@ -246,6 +247,7 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
     let sort = match query.sort.as_deref() {
         Some("tlds") => SortMode::Tlds,
         Some("shortest") => SortMode::Shortest,
+        Some("random") => SortMode::Random(query.seed.unwrap_or(0)),
         _ => SortMode::Alpha,
     };
 

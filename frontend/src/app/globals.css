@@ -231,3 +231,15 @@
 @utility jgd-ease-out {
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .jgd-tile-in,
+  .jgd-fade-up {
+    opacity: 1;
+    animation: none;
+  }
+  .jgd-pulse,
+  .jgd-blink {
+    animation: none;
+  }
+}

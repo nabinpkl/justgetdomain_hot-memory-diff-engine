@@ -94,3 +94,38 @@ generic dictionary term
 # we do a quick google check
 
 so no search engine appearance
+
+# Companion ("Clippy done right") — parked until browse UX is solved
+
+Revive the idea of an ambient helper. Silent by default, behavior-triggered, emotionally warm, on-brand.
+
+## Character
+- Reuse the green `>_` terminal prompt from the logo as the character.
+- Three states: waiting (blink), thinking, excited.
+- Lives in a corner. Never blocks content.
+
+## Behavior contract
+Silent by default. Speaks only on earned triggers:
+- Scrolled ~30 names, no clicks → offer to narrow by vibe.
+- Filter hit 0 results → suggest loosening the tightest filter.
+- Search typed then erased 3× in 60s → offer vibe suggestions.
+- Same name hovered 3× → offer to save it.
+- Return visit → greet with last-session context.
+- Long idle (~10 min) without shortlist → suggest sleeping on it.
+- Shortlist reaches 3+ → offer side-by-side compare.
+
+Every message cites something the user just did. No generic "can I help?".
+
+## Dismissal
+- Tap `✕` → silent for session.
+- Per-trigger mute → that trigger off forever.
+- Global mode: `chatty | quiet | off`.
+
+## Memory (localStorage)
+Last-viewed names, favorites, dismissed triggers, preferred TLD, sort preference, session count, optional user-given name.
+
+## Taste layer (rule-based v1)
+Opinions on: length class, dictionary membership, syllable count, C/V ratio, phonetic patterns. Voice: quiet librarian. Observational, not prescriptive. (v2: embedding-based vibe matching.)
+
+## Hard constraint
+Companion serves the user only. No upsell, no share prompts, no engagement-metric agenda. Second job = dead product.

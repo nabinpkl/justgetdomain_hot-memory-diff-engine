@@ -44,6 +44,7 @@ pub enum SortMode {
     Alpha,
     Tlds,
     Shortest,
+    Random(u64),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -166,7 +167,22 @@ impl DomainIndex {
             SortMode::Alpha => &self.by_alpha,
             SortMode::Tlds => &self.by_tld_count,
             SortMode::Shortest => &self.by_shortest,
+            // `/stream` can't cheaply yield a seeded permutation; falls back
+            // to alpha. `/search` handles Random ahead of this call.
+            SortMode::Random(_) => &self.by_alpha,
         }
+    }
+
+    fn random_ordering(&self, seed: u64) -> Vec<usize> {
+        use std::hash::Hasher;
+        let mut v: Vec<usize> = (0..self.entries.len()).collect();
+        v.sort_by_cached_key(|&idx| {
+            let mut h = rustc_hash::FxHasher::default();
+            h.write_u64(seed);
+            h.write(self.entries[idx].word.as_bytes());
+            h.finish()
+        });
+        v
     }
 
     /// Get the list of TLDs to emit for an entry, respecting filters.
@@ -208,7 +224,14 @@ impl DomainIndex {
         offset: usize,
         limit: usize,
     ) -> (usize, Vec<SearchResult>) {
-        let indices = self.sorted_indices(&params.sort);
+        let random_indices: Vec<usize>;
+        let indices: &[usize] = match &params.sort {
+            SortMode::Random(seed) => {
+                random_indices = self.random_ordering(*seed);
+                &random_indices
+            }
+            other => self.sorted_indices(other),
+        };
         let query_lower = params.query.as_ref().map(|q| q.to_lowercase());
         let tld_filter: Option<FxHashSet<&str>> = params
             .tlds
