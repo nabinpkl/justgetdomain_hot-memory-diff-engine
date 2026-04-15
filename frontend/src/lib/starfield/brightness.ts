@@ -1,4 +1,4 @@
-import type { DomainEntry } from "@/components/domain/domain-data";
+import type { DomainEntry } from "@/components/starfield/domain-data";
 
 export type Brightness = "bright" | "mid" | "dim";
 

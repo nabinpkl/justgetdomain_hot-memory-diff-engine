@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
-import type { DomainEntry } from "@/components/domain/domain-data";
+import type { DomainEntry } from "./domain-data";
 import type { Brightness } from "@/lib/starfield/brightness";
 import type { Position } from "@/lib/starfield/scatter";
 

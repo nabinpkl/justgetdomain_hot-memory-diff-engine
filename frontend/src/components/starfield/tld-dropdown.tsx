@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Long-tail TLD dropdown. Popular TLDs render as chips alongside this trigger;
-// this control only handles the searchable list of every TLD beyond the popular set.
 export function TldDropdown({
   allTlds,
   popularTlds,

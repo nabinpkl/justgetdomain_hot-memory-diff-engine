@@ -4,31 +4,37 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { brightness } from "@/lib/starfield/brightness";
 import { hashString } from "@/lib/starfield/seeded-random";
 import { scatter } from "@/lib/starfield/scatter";
+import { useFilterState } from "@/lib/starfield/filter-state";
 import { MAX_SHORTLIST, useShortlist } from "@/stores/use-shortlist";
+import type { DomainEntry } from "./domain-data";
 import { ShuffleButton } from "./shuffle-button";
 import { Star } from "./star";
-import { useStarfieldData } from "./use-starfield-data";
 
-const LIMIT = 80;
 const MOBILE_BREAKPOINT = 640;
 
-function makeSeed() {
-  return (Math.random() * 0xffffffff) >>> 0;
-}
+type StarfieldProps = {
+  seed: number | null;
+  entries: DomainEntry[];
+  total: number;
+  isLoading: boolean;
+  error: string | null;
+  onShuffle: () => void;
+};
 
-export function Starfield() {
-  const [seed, setSeed] = useState<number | null>(null);
-  const { entries, isLoading, error } = useStarfieldData(seed, LIMIT);
-
+export function Starfield({
+  seed,
+  entries,
+  total,
+  isLoading,
+  error,
+  onShuffle,
+}: StarfieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
   const add = useShortlist((s) => s.add);
   const items = useShortlist((s) => s.items);
-
-  useEffect(() => {
-    if (seed === null) setSeed(makeSeed());
-  }, [seed]);
+  const { clearFilters, hasAnyActive } = useFilterState();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -72,6 +78,8 @@ export function Starfield() {
     ? stars
     : stars.filter((s) => s.position !== null);
 
+  const showEmpty = !isLoading && !error && total === 0;
+
   return (
     <div
       ref={containerRef}
@@ -82,7 +90,7 @@ export function Starfield() {
           <span>{error}</span>
           <button
             type="button"
-            onClick={() => setSeed(makeSeed())}
+            onClick={onShuffle}
             className="ml-3 text-jgd-accent hover:opacity-80 cursor-pointer"
           >
             Try again
@@ -96,7 +104,27 @@ export function Starfield() {
         </div>
       )}
 
-      {!error &&
+      {showEmpty && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+          <p className="font-serif text-[1.2rem] text-jgd-text">
+            Nothing matches.
+          </p>
+          <p className="text-[0.8rem] text-jgd-dim max-w-[320px]">
+            Loosen a filter, or clear them all and shuffle.
+          </p>
+          {hasAnyActive && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-2 cursor-pointer text-[0.7rem] uppercase tracking-[2px] px-4 py-2 rounded text-jgd-accent border border-jgd-accent-mid bg-jgd-accent-dim hover:opacity-90 transition-opacity"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
+      {!error && !showEmpty &&
         (isMobile ? (
           <ul className="flex flex-col gap-4 py-8 px-4">
             {visibleStars.map(
@@ -131,10 +159,7 @@ export function Starfield() {
           </ul>
         ))}
 
-      <ShuffleButton
-        onShuffle={() => setSeed(makeSeed())}
-        disabled={isLoading}
-      />
+      <ShuffleButton onShuffle={onShuffle} disabled={isLoading} />
     </div>
   );
 }

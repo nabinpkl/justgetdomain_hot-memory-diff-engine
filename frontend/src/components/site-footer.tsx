@@ -80,6 +80,16 @@ export function SiteFooter() {
                 Takedown / curation requests →
               </a>
             </li>
+            <li>
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLScVOEVfQqP1EOf2cES6-LjWBXxc30bBahL5xc85uAUHpgS7Jw/viewform?usp=dialog"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-[3px] decoration-jgd-dim/40 hover:text-jgd-accent hover:decoration-jgd-accent transition-colors"
+              >
+                Request removal →
+              </a>
+            </li>
           </ul>
         </div>
       </div>

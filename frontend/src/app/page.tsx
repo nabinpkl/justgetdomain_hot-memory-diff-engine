@@ -76,7 +76,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="overflow-x-hidden bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
+      <div className="overflow-x-clip bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
         <HomeHero />
 
         <div className="jgd-fade-up flex justify-center px-6 pb-8 [animation-delay:0.45s]">
