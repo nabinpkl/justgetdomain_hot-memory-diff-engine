@@ -6,8 +6,6 @@ import { SkyCommandBar } from "@/components/starfield/sky-command-bar";
 import { Starfield } from "@/components/starfield/starfield";
 import { useStarfieldData } from "@/components/starfield/use-starfield-data";
 
-const LIMIT = 80;
-
 function makeSeed() {
   return (Math.random() * 0xffffffff) >>> 0;
 }
@@ -18,7 +16,16 @@ function HomeHeroInner() {
     if (seed === null) setSeed(makeSeed());
   }, [seed]);
 
-  const { entries, total, isLoading, error } = useStarfieldData(seed, LIMIT);
+  const {
+    entries,
+    total,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    paramsKey,
+  } = useStarfieldData(seed);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
@@ -51,6 +58,10 @@ function HomeHeroInner() {
           isLoading={isLoading}
           error={error}
           onShuffle={() => setSeed(makeSeed())}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          paramsKey={paramsKey}
         />
       </div>
     </div>

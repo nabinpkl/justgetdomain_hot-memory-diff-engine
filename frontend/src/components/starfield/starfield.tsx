@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { brightness } from "@/lib/starfield/brightness";
 import { hashString } from "@/lib/starfield/seeded-random";
-import { scatter } from "@/lib/starfield/scatter";
 import { useFilterState } from "@/lib/starfield/filter-state";
 import { MAX_SHORTLIST, useShortlist } from "@/stores/use-shortlist";
 import type { DomainEntry } from "./domain-data";
+import { SkySlab } from "./sky-slab";
 import { Star } from "./star";
 
 const MOBILE_BREAKPOINT = 640;
+const SLAB_WIDTH = 240;
+const STARS_PER_SLAB = 12;
+const OVERSCAN = 2;
+const PREFETCH_THRESHOLD = 50;
 
 type StarfieldProps = {
   seed: number | null;
@@ -18,6 +23,10 @@ type StarfieldProps = {
   isLoading: boolean;
   error: string | null;
   onShuffle: () => void;
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  paramsKey: string;
 };
 
 export function Starfield({
@@ -27,8 +36,14 @@ export function Starfield({
   isLoading,
   error,
   onShuffle,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  paramsKey,
 }: StarfieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const mobileSentinelRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
   const add = useShortlist((s) => s.add);
@@ -47,24 +62,6 @@ export function Starfield({
 
   const isMobile = size ? size.w < MOBILE_BREAKPOINT : false;
 
-  const stars = useMemo(() => {
-    if (!entries.length || !size || seed === null) return [];
-    const positions = isMobile
-      ? null
-      : scatter(entries.length, size.w, size.h, seed);
-    return entries.map((entry, i) => {
-      const displayTld =
-        entry.tlds[hashString(entry.name, seed) % entry.tlds.length];
-      return {
-        entry,
-        displayTld,
-        fullDomain: `${entry.name}${displayTld}`,
-        brightness: brightness(entry),
-        position: positions ? positions[i] ?? null : null,
-      };
-    });
-  }, [entries, size, seed, isMobile]);
-
   const savedSet = useMemo(() => new Set(items), [items]);
 
   const handleStarClick = (domain: string) => {
@@ -73,9 +70,75 @@ export function Starfield({
     add(domain);
   };
 
-  const visibleStars = isMobile
-    ? stars
-    : stars.filter((s) => s.position !== null);
+  const slabCount = Math.max(1, Math.ceil(total / STARS_PER_SLAB));
+
+  const virtualizer = useVirtualizer({
+    horizontal: true,
+    count: slabCount,
+    estimateSize: () => SLAB_WIDTH,
+    overscan: OVERSCAN,
+    getScrollElement: () => scrollRef.current,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const lastVisibleIndex = virtualItems.length
+    ? virtualItems[virtualItems.length - 1].index
+    : 0;
+
+  useEffect(() => {
+    if (isMobile || seed === null) return;
+    const loadedStars = entries.length;
+    const needed = (lastVisibleIndex + 1) * STARS_PER_SLAB;
+    if (
+      hasNextPage &&
+      !isFetchingNextPage &&
+      needed >= loadedStars - PREFETCH_THRESHOLD
+    ) {
+      fetchNextPage();
+    }
+  }, [
+    lastVisibleIndex,
+    entries.length,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isMobile,
+    seed,
+  ]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ left: 0 });
+  }, [paramsKey, seed]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = mobileSentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries$) => {
+        if (entries$.some((e) => e.isIntersecting)) {
+          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isMobile, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const mobileStars = useMemo(() => {
+    if (!isMobile || seed === null) return [];
+    return entries.map((entry) => {
+      const displayTld =
+        entry.tlds[hashString(entry.name, seed) % entry.tlds.length];
+      return {
+        entry,
+        displayTld,
+        fullDomain: `${entry.name}${displayTld}`,
+        brightness: brightness(entry),
+      };
+    });
+  }, [entries, seed, isMobile]);
 
   const showEmpty = !isLoading && !error && total === 0;
 
@@ -99,7 +162,7 @@ export function Starfield({
 
       {!error && isLoading && !entries.length && (
         <div className="absolute inset-0 flex items-center justify-center text-[0.85rem] text-jgd-dim">
-          <span className="jgd-blink">Assembling the sky…</span>
+          <span className="jgd-blink">Loading domains…</span>
         </div>
       )}
 
@@ -123,40 +186,73 @@ export function Starfield({
         </div>
       )}
 
-      {!error && !showEmpty &&
-        (isMobile ? (
-          <ul className="flex flex-col gap-4 py-8 px-4">
-            {visibleStars.map(
-              ({ entry, displayTld, fullDomain, brightness: b, position }) => (
-                <Star
-                  key={entry.name + displayTld}
-                  entry={entry}
-                  displayTld={displayTld}
-                  brightness={b}
-                  position={position}
-                  onClick={handleStarClick}
-                  saved={savedSet.has(fullDomain)}
-                />
-              ),
+      {!error && !showEmpty && size !== null && seed !== null && (
+        isMobile ? (
+          <>
+            <ul className="flex flex-col gap-4 py-8 px-4">
+              {mobileStars.map(
+                ({ entry, displayTld, fullDomain, brightness: b }) => (
+                  <Star
+                    key={entry.name + displayTld}
+                    entry={entry}
+                    displayTld={displayTld}
+                    brightness={b}
+                    position={null}
+                    onClick={handleStarClick}
+                    saved={savedSet.has(fullDomain)}
+                  />
+                ),
+              )}
+            </ul>
+            <div ref={mobileSentinelRef} aria-hidden className="h-px w-full" />
+            {isFetchingNextPage && (
+              <div className="py-4 text-center text-[0.75rem] text-jgd-dim jgd-blink">
+                Loading more…
+              </div>
             )}
-          </ul>
+          </>
         ) : (
-          <ul className="relative h-full w-full list-none">
-            {visibleStars.map(
-              ({ entry, displayTld, fullDomain, brightness: b, position }) => (
-                <Star
-                  key={entry.name + displayTld}
-                  entry={entry}
-                  displayTld={displayTld}
-                  brightness={b}
-                  position={position}
-                  onClick={handleStarClick}
-                  saved={savedSet.has(fullDomain)}
-                />
-              ),
-            )}
-          </ul>
-        ))}
+          <div
+            ref={scrollRef}
+            className="absolute inset-0 overflow-x-auto overflow-y-hidden"
+          >
+            <div
+              style={{
+                width: virtualizer.getTotalSize(),
+                height: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualItems.map((vi) => {
+                const slabEntries = entries.slice(
+                  vi.index * STARS_PER_SLAB,
+                  (vi.index + 1) * STARS_PER_SLAB,
+                );
+                return (
+                  <SkySlab
+                    key={vi.key}
+                    slabIndex={vi.index}
+                    entries={slabEntries}
+                    width={SLAB_WIDTH}
+                    height={size.h}
+                    seed={seed}
+                    savedSet={savedSet}
+                    onStarClick={handleStarClick}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      width: SLAB_WIDTH,
+                      height: "100%",
+                      transform: `translateX(${vi.start}px)`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }

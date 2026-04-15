@@ -37,7 +37,7 @@ export function SkyCommandBar({ total, onShuffle, shuffleDisabled }: SkyCommandB
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="filter by text"
-            aria-label="Filter the sky by text"
+            aria-label="Filter domains by text"
             className="flex-1 min-w-0 bg-transparent outline-none text-[0.85rem] text-jgd-text placeholder:opacity-50 font-sans caret-jgd-accent normal-case tracking-normal"
             spellCheck={false}
           />

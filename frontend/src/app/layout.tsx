@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
+import { QueryProvider } from "@/components/query-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -57,9 +58,11 @@ export default function RootLayout({
           storageKey="jgd-theme"
           disableTransitionOnChange
         >
-          <SiteNav />
-          <div className="flex-1">{children}</div>
-          <SiteFooter />
+          <QueryProvider>
+            <SiteNav />
+            <div className="flex-1">{children}</div>
+            <SiteFooter />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

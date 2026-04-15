@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import type { DomainEntry } from "./domain-data";
 import { useFilterState } from "@/lib/starfield/filter-state";
 
@@ -7,20 +8,30 @@ type StarfieldData = {
   total: number;
   isLoading: boolean;
   error: string | null;
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  paramsKey: string;
 };
 
 const DEBOUNCE_MS = 200;
+export const PAGE_SIZE = 200;
+
+type SearchResponse = { total: number; results: DomainEntry[] };
+
+type BuildUrlParams = {
+  query: string;
+  tlds: Set<string>;
+  lengths: Set<number>;
+  startsWith: string | null;
+  availableBand: string | null;
+};
 
 function buildUrl(
   seed: number,
+  offset: number,
   limit: number,
-  params: {
-    query: string;
-    tlds: Set<string>;
-    lengths: Set<number>;
-    startsWith: string | null;
-    availableBand: string | null;
-  },
+  params: BuildUrlParams,
 ): string {
   const usp = new URLSearchParams();
   const text = params.query.trim();
@@ -34,16 +45,23 @@ function buildUrl(
   if (params.availableBand) usp.set("available", params.availableBand);
   usp.set("sort", "random");
   usp.set("seed", String(seed));
+  usp.set("offset", String(offset));
   usp.set("limit", String(limit));
   return `/api/search?${usp.toString()}`;
 }
 
-export function useStarfieldData(seed: number | null, limit: number): StarfieldData {
-  const { query, activeTlds, activeLengths, startsWith, availableBand } = useFilterState();
-  const [entries, setEntries] = useState<DomainEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
+export function useStarfieldData(seed: number | null): StarfieldData {
+  const { query, activeTlds, activeLengths, startsWith, availableBand } =
+    useFilterState();
 
   const paramsKey = [
     query.trim(),
@@ -53,46 +71,63 @@ export function useStarfieldData(seed: number | null, limit: number): StarfieldD
     availableBand ?? "",
   ].join("|");
 
-  useEffect(() => {
-    if (seed === null) return;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      setIsLoading(true);
-      setError(null);
+  const debouncedKey = useDebouncedValue(paramsKey, DEBOUNCE_MS);
 
-      const url = buildUrl(seed, limit, {
-        query,
-        tlds: activeTlds,
-        lengths: activeLengths,
-        startsWith,
-        availableBand,
-      });
+  const params = useMemo<BuildUrlParams>(
+    () => ({
+      query,
+      tlds: activeTlds,
+      lengths: activeLengths,
+      startsWith,
+      availableBand,
+    }),
+    [query, activeTlds, activeLengths, startsWith, availableBand],
+  );
 
-      fetch(url, { signal: controller.signal })
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json() as Promise<{ total: number; results: DomainEntry[] }>;
-        })
-        .then((data) => {
-          if (controller.signal.aborted) return;
-          setEntries(data.results);
-          setTotal(data.total);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-          console.error("starfield fetch failed:", err);
-          setError("Sky's quiet — try again.");
-          setIsLoading(false);
-        });
-    }, DEBOUNCE_MS);
+  const query$ = useInfiniteQuery({
+    queryKey: ["starfield", seed, debouncedKey],
+    enabled: seed !== null,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
+      const url = buildUrl(seed as number, pageParam as number, PAGE_SIZE, params);
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as SearchResponse;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, p) => sum + p.results.length, 0);
+      if (loaded >= lastPage.total) return undefined;
+      return loaded;
+    },
+  });
 
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed, limit, paramsKey]);
+  const entries = useMemo(
+    () => query$.data?.pages.flatMap((p) => p.results) ?? [],
+    [query$.data],
+  );
+  const total = query$.data?.pages[0]?.total ?? 0;
 
-  return { entries, total, isLoading, error };
+  const error = query$.error
+    ? "Couldn't load domains — try again."
+    : null;
+
+  const isLoading =
+    seed === null ||
+    (query$.isPending && query$.fetchStatus !== "idle") ||
+    (query$.isFetching && entries.length === 0);
+
+  return {
+    entries,
+    total,
+    isLoading,
+    error,
+    fetchNextPage: () => {
+      if (query$.hasNextPage && !query$.isFetchingNextPage) {
+        query$.fetchNextPage();
+      }
+    },
+    hasNextPage: query$.hasNextPage,
+    isFetchingNextPage: query$.isFetchingNextPage,
+    paramsKey: debouncedKey,
+  };
 }

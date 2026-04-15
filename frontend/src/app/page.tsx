@@ -1,5 +1,4 @@
 import { HomeHero } from "@/components/home-hero";
-import { TerminalDemo } from "@/components/terminal-demo";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { DisclaimerCard } from "@/components/disclaimer-card";
 
@@ -79,15 +78,11 @@ export default function Home() {
       <div className="overflow-x-clip bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
         <HomeHero />
 
-        <div className="jgd-fade-up flex justify-center px-6 pb-8 [animation-delay:0.45s]">
-          <TerminalDemo />
-        </div>
 
-        <div className="jgd-fade-up px-6 pb-16 max-w-[640px] mx-auto [animation-delay:0.6s]">
-          <DisclaimerCard />
-        </div>
-
-        <section className="py-[120px] border-t border-jgd-border">
+        <section className="py-[32px] border-t border-jgd-border">
+          <div className="jgd-fade-up px-6 pt-6 pb-10 max-w-[640px] mx-auto [animation-delay:0.6s]">
+            <DisclaimerCard />
+          </div>
           <div className="max-w-[820px] mx-auto px-6">
             <p className="text-[0.72rem] uppercase tracking-[4px] mb-6 text-jgd-dim">
               The problem
