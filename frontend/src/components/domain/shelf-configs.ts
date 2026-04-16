@@ -5,7 +5,6 @@ export type ShelfConfig = {
   tlds?: string;
   lengths?: string;
   categories?: string;
-  seed: number;
   group: "vibe" | "tld" | "length";
 };
 
@@ -18,39 +17,11 @@ export type ShelfConfig = {
 export const SHELF_CONFIGS: ShelfConfig[] = [
   // By Vibe — real word-level categorization from the backend
   {
-    id: "nature",
-    title: "Nature & Earth",
-    description:
-      "Organic, natural words — wellness, eco, lifestyle brands",
-    categories: "nature",
-    seed: 1,
-    group: "vibe",
-  },
-  {
     id: "tech",
     title: "Tech & Systems",
     description:
       "Speed, precision, systems — SaaS, devtools, startups",
     categories: "tech",
-    seed: 3,
-    group: "vibe",
-  },
-  {
-    id: "food",
-    title: "Food & Taste",
-    description:
-      "Flavor-forward names — restaurants, food tech, lifestyle",
-    categories: "food",
-    seed: 4,
-    group: "vibe",
-  },
-  {
-    id: "motion",
-    title: "Motion & Flow",
-    description:
-      "Speed, action, momentum — sports, fintech, bold brands",
-    categories: "motion",
-    seed: 11,
     group: "vibe",
   },
   {
@@ -59,7 +30,30 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "Make, shape, forge — studios, makers, artisan brands",
     categories: "craft",
-    seed: 12,
+    group: "vibe",
+  },
+  {
+    id: "nature",
+    title: "Clean Tech & Energy",
+    description:
+      "Sustainable, renewable — cleantech, climate, energy brands",
+    categories: "nature",
+    group: "vibe",
+  },
+  {
+    id: "food",
+    title: "Food & Taste",
+    description:
+      "Flavor-forward names — restaurants, food tech, lifestyle",
+    categories: "food",
+    group: "vibe",
+  },
+  {
+    id: "motion",
+    title: "Motion & Flow",
+    description:
+      "Speed, action, momentum — sports, fintech, bold brands",
+    categories: "motion",
     group: "vibe",
   },
 
@@ -70,7 +64,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "The app-store TLD — signals software, tools, products",
     tlds: ".app",
-    seed: 5,
     group: "tld",
   },
   {
@@ -78,7 +71,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     title: ".dev Domains",
     description: "By developers, for developers — your builder identity",
     tlds: ".dev",
-    seed: 6,
     group: "tld",
   },
   {
@@ -87,7 +79,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "The startup classic — still the default for tech products",
     tlds: ".io",
-    seed: 7,
     group: "tld",
   },
 
@@ -98,7 +89,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "The rarest namespace — every available one surfaced",
     lengths: "3",
-    seed: 8,
     group: "length",
   },
   {
@@ -107,7 +97,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "The sweet spot for brandable names — short, memorable, available",
     lengths: "4",
-    seed: 9,
     group: "length",
   },
   {
@@ -116,7 +105,6 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     description:
       "Real words, compound fragments, memorable slugs — the widest net",
     lengths: "5",
-    seed: 10,
     group: "length",
   },
 ];

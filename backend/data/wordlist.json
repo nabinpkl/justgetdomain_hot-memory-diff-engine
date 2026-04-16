@@ -1,8 +1,8 @@
 {
   "_comment": "Single source of truth for all candidate domain words and their shelf categories. Every word is assigned exactly one category. To add or move words, edit this file and redeploy — no other word list exists.",
   "nature": {
-    "title": "Nature & Earth",
-    "description": "Organic, natural words — wellness, eco, lifestyle brands",
+    "title": "Clean Tech & Energy",
+    "description": "Sustainable, renewable — cleantech, climate, energy brands",
     "words": [
       "acacia",
       "adder",

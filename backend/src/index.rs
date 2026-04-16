@@ -239,7 +239,7 @@ impl DomainIndex {
         params: &SearchParams,
         offset: usize,
         limit: usize,
-    ) -> (usize, Vec<SearchResult>) {
+    ) -> (usize, usize, Vec<SearchResult>) {
         let random_indices: Vec<usize>;
         let indices: &[usize] = match &params.sort {
             SortMode::Random(seed) => {
@@ -261,6 +261,7 @@ impl DomainIndex {
             .map(|c| c.iter().map(|s| s.as_str()).collect());
 
         let mut total = 0usize;
+        let mut total_combos = 0usize;
         let mut results = Vec::with_capacity(limit);
         let end = offset + limit;
 
@@ -280,8 +281,10 @@ impl DomainIndex {
                 continue;
             }
 
+            let match_count = tlds.len();
+            total_combos += match_count;
+
             if total >= offset && total < end {
-                let match_count = tlds.len();
                 let capped: Vec<String> = tlds
                     .into_iter()
                     .take(MAX_TLDS_PER_RESULT)
@@ -297,7 +300,7 @@ impl DomainIndex {
             total += 1;
         }
 
-        (total, results)
+        (total, total_combos, results)
     }
 
     /// Streaming grouped search.

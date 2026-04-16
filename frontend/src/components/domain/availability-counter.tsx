@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/popover";
 
 type Stats = {
-  entries: number;
   total_available: number;
   index_loaded: boolean;
   snapshot_age_seconds: number | null;
@@ -62,7 +61,7 @@ export function AvailabilityCounter({ className }: { className?: string }) {
     <span className={cn("inline-flex items-center gap-1.5", className)}>
       <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent shrink-0" />
       <span className="text-jgd-accent">
-        {stats.entries.toLocaleString()} available names
+        {stats.total_available.toLocaleString()} available name.tld combos
       </span>
       {stats.snapshot_age_seconds != null && (
         <>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { MiniShelf } from "./mini-shelf";
 import { useShelfData } from "@/hooks/use-shelf-data";
@@ -13,11 +14,13 @@ import {
  * the homepage teaser and `/explore` can't drift apart.
  */
 function HomepageShelf({ config }: { config: ShelfConfig }) {
+  const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
+
   const { domains, total, isLoading } = useShelfData({
     tlds: config.tlds,
     lengths: config.lengths,
     categories: config.categories,
-    seed: config.seed,
+    seed,
     limit: 20,
   });
 

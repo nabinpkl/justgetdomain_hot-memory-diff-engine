@@ -9,13 +9,18 @@ type SearchResult = {
   match_count: number;
 };
 
-type ApiResponse = { total: number; results: SearchResult[] };
+type ApiResponse = {
+  total: number;
+  total_combos: number;
+  results: SearchResult[];
+};
 
 type Domain = { name: string; tld: string };
 
 type ShelfDataResult = {
   domains: Domain[];
   total: number;
+  totalCombos: number;
   isLoading: boolean;
 };
 
@@ -38,6 +43,7 @@ export function useShelfData({
 }: ShelfDataParams): ShelfDataResult {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalCombos, setTotalCombos] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +69,7 @@ export function useShelfData({
           })),
         );
         setTotal(data.total);
+        setTotalCombos(data.total_combos);
       })
       .catch(() => {})
       .finally(() => {
@@ -74,5 +81,5 @@ export function useShelfData({
     };
   }, [tlds, lengths, categories, seed, limit, sort]);
 
-  return { domains, total, isLoading };
+  return { domains, total, totalCombos, isLoading };
 }

@@ -44,6 +44,7 @@ pub struct SearchQuery {
 #[derive(Serialize)]
 pub struct SearchResponse {
     pub total: usize,
+    pub total_combos: usize,
     pub results: Vec<SearchResult>,
 }
 
@@ -59,8 +60,13 @@ pub async fn search_handler(
     let offset = query.offset.unwrap_or(0);
     let limit = query.limit.unwrap_or(50).min(200);
 
-    let (total, results) = index.search(&params, offset, limit);
-    Json(SearchResponse { total, results }).into_response()
+    let (total, total_combos, results) = index.search(&params, offset, limit);
+    Json(SearchResponse {
+        total,
+        total_combos,
+        results,
+    })
+    .into_response()
 }
 
 // ─── /stream (NDJSON) ──────────────────────────────────────────────────
