@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AvailabilityCounter } from "@/components/domain/availability-counter";
 
-type Stats = { total_available: number; index_loaded: boolean };
 type SearchResult = {
   name: string;
   tlds: string[];
@@ -60,18 +60,10 @@ function DomainGrid({
 }
 
 export function HeroSection() {
-  const [count, setCount] = useState<number | null>(null);
   const [domains, setDomains] = useState<{ name: string; tld: string }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-
-    fetch("/api/stats")
-      .then((r) => (r.ok ? (r.json() as Promise<Stats>) : null))
-      .then((data) => {
-        if (!cancelled && data?.index_loaded) setCount(data.total_available);
-      })
-      .catch(() => {});
 
     fetch("/api/search?sort=random&seed=99&limit=24")
       .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
@@ -107,18 +99,8 @@ export function HeroSection() {
             What&apos;s left is yours to browse.
           </p>
 
-          <div className="jgd-fade-up [animation-delay:0.3s] mt-8 flex items-center gap-1.5">
-            {count !== null ? (
-              <span className="flex items-center gap-1.5 text-[0.88rem] tracking-wide text-jgd-accent font-medium">
-                <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent shrink-0" />
-                {count.toLocaleString()} domains available now
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-[0.88rem] tracking-wide text-jgd-muted">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-jgd-muted shrink-0" />
-                Loading availability&hellip;
-              </span>
-            )}
+          <div className="jgd-fade-up [animation-delay:0.3s] mt-8">
+            <AvailabilityCounter className="text-[0.88rem] tracking-wide font-medium" />
           </div>
         </div>
 

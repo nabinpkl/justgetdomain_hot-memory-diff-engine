@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ShelfRow } from "@/components/domain/shelf-row";
 import { FilterPills } from "@/components/domain/filter-pills";
 import { SavedBar } from "@/components/domain/saved-bar";
+import { AvailabilityCounter } from "@/components/domain/availability-counter";
 import { filterShelves, type FilterGroup } from "@/components/domain/shelf-configs";
 import { useShortlist } from "@/stores/use-shortlist";
 
@@ -36,15 +37,12 @@ export default function ExplorePage() {
           Browse available domains.
         </h1>
         <p className="jgd-fade-up [animation-delay:0.1s] text-[1rem] text-jgd-dim leading-[1.6] max-w-[520px] mb-2">
-          Every domain below is verified available. Tap any name to save it.
+          Every domain below is available. Tap any name to view it.
           Browse by category or scroll through everything.
         </p>
-        {stats && (
-          <p className="jgd-fade-up [animation-delay:0.2s] flex items-center gap-1.5 text-[0.82rem] text-jgd-accent font-mono mb-6">
-            <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent shrink-0" />
-            {stats.total_available.toLocaleString()} available domains
-          </p>
-        )}
+        <div className="jgd-fade-up [animation-delay:0.2s] mb-6">
+          <AvailabilityCounter className="text-[0.82rem] font-mono" />
+        </div>
       </section>
 
       {/* Filter pills */}
