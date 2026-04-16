@@ -1,4 +1,3 @@
-import { HomeHero } from "@/components/home-hero";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { DisclaimerCard } from "@/components/disclaimer-card";
 
@@ -76,9 +75,6 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="overflow-x-clip bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
-        <HomeHero />
-
-
         <section className="py-[32px] border-t border-jgd-border">
           <div className="jgd-fade-up px-6 pt-6 pb-10 max-w-[640px] mx-auto [animation-delay:0.6s]">
             <DisclaimerCard />

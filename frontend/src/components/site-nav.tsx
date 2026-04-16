@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { usePathname } from "next/navigation";
 
 export function SiteNav() {
+  const pathname = usePathname();
   return (
     <nav
       role="navigation"
@@ -39,6 +41,12 @@ export function SiteNav() {
       </Link>
 
       <div className="flex items-center gap-4">
+        <Link
+          href="/explore"
+          className={`text-[0.75rem] tracking-[1.5px] uppercase transition-opacity hover:opacity-100 ${pathname === "/explore" ? "text-jgd-accent" : "text-jgd-dim opacity-60"}`}
+        >
+          Explore
+        </Link>
         <ThemeToggle />
       </div>
     </nav>
