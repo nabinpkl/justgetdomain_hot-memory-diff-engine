@@ -9,7 +9,6 @@ use tracing::{info, warn};
 
 use justgetdomain::categories::Categories;
 use justgetdomain::config::BatchConfig;
-use justgetdomain::dictionary;
 use justgetdomain::handlers;
 use justgetdomain::index::DomainIndex;
 use justgetdomain::scheduler;
@@ -45,9 +44,7 @@ async fn main() {
 
     // Load the vibe taxonomy once; every index rebuild reuses the same
     // reference so curator edits require a deploy, not a runtime reload.
-    let candidates = dictionary::load_candidates();
-    let categories = Arc::new(Categories::load(&candidates));
-    drop(candidates);
+    let categories = Arc::new(Categories::load());
 
     // Try to load an existing snapshot so we can serve immediately on boot.
     // A missing snapshot is fine — scheduler will run the first batch.

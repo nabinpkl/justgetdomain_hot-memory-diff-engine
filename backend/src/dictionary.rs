@@ -1,43 +1,27 @@
 use rustc_hash::FxHashSet;
 
-const WORDS_SELECTIVE: &str = include_str!("../data/words_selective.txt");
-const WORDS_FULL: &str = include_str!("../data/words_full.txt");
+const WORDLIST_JSON: &str = include_str!("../data/wordlist.json");
 
-/// Pluggable wordlist. Production ships `selective` (curated, brand- and
-/// scam-bait-filtered). Set `JGD_WORDLIST=full` to opt into the unfiltered
-/// dictionary for development. Unknown values fall back to selective.
-fn pick_wordlist() -> (&'static str, &'static str) {
-    match std::env::var("JGD_WORDLIST").as_deref() {
-        Ok("full") => ("full", WORDS_FULL),
-        Ok("selective") | Err(_) => ("selective", WORDS_SELECTIVE),
-        Ok(other) => {
-            tracing::warn!(
-                value = other,
-                "unknown JGD_WORDLIST value, defaulting to selective"
-            );
-            ("selective", WORDS_SELECTIVE)
-        }
-    }
-}
-
-/// Load the embedded word list into an FxHashSet.
-/// Filters to lowercase alpha-only words, 3-6 characters.
-/// Lines starting with `#` are treated as comments and skipped.
+/// Load all words from the embedded wordlist.json into an FxHashSet.
+/// Every word in the JSON (across all categories) becomes a candidate domain name.
 pub fn load_candidates() -> FxHashSet<String> {
-    let (name, raw) = pick_wordlist();
+    let parsed: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(WORDLIST_JSON).expect("wordlist.json: invalid JSON");
+
     let mut set = FxHashSet::default();
-    for line in raw.lines() {
-        let word = line.trim();
-        if word.is_empty() || word.starts_with('#') {
-            continue;
+    for (key, value) in &parsed {
+        if key.starts_with('_') {
+            continue; // metadata / comment key
         }
-        if word.len() >= 3
-            && word.len() <= 6
-            && word.bytes().all(|b| b.is_ascii_lowercase())
-        {
-            set.insert(word.to_string());
+        if let Some(words) = value.get("words").and_then(|w| w.as_array()) {
+            for w in words {
+                if let Some(s) = w.as_str() {
+                    set.insert(s.to_string());
+                }
+            }
         }
     }
-    tracing::info!(wordlist = name, count = set.len(), "loaded candidate wordlist");
+
+    tracing::info!(count = set.len(), "loaded candidate wordlist from wordlist.json");
     set
 }

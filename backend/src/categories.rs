@@ -1,4 +1,4 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
@@ -43,7 +43,7 @@ struct CategoryDef {
 impl Categories {
     /// Parse the embedded wordlist and drop any word not present in the
     /// candidate dictionary (so stale entries don't silently shadow reality).
-    pub fn load(candidates: &FxHashSet<String>) -> Self {
+    pub fn load() -> Self {
         // `preserve_order` feature keeps JSON object ordering so curator
         // intent survives. Keys prefixed with `_` are treated as comments.
         let parsed: serde_json::Map<String, serde_json::Value> =
@@ -65,32 +65,20 @@ impl Categories {
                 }
             };
 
+            // wordlist.json is now the single source of truth for candidates,
+            // so every word here is guaranteed to be in the candidate set.
             let mut kept: Vec<String> = Vec::with_capacity(def.words.len());
-            let mut dropped: Vec<String> = Vec::new();
             for word in def.words {
-                if candidates.contains(&word) {
-                    word_to_cats
-                        .entry(word.clone())
-                        .or_default()
-                        .push(key.clone());
-                    kept.push(word);
-                } else {
-                    dropped.push(word);
-                }
-            }
-
-            if !dropped.is_empty() {
-                warn!(
-                    category = %key,
-                    dropped = dropped.len(),
-                    examples = ?dropped.iter().take(5).collect::<Vec<_>>(),
-                    "wordlist.json: words not in candidate dictionary, dropped"
-                );
+                word_to_cats
+                    .entry(word.clone())
+                    .or_default()
+                    .push(key.clone());
+                kept.push(word);
             }
 
             info!(
                 category = %key,
-                kept = kept.len(),
+                count = kept.len(),
                 "wordlist.json: category loaded"
             );
 
