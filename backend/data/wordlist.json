@@ -1,0 +1,80 @@
+{
+  "_comment": "Curated vibe categories for shelf browsing. Each word must also exist in words_selective.txt. A word may appear in multiple categories. Unknown words are logged and ignored at startup.",
+
+  "nature": {
+    "title": "Nature & Earth",
+    "description": "Organic, natural words — wellness, eco, lifestyle brands",
+    "words": [
+      "acacia", "alder", "almond", "aloe", "amber", "aspen", "azalea",
+      "bamboo", "basil", "beech", "bloom", "cedar", "clover", "cove",
+      "creek", "dahlia", "daisy", "dune", "eagle", "earth", "falcon",
+      "fern", "finch", "flora", "forest", "garden", "glen", "grove",
+      "hawk", "hazel", "heron", "herb", "lagoon", "lake", "lilac",
+      "lily", "maple", "marsh", "meadow", "mint", "mist", "moss",
+      "myrtle", "oasis", "ocean", "olive", "orchid", "otter", "palm",
+      "pearl", "pebble", "petal", "pine", "quartz", "reed", "reef",
+      "ridge", "river", "robin", "rose", "sage", "shore", "spruce",
+      "star", "stone", "storm", "stream", "summit", "swan", "thyme",
+      "trout", "tulip", "vale", "valley", "vine", "wave", "willow",
+      "wren", "zephyr"
+    ]
+  },
+
+  "tech": {
+    "title": "Tech & Systems",
+    "description": "Speed, precision, systems — SaaS, devtools, startups",
+    "words": [
+      "byte", "cache", "code", "codex", "core", "data",
+      "debug", "digit", "flux", "grid", "index", "info", "input",
+      "link", "logic", "matrix", "mesh", "modem", "node", "parse",
+      "pixel", "port", "proton", "proxy", "pulse", "pulsar", "query",
+      "quark", "relay", "script", "server", "sync", "vector", "vertex",
+      "vortex"
+    ]
+  },
+
+  "food": {
+    "title": "Food & Taste",
+    "description": "Flavor-forward names — restaurants, food tech, lifestyle",
+    "words": [
+      "basil", "bean", "berry", "bistro", "bread", "broth", "butter",
+      "cafe", "cashew", "celery", "cereal", "cheese", "cherry", "chile",
+      "chili", "chive", "citrus", "cocoa", "coffee", "cookie", "cream",
+      "crepe", "crisp", "crust", "cumin", "dill", "feast", "feta",
+      "fondue", "ginger", "grain", "grill", "honey", "kale", "lemon",
+      "lentil", "mango", "maple", "menu", "mint", "mocha", "nectar",
+      "nutmeg", "olive", "onion", "orange", "papaya", "pasta", "peach",
+      "pear", "pepper", "pita", "plum", "potato", "quince", "radish",
+      "rice", "roast", "sage", "salad", "salami", "salsa", "sauce",
+      "savor", "savory", "sesame", "spice", "spicy", "sugar", "sushi",
+      "sweet", "syrup", "taco", "tart", "taste", "toast", "tofu",
+      "tomato", "turkey", "wine", "zest"
+    ]
+  },
+
+  "motion": {
+    "title": "Motion & Flow",
+    "description": "Speed, action, momentum — sports, fintech, bold brands",
+    "words": [
+      "blaze", "blitz", "bolt", "boost", "breeze", "brisk", "charge",
+      "chase", "cruise", "dart", "dash", "dive", "drift", "drive",
+      "flash", "fleet", "flick", "flip", "float", "flow",
+      "gallop", "glide", "gust", "haste", "hurl", "hustle", "jump",
+      "launch", "leap", "pace", "pivot", "plunge", "pulse", "quick",
+      "rapid", "rise", "rocket", "rush", "shift", "soar", "speed",
+      "spin", "sprint", "stride", "surge", "sway", "sweep", "swing",
+      "swoop", "thrust", "track", "trail", "trek", "whirl", "wing"
+    ]
+  },
+
+  "craft": {
+    "title": "Craft & Build",
+    "description": "Make, shape, forge — studios, makers, artisan brands",
+    "words": [
+      "anvil", "build", "carve", "chisel", "craft", "design", "etch",
+      "fabric", "finish", "fold", "forge", "frame", "hammer", "loom",
+      "make", "mason", "mold", "shape", "sketch", "smith", "stitch",
+      "studio", "style", "tailor", "weave", "weld"
+    ]
+  }
+}

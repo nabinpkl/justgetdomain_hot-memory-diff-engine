@@ -1,82 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MiniShelf } from "./mini-shelf";
+import { useShelfData } from "@/hooks/use-shelf-data";
+import {
+  getHomepageShelves,
+  type ShelfConfig,
+} from "@/components/domain/shelf-configs";
 
-type SearchResult = {
-  name: string;
-  tlds: string[];
-  length: number;
-  match_count: number;
-};
+/**
+ * Shelf configs are the single source of truth (see shelf-configs.ts) so
+ * the homepage teaser and `/explore` can't drift apart.
+ */
+function HomepageShelf({ config }: { config: ShelfConfig }) {
+  const { domains, total, isLoading } = useShelfData({
+    tlds: config.tlds,
+    lengths: config.lengths,
+    categories: config.categories,
+    seed: config.seed,
+    limit: 20,
+  });
 
-type ApiResponse = { total: number; results: SearchResult[] };
-
-type ShelfConfig = {
-  title: string;
-  tlds: string;
-  seed: number;
-};
-
-const SHELF_CONFIGS: ShelfConfig[] = [
-  { title: "Nature & Earth", tlds: ".garden,.green,.bio,.eco,.earth", seed: 1 },
-  { title: ".app Domains", tlds: ".app", seed: 2 },
-  { title: "Tech & Dev", tlds: ".dev,.io,.tech", seed: 3 },
-];
-
-type ShelfData = {
-  total: number;
-  domains: { name: string; tld: string }[];
-  isLoading: boolean;
-};
+  return (
+    <MiniShelf
+      title={config.title}
+      total={total}
+      domains={domains}
+      isLoading={isLoading}
+    />
+  );
+}
 
 export function MiniShelvesSection() {
-  const [shelves, setShelves] = useState<ShelfData[]>(
-    SHELF_CONFIGS.map(() => ({ total: 0, domains: [], isLoading: true })),
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    SHELF_CONFIGS.forEach((config, idx) => {
-      const url = `/api/search?tlds=${encodeURIComponent(config.tlds)}&sort=random&seed=${config.seed}&limit=20`;
-      fetch(url)
-        .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
-        .then((data) => {
-          if (cancelled || !data) return;
-          setShelves((prev) => {
-            const next = [...prev];
-            next[idx] = {
-              total: data.total,
-              domains: data.results.map((d) => ({
-                name: d.name,
-                tld: d.tlds[0]?.replace(/^\./, "") ?? "com",
-              })),
-              isLoading: false,
-            };
-            return next;
-          });
-        })
-        .catch(() => {
-          if (cancelled) return;
-          setShelves((prev) => {
-            const next = [...prev];
-            next[idx] = { total: 0, domains: [], isLoading: false };
-            return next;
-          });
-        });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const hasAnyShelves = shelves.some((s) => !s.isLoading && s.domains.length > 0);
-  const allLoaded = shelves.every((s) => !s.isLoading);
-
-  if (allLoaded && !hasAnyShelves) return null;
+  const shelves = getHomepageShelves();
 
   return (
     <section className="py-[clamp(2.5rem,8vh,5rem)] px-6 sm:px-10">
@@ -92,14 +48,8 @@ export function MiniShelvesSection() {
           ones that click.
         </p>
 
-        {SHELF_CONFIGS.map((config, i) => (
-          <MiniShelf
-            key={config.title}
-            title={config.title}
-            total={shelves[i].total}
-            domains={shelves[i].domains}
-            isLoading={shelves[i].isLoading}
-          />
+        {shelves.map((config) => (
+          <HomepageShelf key={config.id} config={config} />
         ))}
 
         <Link

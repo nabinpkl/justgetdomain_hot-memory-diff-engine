@@ -1,4 +1,5 @@
 pub mod batch_runner;
+pub mod categories;
 pub mod config;
 pub mod dictionary;
 pub mod handlers;

@@ -4,27 +4,34 @@ export type ShelfConfig = {
   description: string;
   tlds?: string;
   lengths?: string;
+  categories?: string;
   seed: number;
   group: "vibe" | "tld" | "length";
 };
 
+/**
+ * Vibe shelves map to backend-curated word categories (see
+ * `backend/data/wordlist.json`). Titles and descriptions mirror the ones on
+ * the backend so the UI reads coherently even before `/api/categories`
+ * responds.
+ */
 export const SHELF_CONFIGS: ShelfConfig[] = [
-  // By Vibe
+  // By Vibe — real word-level categorization from the backend
   {
     id: "nature",
     title: "Nature & Earth",
     description:
-      "Organic, natural words — great for wellness, eco, lifestyle brands",
-    tlds: ".garden,.green,.bio,.eco,.earth",
+      "Organic, natural words — wellness, eco, lifestyle brands",
+    categories: "nature",
     seed: 1,
     group: "vibe",
   },
   {
     id: "tech",
-    title: "Tech & Motion",
+    title: "Tech & Systems",
     description:
-      "Speed, precision, systems — built for SaaS, devtools, startups",
-    tlds: ".dev,.io,.tech,.sh,.run",
+      "Speed, precision, systems — SaaS, devtools, startups",
+    categories: "tech",
     seed: 3,
     group: "vibe",
   },
@@ -33,8 +40,26 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     title: "Food & Taste",
     description:
       "Flavor-forward names — restaurants, food tech, lifestyle",
-    tlds: ".kitchen,.recipes,.cafe,.menu,.bar",
+    categories: "food",
     seed: 4,
+    group: "vibe",
+  },
+  {
+    id: "motion",
+    title: "Motion & Flow",
+    description:
+      "Speed, action, momentum — sports, fintech, bold brands",
+    categories: "motion",
+    seed: 11,
+    group: "vibe",
+  },
+  {
+    id: "craft",
+    title: "Craft & Build",
+    description:
+      "Make, shape, forge — studios, makers, artisan brands",
+    categories: "craft",
+    seed: 12,
     group: "vibe",
   },
 

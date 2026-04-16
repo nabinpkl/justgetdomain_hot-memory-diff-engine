@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 use std::time::Instant;
 use tracing::info;
 
+use crate::categories::Categories;
 use crate::snapshot::Snapshot;
 
 /// TLDs shown individually in the UI, in priority sort order.
@@ -18,6 +19,9 @@ struct IndexedEntry {
     length: usize,
     registered_tlds: FxHashSet<String>,
     available_count: usize,
+    /// Curated category IDs this word belongs to. Populated from
+    /// `backend/data/wordlist.json`. Empty for words that aren't curated.
+    categories: Vec<String>,
 }
 
 pub struct DomainIndex {
@@ -37,6 +41,9 @@ pub struct SearchParams {
     pub lengths: Option<Vec<usize>>,
     pub available_band: Option<AvailableBand>,
     pub sort: SortMode,
+    /// OR-semantics: an entry passes if any of its categories is in this set.
+    /// `None` means the filter is off.
+    pub categories: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default)]
@@ -69,7 +76,7 @@ pub struct SearchResult {
 pub const MAX_TLDS_PER_RESULT: usize = 12;
 
 impl DomainIndex {
-    pub fn from_snapshot(snapshot: &Snapshot) -> Self {
+    pub fn from_snapshot(snapshot: &Snapshot, categories: &Categories) -> Self {
         let start = Instant::now();
 
         // Build priority map: DISPLAY_TLDS get rank 0..N, everything else gets N+1
@@ -114,6 +121,7 @@ impl DomainIndex {
 
                 Some(IndexedEntry {
                     length: entry.word.len(),
+                    categories: categories.categories_for(&entry.word).to_vec(),
                     word: entry.word.clone(),
                     registered_tlds: registered,
                     available_count,
@@ -247,6 +255,10 @@ impl DomainIndex {
             .map(|t| t.iter().map(|s| s.as_str()).collect());
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let category_filter: Option<FxHashSet<&str>> = params
+            .categories
+            .as_ref()
+            .map(|c| c.iter().map(|s| s.as_str()).collect());
 
         let mut total = 0usize;
         let mut results = Vec::with_capacity(limit);
@@ -255,7 +267,7 @@ impl DomainIndex {
         for &idx in indices {
             let entry = &self.entries[idx];
 
-            if !Self::word_matches(entry, &query_lower, &length_filter) {
+            if !Self::word_matches(entry, &query_lower, &length_filter, &category_filter) {
                 continue;
             }
 
@@ -301,12 +313,16 @@ impl DomainIndex {
             .map(|t| t.iter().map(|s| s.as_str()).collect());
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let category_filter: Option<FxHashSet<&str>> = params
+            .categories
+            .as_ref()
+            .map(|c| c.iter().map(|s| s.as_str()).collect());
         let tld_prefix = &params.tld_prefix;
         let band = &params.available_band;
 
         indices.iter().filter_map(move |&idx| {
             let entry = &self.entries[idx];
-            if !Self::word_matches(entry, &query_lower, &length_filter) {
+            if !Self::word_matches(entry, &query_lower, &length_filter, &category_filter) {
                 return None;
             }
             let tlds = self.matching_tlds(entry, &tld_filter, tld_prefix);
@@ -355,6 +371,7 @@ impl DomainIndex {
         entry: &IndexedEntry,
         query_lower: &Option<String>,
         length_filter: &Option<FxHashSet<usize>>,
+        category_filter: &Option<FxHashSet<&str>>,
     ) -> bool {
         if let Some(q) = query_lower {
             if !entry.word.starts_with(q.as_str()) {
@@ -368,6 +385,12 @@ impl DomainIndex {
             let in_set = lengths.contains(&entry.length);
             let in_tail = entry.length > max;
             if !(in_set || in_tail) {
+                return false;
+            }
+        }
+        if let Some(cats) = category_filter {
+            // OR-semantics: passing any selected category is enough.
+            if !entry.categories.iter().any(|c| cats.contains(c.as_str())) {
                 return false;
             }
         }

@@ -5,6 +5,7 @@ use chrono::Utc;
 use serde::Serialize;
 use tokio::sync::Mutex;
 
+use crate::categories::Categories;
 use crate::config::BatchConfig;
 use crate::index::DomainIndex;
 
@@ -15,15 +16,24 @@ pub struct AppState {
     pub batch: ArcSwap<BatchStatus>,
     pub batch_lock: Mutex<()>,
     pub config: BatchConfig,
+    /// Loaded once at startup. Shared by the boot-time index build and every
+    /// subsequent batch rebuild so curator intent stays consistent without a
+    /// process restart.
+    pub categories: Arc<Categories>,
 }
 
 impl AppState {
-    pub fn new(config: BatchConfig, initial_index: Option<Arc<DomainIndex>>) -> Self {
+    pub fn new(
+        config: BatchConfig,
+        initial_index: Option<Arc<DomainIndex>>,
+        categories: Arc<Categories>,
+    ) -> Self {
         Self {
             index: ArcSwapOption::from(initial_index),
             batch: ArcSwap::from_pointee(BatchStatus::default()),
             batch_lock: Mutex::new(()),
             config,
+            categories,
         }
     }
 

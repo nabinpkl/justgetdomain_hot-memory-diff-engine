@@ -27,6 +27,7 @@ export function ShelfRow({ config }: ShelfRowProps) {
   const { domains, total, isLoading } = useShelfData({
     tlds: config.tlds,
     lengths: config.lengths,
+    categories: config.categories,
     seed: config.seed,
     limit: 20,
   });

@@ -131,8 +131,9 @@ async fn do_run_batch(state: &Arc<AppState>) -> Result<()> {
     state.update_batch(|s| s.phase = Phase::Swapping);
     let idx_start = Instant::now();
     let snapshot_for_index = Arc::clone(&snapshot_for_save);
+    let categories_for_index = Arc::clone(&state.categories);
     let index = tokio::task::spawn_blocking(move || {
-        DomainIndex::from_snapshot(&snapshot_for_index)
+        DomainIndex::from_snapshot(&snapshot_for_index, &categories_for_index)
     })
     .await
     .map_err(|e| anyhow!("index build join error: {e}"))?;

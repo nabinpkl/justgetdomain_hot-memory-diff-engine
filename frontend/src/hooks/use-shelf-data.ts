@@ -22,6 +22,7 @@ type ShelfDataResult = {
 type ShelfDataParams = {
   tlds?: string;
   lengths?: string;
+  categories?: string;
   seed: number;
   limit?: number;
   sort?: string;
@@ -30,6 +31,7 @@ type ShelfDataParams = {
 export function useShelfData({
   tlds,
   lengths,
+  categories,
   seed,
   limit = 20,
   sort = "random",
@@ -45,6 +47,7 @@ export function useShelfData({
     const params = new URLSearchParams();
     if (tlds) params.set("tlds", tlds);
     if (lengths) params.set("lengths", lengths);
+    if (categories) params.set("categories", categories);
     params.set("sort", sort);
     params.set("seed", String(seed));
     params.set("limit", String(limit));
@@ -69,7 +72,7 @@ export function useShelfData({
     return () => {
       cancelled = true;
     };
-  }, [tlds, lengths, seed, limit, sort]);
+  }, [tlds, lengths, categories, seed, limit, sort]);
 
   return { domains, total, isLoading };
 }

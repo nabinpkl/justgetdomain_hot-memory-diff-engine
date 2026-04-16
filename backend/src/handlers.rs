@@ -37,6 +37,8 @@ pub struct SearchQuery {
     pub seed: Option<u64>,
     pub offset: Option<usize>,
     pub limit: Option<usize>,
+    /// Comma-separated category IDs (see `/categories`). OR-semantics.
+    pub categories: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -145,6 +147,12 @@ pub async fn tlds_for_handler(
         tlds,
     })
     .into_response()
+}
+
+// ─── /categories ───────────────────────────────────────────────────────
+
+pub async fn categories_handler(State(state): State<Arc<AppState>>) -> Response {
+    Json(state.categories.list()).into_response()
 }
 
 // ─── /health (liveness) ────────────────────────────────────────────────
@@ -289,6 +297,13 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
         _ => None,
     });
 
+    let categories: Option<Vec<String>> = query.categories.as_ref().map(|c| {
+        c.split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
+    });
+
     SearchParams {
         query: q,
         tlds,
@@ -296,5 +311,6 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
         lengths,
         available_band,
         sort,
+        categories,
     }
 }
