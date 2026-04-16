@@ -223,6 +223,26 @@
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ── Marquee animations ── */
+
+@keyframes jgd-marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes jgd-marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+@utility jgd-marquee-left {
+  animation: jgd-marquee-left 35s linear infinite;
+}
+
+@utility jgd-marquee-right {
+  animation: jgd-marquee-right 35s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .jgd-tile-in,
   .jgd-fade-up {
@@ -230,7 +250,9 @@
     animation: none;
   }
   .jgd-pulse,
-  .jgd-blink {
+  .jgd-blink,
+  .jgd-marquee-left,
+  .jgd-marquee-right {
     animation: none;
   }
 }
