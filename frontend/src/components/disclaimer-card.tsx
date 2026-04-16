@@ -8,7 +8,7 @@ export function DisclaimerCard({ className = "" }: { className?: string }) {
     <aside
       role="note"
       aria-label="Project disclaimer"
-      className={`flex gap-2.5 rounded-md border border-jgd-border/70 px-3 py-2 text-[0.72rem] leading-[1.6] text-jgd-dim ${className}`}
+      className={`flex gap-2.5 rounded-sm border border-jgd-border/70 px-3 py-2 text-[0.72rem] leading-[1.6] text-jgd-dim ${className}`}
     >
       <Info
         size={12}

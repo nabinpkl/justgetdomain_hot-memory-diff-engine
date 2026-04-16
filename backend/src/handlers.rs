@@ -32,6 +32,9 @@ pub struct SearchQuery {
     pub q: Option<String>,
     pub tlds: Option<String>,
     pub lengths: Option<String>,
+    /// Inclusive lower bound on name length for ">=" buckets ("8+"). Works
+    /// alongside `lengths` via OR.
+    pub min_length: Option<usize>,
     pub available: Option<String>,
     pub sort: Option<String>,
     pub seed: Option<u64>,
@@ -315,6 +318,7 @@ fn parse_search_params(query: &SearchQuery) -> SearchParams {
         tlds,
         tld_prefix,
         lengths,
+        min_length: query.min_length,
         available_band,
         sort,
         categories,

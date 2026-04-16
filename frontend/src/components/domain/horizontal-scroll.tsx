@@ -6,22 +6,32 @@ type HorizontalScrollProps = {
   children: ReactNode;
   showArrows?: boolean;
   className?: string;
+  /** Called when the scroll approaches the right edge (within ~1 viewport). Use to trigger page loads. */
+  onReachEnd?: () => void;
 };
+
+const NEAR_END_PX = 600;
 
 export function HorizontalScroll({
   children,
   showArrows = false,
   className = "",
+  onReachEnd,
 }: HorizontalScrollProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  // Keep latest callback without retriggering effect.
+  const onReachEndRef = useRef(onReachEnd);
+  onReachEndRef.current = onReachEnd;
 
   const checkScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 10);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    const remaining = el.scrollWidth - el.clientWidth - el.scrollLeft;
+    setCanScrollRight(remaining > 10);
+    if (remaining < NEAR_END_PX) onReachEndRef.current?.();
   };
 
   useEffect(() => {

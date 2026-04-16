@@ -16,9 +16,10 @@ import {
 function HomepageShelf({ config }: { config: ShelfConfig }) {
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
-  const { domains, total, isLoading } = useShelfData({
+  const { domains, total, totalCombos, isLoading } = useShelfData({
     tlds: config.tlds,
     lengths: config.lengths,
+    minLength: config.minLength,
     categories: config.categories,
     seed,
     limit: 20,
@@ -26,8 +27,10 @@ function HomepageShelf({ config }: { config: ShelfConfig }) {
 
   return (
     <MiniShelf
+      shelfId={config.id}
       title={config.title}
       total={total}
+      totalCombos={totalCombos}
       domains={domains}
       isLoading={isLoading}
     />
@@ -57,7 +60,7 @@ export function MiniShelvesSection() {
 
         <Link
           href="/explore"
-          className="inline-flex items-center mt-2 px-7 py-3 rounded-lg border border-jgd-accent/30 bg-jgd-accent-dim text-jgd-accent text-[0.82rem] font-medium transition-colors hover:bg-jgd-accent-mid hover:border-jgd-accent/50"
+          className="inline-flex items-center mt-2 px-7 py-3 rounded-sm border border-jgd-accent/30 bg-jgd-accent-dim text-jgd-accent text-[0.82rem] font-medium transition-colors hover:bg-jgd-accent-mid hover:border-jgd-accent/50"
         >
           Explore all domains &rarr;
         </Link>

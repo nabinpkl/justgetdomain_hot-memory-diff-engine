@@ -48,13 +48,16 @@
   --color-jgd-border: var(--jgd-border);
   --color-jgd-nav: var(--jgd-nav);
   --color-jgd-muted: var(--jgd-muted);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* JustGetDomain visual language: minimal corner radius across the board.
+     Tailwind token map is flattened to 4px (`sm` and up) so any remaining
+     radius-scale utility in third-party shadcn components also stays crisp. */
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
 }
 
 :root {
@@ -251,6 +254,59 @@
   animation: jgd-marquee-right 25s linear infinite;
 }
 
+/* ── 3D dice roll ── */
+
+@keyframes jgd-dice-roll {
+  0%   { transform: rotateX(0deg)    rotateY(0deg)    rotateZ(0deg); }
+  20%  { transform: rotateX(360deg)  rotateY(180deg)  rotateZ(90deg); }
+  40%  { transform: rotateX(720deg)  rotateY(540deg)  rotateZ(180deg); }
+  60%  { transform: rotateX(1080deg) rotateY(900deg)  rotateZ(270deg); }
+  80%  { transform: rotateX(1440deg) rotateY(1260deg) rotateZ(360deg); }
+  100% { transform: rotateX(1800deg) rotateY(1620deg) rotateZ(450deg); }
+}
+
+@utility jgd-dice-scene {
+  perspective: 800px;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+}
+
+@utility jgd-dice {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  transform-style: preserve-3d;
+  animation: jgd-dice-roll 1.6s cubic-bezier(0.45, 0, 0.3, 1) infinite;
+}
+
+@utility jgd-dice-face {
+  position: absolute;
+  inset: 0;
+  width: 100px;
+  height: 100px;
+  border: 1px solid var(--jgd-accent);
+  background: var(--jgd-accent-dim);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 14px;
+  gap: 4px;
+  backface-visibility: hidden;
+}
+
+@utility jgd-dice-pip {
+  width: 14px;
+  height: 14px;
+  background: var(--jgd-accent);
+  border-radius: 50%;
+  align-self: center;
+  justify-self: center;
+  box-shadow: 0 0 6px var(--jgd-accent-mid);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .jgd-tile-in,
   .jgd-fade-up {
@@ -262,7 +318,8 @@
   .jgd-marquee-left,
   .jgd-marquee-left-slow,
   .jgd-marquee-right,
-  .jgd-marquee-right-fast {
+  .jgd-marquee-right-fast,
+  .jgd-dice {
     animation: none;
   }
 }

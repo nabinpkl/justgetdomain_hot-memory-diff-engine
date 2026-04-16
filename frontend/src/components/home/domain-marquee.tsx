@@ -13,7 +13,7 @@ type ApiResponse = { total: number; results: SearchResult[] };
 
 function DomainPill({ name, tld }: { name: string; tld: string }) {
   return (
-    <span className="shrink-0 px-4 py-2 rounded-md bg-jgd-surface/50 border border-jgd-border text-[0.82rem] text-jgd-dim font-mono">
+    <span className="shrink-0 px-4 py-2 rounded-sm bg-jgd-surface/50 border border-jgd-border text-[0.82rem] text-jgd-dim font-mono">
       {name}
       <span className="text-jgd-accent/60">.{tld}</span>
     </span>

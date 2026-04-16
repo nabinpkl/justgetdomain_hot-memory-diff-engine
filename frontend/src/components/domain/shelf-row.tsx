@@ -11,6 +11,7 @@ import type { ShelfConfig } from "./shelf-configs";
 
 type ShelfRowProps = {
   config: ShelfConfig;
+  q?: string;
 };
 
 function ShelfSkeleton() {
@@ -19,27 +20,36 @@ function ShelfSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="shrink-0 h-12 w-36 rounded-lg bg-jgd-surface/40 animate-pulse"
+          className="shrink-0 h-12 w-36 rounded-sm bg-jgd-surface/40 animate-pulse"
         />
       ))}
     </div>
   );
 }
 
-export function ShelfRow({ config }: ShelfRowProps) {
+export function ShelfRow({ config, q }: ShelfRowProps) {
   // Fresh seed per mount = new domains on every page refresh.
   // Lazy initializer keeps the seed stable across re-renders.
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
-  const { domains, total, totalCombos, isLoading } = useShelfData({
+  const {
+    domains,
+    total,
+    totalCombos,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useShelfData({
     tlds: config.tlds,
     lengths: config.lengths,
+    minLength: config.minLength,
     categories: config.categories,
+    q,
     seed,
-    limit: 20,
+    limit: 40,
   });
 
-  const remaining = total - domains.length;
   const [active, setActive] = useState<{ name: string; tld: string } | null>(
     null,
   );
@@ -64,7 +74,7 @@ export function ShelfRow({ config }: ShelfRowProps) {
           <span className="text-[0.72rem] text-jgd-muted font-mono">
             {isLoading
               ? "\u2026"
-              : `${totalCombos.toLocaleString()} available combos`}
+              : `${totalCombos.toLocaleString()} combos across ${total.toLocaleString()} names`}
           </span>
         </div>
       </div>
@@ -81,7 +91,7 @@ export function ShelfRow({ config }: ShelfRowProps) {
         </div>
       ) : (
         <div className="px-6 sm:px-10">
-          <HorizontalScroll showArrows>
+          <HorizontalScroll showArrows onReachEnd={fetchNextPage}>
             {domains.map((d) => (
               <DomainPill
                 key={`${d.name}.${d.tld}`}
@@ -91,11 +101,13 @@ export function ShelfRow({ config }: ShelfRowProps) {
                 onClick={() => setActive({ name: d.name, tld: d.tld })}
               />
             ))}
-            {remaining > 0 && (
-              <div className="shrink-0 px-5 py-2.5 rounded-lg border border-dashed border-jgd-border/50 flex items-center text-[0.78rem] text-jgd-accent/50 font-mono whitespace-nowrap">
-                +{remaining.toLocaleString()} more
-              </div>
-            )}
+            {(isFetchingNextPage || hasNextPage) &&
+              Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="shrink-0 h-12 w-36 rounded-sm bg-jgd-surface/40 animate-pulse"
+                />
+              ))}
           </HorizontalScroll>
         </div>
       )}

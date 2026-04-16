@@ -10,7 +10,7 @@ export function SiteNav() {
     <nav
       role="navigation"
       aria-label="Main"
-      className="sticky top-0 z-50 h-14 flex justify-between items-center px-6 sm:px-8 text-[0.75rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-jgd-nav border-b border-jgd-border"
+      className="sticky top-0 z-50 h-14 flex justify-between items-center px-6 sm:px-8 text-[0.75rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-jgd-nav border-b border-jgd-border relative"
     >
       <Link
         href="/"
@@ -39,6 +39,14 @@ export function SiteNav() {
           JustGetDomain<span className="text-jgd-accent">.</span>
         </span>
       </Link>
+
+      <p
+        className="hidden md:block absolute left-1/2 -translate-x-1/2 text-[0.68rem] normal-case tracking-[0.5px] text-jgd-muted max-w-[440px] text-center leading-tight"
+        role="note"
+      >
+        Proof of concept - real data, but{" "}
+        <span className="text-jgd-dim">availability is not guaranteed</span>.
+      </p>
 
       <div className="flex items-center gap-4">
         <Link

@@ -69,7 +69,7 @@ export function TldDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-md border border-jgd-border bg-jgd-bg shadow-lg overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-sm border border-jgd-border bg-jgd-bg shadow-lg overflow-hidden">
           <div className="flex items-center gap-2 px-2.5 py-2 border-b border-jgd-border">
             <Search size={12} className="text-jgd-dim shrink-0" />
             <input

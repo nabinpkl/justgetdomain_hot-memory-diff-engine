@@ -39,6 +39,11 @@ pub struct SearchParams {
     pub tlds: Option<Vec<String>>,
     pub tld_prefix: Option<String>,
     pub lengths: Option<Vec<usize>>,
+    /// Lower bound for `entry.length` (inclusive). Combines with `lengths`
+    /// using OR: an entry passes if it matches `lengths` exactly OR its
+    /// length is >= `min_length`. Enables "N+" buckets in UI without
+    /// contaminating exact-length filters (e.g. 3-letter shelf).
+    pub min_length: Option<usize>,
     pub available_band: Option<AvailableBand>,
     pub sort: SortMode,
     /// OR-semantics: an entry passes if any of its categories is in this set.
@@ -255,6 +260,7 @@ impl DomainIndex {
             .map(|t| t.iter().map(|s| s.as_str()).collect());
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let min_length = params.min_length;
         let category_filter: Option<FxHashSet<&str>> = params
             .categories
             .as_ref()
@@ -268,7 +274,13 @@ impl DomainIndex {
         for &idx in indices {
             let entry = &self.entries[idx];
 
-            if !Self::word_matches(entry, &query_lower, &length_filter, &category_filter) {
+            if !Self::word_matches(
+                entry,
+                &query_lower,
+                &length_filter,
+                &min_length,
+                &category_filter,
+            ) {
                 continue;
             }
 
@@ -316,6 +328,7 @@ impl DomainIndex {
             .map(|t| t.iter().map(|s| s.as_str()).collect());
         let length_filter: Option<FxHashSet<usize>> =
             params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let min_length = params.min_length;
         let category_filter: Option<FxHashSet<&str>> = params
             .categories
             .as_ref()
@@ -325,7 +338,13 @@ impl DomainIndex {
 
         indices.iter().filter_map(move |&idx| {
             let entry = &self.entries[idx];
-            if !Self::word_matches(entry, &query_lower, &length_filter, &category_filter) {
+            if !Self::word_matches(
+                entry,
+                &query_lower,
+                &length_filter,
+                &min_length,
+                &category_filter,
+            ) {
                 return None;
             }
             let tlds = self.matching_tlds(entry, &tld_filter, tld_prefix);
@@ -374,6 +393,7 @@ impl DomainIndex {
         entry: &IndexedEntry,
         query_lower: &Option<String>,
         length_filter: &Option<FxHashSet<usize>>,
+        min_length: &Option<usize>,
         category_filter: &Option<FxHashSet<&str>>,
     ) -> bool {
         if let Some(q) = query_lower {
@@ -381,13 +401,15 @@ impl DomainIndex {
                 return false;
             }
         }
-        if let Some(lengths) = length_filter {
-            // Highest selected length acts as ">=" so the UI's "8+" bucket
-            // captures all longer words without enumerating each length.
-            let max = lengths.iter().copied().max().unwrap_or(0);
-            let in_set = lengths.contains(&entry.length);
-            let in_tail = entry.length > max;
-            if !(in_set || in_tail) {
+        // `lengths` is an exact-match set. `min_length` opens an open-ended
+        // ">=" tail so the UI's "N+" bucket doesn't force us to enumerate
+        // every possible word length. Combined with OR semantics.
+        if length_filter.is_some() || min_length.is_some() {
+            let in_set = length_filter
+                .as_ref()
+                .is_some_and(|s| s.contains(&entry.length));
+            let in_tail = min_length.is_some_and(|m| entry.length >= m);
+            if !in_set && !in_tail {
                 return false;
             }
         }

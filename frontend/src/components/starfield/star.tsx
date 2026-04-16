@@ -35,7 +35,7 @@ export function Star({
   const [hover, setHover] = useState(false);
   const fullDomain = `${entry.name}${displayTld}`;
   const altTlds = entry.tlds.filter((t) => t !== displayTld);
-  const ariaLabel = `${fullDomain}${saved ? " (saved)" : " — add to shortlist"}`;
+  const ariaLabel = `${fullDomain}${saved ? " (saved)" : ", add to shortlist"}`;
   const savedClass = saved ? " text-jgd-accent!" : "";
 
   if (position === null) {
@@ -94,7 +94,7 @@ export function Star({
       {hover && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-20 rounded-md bg-jgd-surface border border-jgd-border px-3 py-2 text-[0.75rem] text-jgd-dim shadow-[0_8px_24px_rgba(0,0,0,0.25)] whitespace-nowrap"
+          className="pointer-events-none absolute z-20 rounded-sm bg-jgd-surface border border-jgd-border px-3 py-2 text-[0.75rem] text-jgd-dim shadow-[0_8px_24px_rgba(0,0,0,0.25)] whitespace-nowrap"
           style={{ top: "20px", left: 0, transform: "translateX(-50%)" }}
         >
           <div className="text-jgd-text font-mono">{fullDomain}</div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 type SearchResult = {
   name: string;
@@ -22,64 +23,110 @@ type ShelfDataResult = {
   total: number;
   totalCombos: number;
   isLoading: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
 };
 
 type ShelfDataParams = {
   tlds?: string;
   lengths?: string;
+  minLength?: number;
   categories?: string;
+  q?: string;
   seed: number;
   limit?: number;
   sort?: string;
 };
 
+type OptionalKeys = "tlds" | "lengths" | "minLength" | "categories" | "q";
+
+function buildUrl(
+  {
+    tlds,
+    lengths,
+    minLength,
+    categories,
+    q,
+    seed,
+    limit,
+    sort,
+  }: Required<Omit<ShelfDataParams, OptionalKeys>> &
+    Pick<ShelfDataParams, OptionalKeys>,
+  offset: number,
+): string {
+  const params = new URLSearchParams();
+  if (tlds) params.set("tlds", tlds);
+  if (lengths) params.set("lengths", lengths);
+  if (minLength !== undefined) params.set("min_length", String(minLength));
+  if (categories) params.set("categories", categories);
+  if (q) params.set("q", q);
+  params.set("sort", sort);
+  params.set("seed", String(seed));
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  return `/api/search?${params.toString()}`;
+}
+
 export function useShelfData({
   tlds,
   lengths,
+  minLength,
   categories,
+  q,
   seed,
   limit = 20,
   sort = "random",
 }: ShelfDataParams): ShelfDataResult {
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalCombos, setTotalCombos] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const query = useInfiniteQuery({
+    queryKey: [
+      "shelf-data",
+      { tlds, lengths, minLength, categories, q, seed, limit, sort },
+    ],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
+      const res = await fetch(
+        buildUrl(
+          { tlds, lengths, minLength, categories, q, seed, limit, sort },
+          pageParam as number,
+        ),
+        { signal },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as ApiResponse;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, p) => sum + p.results.length, 0);
+      if (loaded >= lastPage.total) return undefined;
+      return loaded;
+    },
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
+  const domains = useMemo<Domain[]>(
+    () =>
+      query.data?.pages.flatMap((p) =>
+        p.results.map((d) => ({
+          name: d.name,
+          tld: d.tlds[0]?.replace(/^\./, "") ?? "com",
+        })),
+      ) ?? [],
+    [query.data],
+  );
 
-    const params = new URLSearchParams();
-    if (tlds) params.set("tlds", tlds);
-    if (lengths) params.set("lengths", lengths);
-    if (categories) params.set("categories", categories);
-    params.set("sort", sort);
-    params.set("seed", String(seed));
-    params.set("limit", String(limit));
+  const total = query.data?.pages[0]?.total ?? 0;
+  const totalCombos = query.data?.pages[0]?.total_combos ?? 0;
 
-    fetch(`/api/search?${params.toString()}`)
-      .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        setDomains(
-          data.results.map((d) => ({
-            name: d.name,
-            tld: d.tlds[0]?.replace(/^\./, "") ?? "com",
-          })),
-        );
-        setTotal(data.total);
-        setTotalCombos(data.total_combos);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tlds, lengths, categories, seed, limit, sort]);
-
-  return { domains, total, totalCombos, isLoading };
+  return {
+    domains,
+    total,
+    totalCombos,
+    isLoading: query.isPending,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) {
+        query.fetchNextPage();
+      }
+    },
+  };
 }

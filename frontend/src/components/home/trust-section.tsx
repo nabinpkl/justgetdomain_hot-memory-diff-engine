@@ -31,7 +31,7 @@ export function TrustSection() {
           {FEATURES.map((f) => (
             <article
               key={f.num}
-              className="rounded-lg border border-jgd-border bg-jgd-surface/30 px-7 py-7"
+              className="rounded-sm border border-jgd-border bg-jgd-surface/30 px-7 py-7"
             >
               <p className="text-[0.72rem] tracking-[2px] mb-3 text-jgd-accent">
                 {f.num}

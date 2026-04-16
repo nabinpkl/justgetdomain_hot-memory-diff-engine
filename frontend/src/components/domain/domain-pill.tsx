@@ -34,7 +34,7 @@ export function DomainPill({
     ? "w-full min-w-0"
     : "shrink-0 min-w-[140px]";
 
-  const baseClasses = `${sizingClasses} flex flex-col gap-1 px-4 py-2.5 rounded-lg border text-[0.82rem] transition-colors bg-jgd-surface/40 border-jgd-border`;
+  const baseClasses = `${sizingClasses} flex flex-col gap-1 px-4 py-2.5 rounded-sm border text-[0.82rem] transition-colors bg-jgd-surface/40 border-jgd-border`;
 
   if (onClick) {
     return (

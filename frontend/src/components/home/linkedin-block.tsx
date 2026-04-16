@@ -25,7 +25,7 @@ export function LinkedInBlock() {
           href="https://linkedin.com/in/nabin-pokhrel"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-jgd-border bg-jgd-surface/50 text-jgd-dim text-[0.82rem] font-medium transition-colors hover:text-jgd-accent hover:border-jgd-accent/30"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm border border-jgd-border bg-jgd-surface/50 text-jgd-dim text-[0.82rem] font-medium transition-colors hover:text-jgd-accent hover:border-jgd-accent/30"
         >
           <LinkedInIcon className="w-4 h-4" />
           Connect on LinkedIn

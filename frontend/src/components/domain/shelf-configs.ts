@@ -4,6 +4,7 @@ export type ShelfConfig = {
   description: string;
   tlds?: string;
   lengths?: string;
+  minLength?: number;
   categories?: string;
   group: "vibe" | "tld" | "length";
 };
@@ -20,7 +21,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "tech",
     title: "Tech & Systems",
     description:
-      "Speed, precision, systems — SaaS, devtools, startups",
+      "Speed, precision, systems for SaaS, devtools, startups",
     categories: "tech",
     group: "vibe",
   },
@@ -28,7 +29,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "craft",
     title: "Craft & Build",
     description:
-      "Make, shape, forge — studios, makers, artisan brands",
+      "Make, shape, forge for studios, makers, artisan brands",
     categories: "craft",
     group: "vibe",
   },
@@ -36,7 +37,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "nature",
     title: "Clean Tech & Energy",
     description:
-      "Sustainable, renewable — cleantech, climate, energy brands",
+      "Sustainable, renewable for cleantech, climate, energy brands",
     categories: "nature",
     group: "vibe",
   },
@@ -44,7 +45,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "food",
     title: "Food & Taste",
     description:
-      "Flavor-forward names — restaurants, food tech, lifestyle",
+      "Flavor-forward names for restaurants, food tech, lifestyle",
     categories: "food",
     group: "vibe",
   },
@@ -52,7 +53,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "motion",
     title: "Motion & Flow",
     description:
-      "Speed, action, momentum — sports, fintech, bold brands",
+      "Speed, action, momentum for sports, fintech, bold brands",
     categories: "motion",
     group: "vibe",
   },
@@ -62,14 +63,14 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "app",
     title: ".app Domains",
     description:
-      "The app-store TLD — signals software, tools, products",
+      "The app-store TLD. Signals software, tools, products",
     tlds: ".app",
     group: "tld",
   },
   {
     id: "dev",
     title: ".dev Domains",
-    description: "By developers, for developers — your builder identity",
+    description: "By developers, for developers. Your builder identity",
     tlds: ".dev",
     group: "tld",
   },
@@ -77,7 +78,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "io",
     title: ".io Domains",
     description:
-      "The startup classic — still the default for tech products",
+      "The startup classic. Still the default for tech products",
     tlds: ".io",
     group: "tld",
   },
@@ -87,7 +88,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "3-letter",
     title: "3-Letter Names",
     description:
-      "The rarest namespace — every available one surfaced",
+      "The rarest namespace. Every available one surfaced",
     lengths: "3",
     group: "length",
   },
@@ -95,7 +96,7 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "4-letter",
     title: "4-Letter Names",
     description:
-      "The sweet spot for brandable names — short, memorable, available",
+      "The sweet spot for brandable names. Short, memorable, available",
     lengths: "4",
     group: "length",
   },
@@ -103,8 +104,16 @@ export const SHELF_CONFIGS: ShelfConfig[] = [
     id: "5-letter",
     title: "5-Letter Names",
     description:
-      "Real words, compound fragments, memorable slugs — the widest net",
+      "Real words, compound fragments, memorable slugs. The widest net",
     lengths: "5",
+    group: "length",
+  },
+  {
+    id: "longer",
+    title: "Others",
+    description:
+      "Longer picks. Six characters and up, for when short is taken",
+    minLength: 6,
     group: "length",
   },
 ];

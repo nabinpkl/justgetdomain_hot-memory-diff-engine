@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { DomainEntry } from "./domain-data";
+import { LENGTHS, type DomainEntry } from "./domain-data";
 import { useFilterState } from "@/lib/starfield/filter-state";
 
 type StarfieldData = {
@@ -41,7 +41,20 @@ function buildUrl(
     usp.set("q", params.startsWith.toLowerCase());
   }
   if (params.tlds.size > 0) usp.set("tlds", [...params.tlds].join(","));
-  if (params.lengths.size > 0) usp.set("lengths", [...params.lengths].join(","));
+  if (params.lengths.size > 0) {
+    // Highest chip in the length picker represents "N+" (open-ended tail).
+    // Send it as `min_length` so exact-match `lengths` stays strict.
+    const sorted = [...params.lengths].sort((a, b) => a - b);
+    const tail = sorted[sorted.length - 1];
+    const maxChip = Math.max(...(LENGTHS as readonly number[]));
+    if (tail === maxChip) {
+      usp.set("min_length", String(tail));
+      const exact = sorted.slice(0, -1);
+      if (exact.length > 0) usp.set("lengths", exact.join(","));
+    } else {
+      usp.set("lengths", sorted.join(","));
+    }
+  }
   if (params.availableBand) usp.set("available", params.availableBand);
   usp.set("sort", "random");
   usp.set("seed", String(seed));
@@ -108,7 +121,7 @@ export function useStarfieldData(seed: number | null): StarfieldData {
   const total = query$.data?.pages[0]?.total ?? 0;
 
   const error = query$.error
-    ? "Couldn't load domains — try again."
+    ? "Couldn't load domains. Try again."
     : null;
 
   const isLoading =

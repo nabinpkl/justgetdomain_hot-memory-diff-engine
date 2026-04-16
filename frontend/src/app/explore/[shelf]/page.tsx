@@ -39,6 +39,8 @@ function buildSearchUrl(config: ShelfConfig, seed: number, offset: number) {
   const params = new URLSearchParams();
   if (config.tlds) params.set("tlds", config.tlds);
   if (config.lengths) params.set("lengths", config.lengths);
+  if (config.minLength !== undefined)
+    params.set("min_length", String(config.minLength));
   if (config.categories) params.set("categories", config.categories);
   params.set("sort", "random");
   params.set("seed", String(seed));
@@ -184,7 +186,7 @@ export default function ShelfPage({
               {Array.from({ length: cols * 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-[70px] rounded-lg bg-jgd-surface/40 animate-pulse"
+                  className="h-[70px] rounded-sm bg-jgd-surface/40 animate-pulse"
                 />
               ))}
             </div>
@@ -231,7 +233,7 @@ export default function ShelfPage({
                         return (
                           <div
                             key={cell.idx}
-                            className="h-[70px] rounded-lg bg-jgd-surface/40 animate-pulse"
+                            className="h-[70px] rounded-sm bg-jgd-surface/40 animate-pulse"
                           />
                         );
                       }

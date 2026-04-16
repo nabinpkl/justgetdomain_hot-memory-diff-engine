@@ -96,7 +96,7 @@ export function SiteFooter() {
 
       <div className="border-t border-jgd-border">
         <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-[0.78rem] uppercase tracking-[2px]">
-          <span>© JustGetDomain — portfolio piece, not a registrar.</span>
+          <span>© JustGetDomain, portfolio piece, not a registrar.</span>
           <a
             href={REPO_URL}
             target="_blank"

@@ -12,6 +12,7 @@ type Stats = { total_available: number; index_loaded: boolean };
 
 export default function ExplorePage() {
   const [filter, setFilter] = useState<FilterGroup>("all");
+  const [query, setQuery] = useState("");
   const [stats, setStats] = useState<Stats | null>(null);
   const shortlist = useShortlist();
 
@@ -21,7 +22,7 @@ export default function ExplorePage() {
       .then((data) => {
         if (data?.index_loaded) setStats(data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const shelves = filterShelves(filter);
@@ -37,8 +38,13 @@ export default function ExplorePage() {
           Browse available domains.
         </h1>
         <p className="jgd-fade-up [animation-delay:0.1s] text-[1rem] text-jgd-dim leading-[1.6] max-w-[520px] mb-2">
-          Every domain below is available. Tap any name to view it.
-          Browse by category or scroll through everything.
+          Browse by category or scroll through everything. 
+        </p>
+        <p className="jgd-fade-up [animation-delay:0.12s] text-[1rem] text-jgd-dim leading-[1.6] max-w-[520px] mb-2">
+          Domains are pre-verified for availability at the time of generation, but availability may change over time as they get registered by others.
+        </p>
+        <p className="jgd-fade-up [animation-delay:0.15s] text-[1rem] text-jgd-dim leading-[1.6] max-w-[520px] mb-3">
+          Shorter domain are mostly reserved as premium and may not be available for registration, but they are still listed here for discovery and inspiration.
         </p>
         <div className="jgd-fade-up [animation-delay:0.2s] mb-6">
           <AvailabilityCounter className="text-[0.82rem] font-mono" />
@@ -47,7 +53,12 @@ export default function ExplorePage() {
 
       {/* Filter pills */}
       <section className="px-6 sm:px-10 pb-8 max-w-[1400px] mx-auto">
-        <FilterPills active={filter} onChange={setFilter} />
+        <FilterPills
+          active={filter}
+          onChange={setFilter}
+          query={query}
+          onQueryChange={setQuery}
+        />
       </section>
 
       {/* Shelf rows */}
@@ -58,7 +69,7 @@ export default function ExplorePage() {
             className="jgd-fade-up"
             style={{ animationDelay: `${0.1 + i * 0.06}s` }}
           >
-            <ShelfRow config={config} />
+            <ShelfRow config={config} q={query || undefined} />
           </div>
         ))}
       </div>

@@ -18,7 +18,7 @@ export function FiltersTrigger({ total }: { total: number }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         aria-label="Filter domains"
-        className="shrink-0 inline-flex items-center gap-2 h-8 px-2.5 rounded-md border border-jgd-border bg-jgd-bg/40 text-[0.76rem] text-jgd-dim hover:text-jgd-accent hover:border-jgd-accent-mid transition-colors cursor-pointer normal-case tracking-normal"
+        className="shrink-0 inline-flex items-center gap-2 h-8 px-2.5 rounded-sm border border-jgd-border bg-jgd-bg/40 text-[0.76rem] text-jgd-dim hover:text-jgd-accent hover:border-jgd-accent-mid transition-colors cursor-pointer normal-case tracking-normal"
       >
         <SlidersHorizontal size={13} aria-hidden />
         <span>

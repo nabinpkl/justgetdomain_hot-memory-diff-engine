@@ -20,15 +20,15 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "JustGetDomain — Available Domain Names, Already Found For You",
+  title: "JustGetDomain: Available Domain Names, Already Found For You",
   description:
-    "Stop guessing if a domain is taken. JustGetDomain pre-scans every short domain combination and hands you only the ones that are actually available. 3, 4, 5-letter domains — already checked.",
+    "Stop guessing if a domain is taken. JustGetDomain pre-scans every short domain combination and hands you only the ones that are actually available. 3, 4, 5-letter domains, already checked.",
   robots: "index, follow",
   alternates: {
     canonical: "https://justgetdomain.com/",
   },
   openGraph: {
-    title: "JustGetDomain — Every Available Short Domain, Already Found",
+    title: "JustGetDomain: Every Available Short Domain, Already Found",
     description:
       "We crawl every 3, 4, and 5-letter domain so you don't have to. Browse only what's available. No guessing, no taken results, no frustration.",
     type: "website",

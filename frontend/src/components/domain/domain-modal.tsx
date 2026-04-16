@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Star, X } from "lucide-react";
+import { Search, Star, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useShortlist } from "@/stores/use-shortlist";
+import { RegistrarLinks } from "./registrar-links";
 
 type TldsForResponse = {
   name: string;
@@ -42,7 +43,7 @@ function TldRow({
     return (
       <button
         onClick={toggle}
-        className={`w-full flex items-center gap-4 px-5 py-6 rounded-lg border transition-colors cursor-pointer ${
+        className={`w-full flex items-center gap-4 px-5 py-6 rounded-sm border transition-colors cursor-pointer ${
           saved
             ? "bg-jgd-accent-dim/60 border-jgd-accent/45"
             : "bg-jgd-surface/60 border-jgd-border hover:border-jgd-accent/35"
@@ -67,7 +68,7 @@ function TldRow({
   return (
     <button
       onClick={toggle}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md border transition-colors cursor-pointer text-left ${
+      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-sm border transition-colors cursor-pointer text-left ${
         saved
           ? "bg-jgd-accent-dim/40 border-jgd-accent/30"
           : "bg-jgd-surface/30 border-jgd-border hover:bg-jgd-surface/60"
@@ -97,12 +98,15 @@ export function DomainModal({
 }: DomainModalProps) {
   const [data, setData] = useState<TldsForResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     if (!open || !name) {
       setData(null);
+      setFilter("");
       return;
     }
+    setFilter("");
     let cancelled = false;
     setLoading(true);
     fetch(`/api/tlds-for?name=${encodeURIComponent(name)}&limit=500`)
@@ -124,22 +128,28 @@ export function DomainModal({
     return data.tlds.map(stripDot).filter((t) => t !== heroTld);
   }, [data, heroTld]);
 
+  const filteredTlds = useMemo(() => {
+    const q = filter.trim().toLowerCase().replace(/^\./, "");
+    if (!q) return otherTlds;
+    return otherTlds.filter((t) => t.includes(q));
+  }, [otherTlds, filter]);
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-jgd-bg/75 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
-        <DialogPrimitive.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] sm:w-[540px] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-jgd-bg border border-jgd-border shadow-2xl outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 flex flex-col overflow-hidden">
+        <DialogPrimitive.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] sm:w-[540px] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-sm bg-jgd-bg border border-jgd-border shadow-2xl outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 flex flex-col overflow-hidden">
           {/* Hero */}
           {name && heroTld && (
             <div className="relative px-5 pt-5 pb-4">
               <DialogPrimitive.Close
-                className="absolute top-3 right-3 p-1.5 rounded-md text-jgd-muted hover:text-jgd-text hover:bg-jgd-surface/60 transition-colors cursor-pointer"
+                className="absolute top-3 right-3 p-1.5 rounded-sm text-jgd-muted hover:text-jgd-text hover:bg-jgd-surface/60 transition-colors cursor-pointer"
                 aria-label="Close"
               >
                 <X size={16} />
               </DialogPrimitive.Close>
               <DialogPrimitive.Title className="sr-only">
-                {name}.{heroTld} — available TLDs
+                {name}.{heroTld}: available TLDs
               </DialogPrimitive.Title>
               <div className="mb-3">
                 <div className="text-[0.62rem] font-mono uppercase tracking-widest text-jgd-accent/70">
@@ -147,6 +157,7 @@ export function DomainModal({
                 </div>
               </div>
               <TldRow name={name} tld={heroTld} hero />
+              <RegistrarLinks domain={`${name}.${heroTld}`} />
             </div>
           )}
 
@@ -157,9 +168,43 @@ export function DomainModal({
             </div>
             <div className="h-px bg-jgd-border flex-1" />
             <div className="text-[0.68rem] font-mono text-jgd-muted">
-              {data ? `${Math.max(data.total - 1, 0)} more` : "\u2026"}
+              {data
+                ? filter
+                  ? `${filteredTlds.length} of ${Math.max(data.total - 1, 0)}`
+                  : `${Math.max(data.total - 1, 0)} more`
+                : "\u2026"}
             </div>
           </div>
+
+          {/* Filter input */}
+          {otherTlds.length > 0 && (
+            <div className="px-5 pt-3 pb-1">
+              <div className="relative">
+                <Search
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-jgd-muted pointer-events-none"
+                />
+                <input
+                  type="text"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  placeholder="Filter TLDs (e.g. io, dev, tech)"
+                  aria-label="Filter TLDs"
+                  className="w-full pl-8 pr-8 py-2 rounded-sm bg-jgd-surface/40 border border-jgd-border text-[0.82rem] font-mono text-jgd-text placeholder:text-jgd-muted/70 focus:outline-none focus:border-jgd-accent/50 focus:bg-jgd-surface/60 transition-colors"
+                />
+                {filter && (
+                  <button
+                    type="button"
+                    onClick={() => setFilter("")}
+                    aria-label="Clear filter"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-sm text-jgd-muted hover:text-jgd-text hover:bg-jgd-surface/60 transition-colors cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Scrollable list */}
           <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
@@ -168,16 +213,20 @@ export function DomainModal({
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-10 rounded-md bg-jgd-surface/40 animate-pulse"
+                    className="h-10 rounded-sm bg-jgd-surface/40 animate-pulse"
                   />
                 ))}
               </div>
-            ) : otherTlds.length > 0 ? (
+            ) : filteredTlds.length > 0 ? (
               <div className="flex flex-col gap-1.5">
                 {name &&
-                  otherTlds.map((tld) => (
+                  filteredTlds.map((tld) => (
                     <TldRow key={tld} name={name} tld={tld} />
                   ))}
+              </div>
+            ) : otherTlds.length > 0 && filter ? (
+              <div className="text-[0.82rem] text-jgd-muted font-mono py-4 text-center">
+                No TLDs match &ldquo;{filter}&rdquo;.
               </div>
             ) : (
               !loading && (

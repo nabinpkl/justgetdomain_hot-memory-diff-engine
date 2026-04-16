@@ -28,7 +28,7 @@ export function SkyCommandBar({ total, onShuffle, shuffleDisabled }: SkyCommandB
     <div className="sticky top-14 z-40 backdrop-blur-[12px] bg-jgd-surface/70 border-y border-jgd-border">
       <div className="flex items-center gap-3 px-6 sm:px-8 h-12">
         <div
-          className="shrink-0 w-[180px] sm:w-[260px] flex items-center gap-2 bg-jgd-bg/40 border border-jgd-border rounded-md h-8 px-3 cursor-text transition-colors focus-within:border-jgd-accent-mid"
+          className="shrink-0 w-[180px] sm:w-[260px] flex items-center gap-2 bg-jgd-bg/40 border border-jgd-border rounded-sm h-8 px-3 cursor-text transition-colors focus-within:border-jgd-accent-mid"
           onClick={() => inputRef.current?.focus()}
         >
           <Search size={13} className="text-jgd-dim shrink-0" aria-hidden />
@@ -63,7 +63,7 @@ export function SkyCommandBar({ total, onShuffle, shuffleDisabled }: SkyCommandB
           onClick={onShuffle}
           disabled={shuffleDisabled}
           aria-label="Shuffle"
-          className="shrink-0 inline-flex items-center gap-2 h-8 px-2.5 rounded-md border border-jgd-border bg-jgd-bg/40 text-[0.76rem] text-jgd-dim hover:text-jgd-accent hover:border-jgd-accent-mid transition-colors cursor-pointer normal-case tracking-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          className="shrink-0 inline-flex items-center gap-2 h-8 px-2.5 rounded-sm border border-jgd-border bg-jgd-bg/40 text-[0.76rem] text-jgd-dim hover:text-jgd-accent hover:border-jgd-accent-mid transition-colors cursor-pointer normal-case tracking-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Shuffle size={13} aria-hidden />
           <span>Shuffle</span>
@@ -84,7 +84,7 @@ export function SkyCommandBar({ total, onShuffle, shuffleDisabled }: SkyCommandB
                     type="button"
                     onClick={() => remove(domain)}
                     aria-label={`Remove ${domain} from shortlist`}
-                    className="group flex items-center gap-1 h-7 px-2.5 rounded-md border border-jgd-border bg-jgd-bg/40 text-[0.78rem] font-mono text-jgd-text hover:border-jgd-accent-mid hover:text-jgd-accent transition-colors cursor-pointer normal-case tracking-normal"
+                    className="group flex items-center gap-1 h-7 px-2.5 rounded-sm border border-jgd-border bg-jgd-bg/40 text-[0.78rem] font-mono text-jgd-text hover:border-jgd-accent-mid hover:text-jgd-accent transition-colors cursor-pointer normal-case tracking-normal"
                   >
                     <span>{domain}</span>
                     <X

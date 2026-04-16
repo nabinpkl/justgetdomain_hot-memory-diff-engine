@@ -30,7 +30,7 @@ export function ComparisonBlock() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Old way */}
-          <div className="rounded-lg border border-jgd-border bg-jgd-surface/40 px-8 py-8">
+          <div className="rounded-sm border border-jgd-border bg-jgd-surface/40 px-8 py-8">
             <p className="text-[0.72rem] uppercase tracking-[3px] text-jgd-muted mb-6">
               Every registrar
             </p>
@@ -50,7 +50,7 @@ export function ComparisonBlock() {
           </div>
 
           {/* New way */}
-          <div className="rounded-lg border border-jgd-accent-dim bg-jgd-accent-dim/30 px-8 py-8">
+          <div className="rounded-sm border border-jgd-accent-dim bg-jgd-accent-dim/30 px-8 py-8">
             <p className="text-[0.72rem] uppercase tracking-[3px] text-jgd-accent/70 mb-6">
               JustGetDomain
             </p>

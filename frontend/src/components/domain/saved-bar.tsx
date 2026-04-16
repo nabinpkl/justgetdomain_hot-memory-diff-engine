@@ -25,7 +25,7 @@ export function SavedBar() {
             <button
               key={domain}
               onClick={() => remove(domain)}
-              className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-md bg-jgd-accent-dim/30 border border-jgd-accent/20 text-[0.78rem] font-mono text-jgd-text cursor-pointer transition-colors hover:border-jgd-accent/40"
+              className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-sm bg-jgd-accent-dim/30 border border-jgd-accent/20 text-[0.78rem] font-mono text-jgd-text cursor-pointer transition-colors hover:border-jgd-accent/40"
             >
               {domain}
               <span className="text-jgd-muted text-[0.68rem]">&times;</span>
@@ -37,13 +37,13 @@ export function SavedBar() {
         <div className="flex gap-2 shrink-0">
           <button
             onClick={copyAll}
-            className="px-4 py-1.5 rounded-md bg-jgd-accent-dim border border-jgd-accent/30 text-[0.72rem] font-mono text-jgd-accent cursor-pointer transition-colors hover:bg-jgd-accent-mid"
+            className="px-4 py-1.5 rounded-sm bg-jgd-accent-dim border border-jgd-accent/30 text-[0.72rem] font-mono text-jgd-accent cursor-pointer transition-colors hover:bg-jgd-accent-mid"
           >
             Copy all
           </button>
           <button
             onClick={clear}
-            className="px-3 py-1.5 rounded-md border border-jgd-border text-[0.72rem] font-mono text-jgd-muted cursor-pointer transition-colors hover:text-jgd-dim hover:border-jgd-dim/30"
+            className="px-3 py-1.5 rounded-sm border border-jgd-border text-[0.72rem] font-mono text-jgd-muted cursor-pointer transition-colors hover:text-jgd-dim hover:border-jgd-dim/30"
           >
             Clear
           </button>

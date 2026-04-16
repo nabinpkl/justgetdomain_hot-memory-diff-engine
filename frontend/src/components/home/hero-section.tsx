@@ -47,7 +47,7 @@ function DomainGrid({
           {col.map((d) => (
             <div
               key={`${d.name}.${d.tld}`}
-              className="px-4 py-2.5 rounded-lg bg-jgd-surface/30 border border-jgd-border/50 text-[0.82rem] text-jgd-dim font-mono whitespace-nowrap"
+              className="px-4 py-2.5 rounded-sm bg-jgd-surface/30 border border-jgd-border/50 text-[0.82rem] text-jgd-dim font-mono whitespace-nowrap"
             >
               {d.name}
               <span className="text-jgd-accent/40">.{d.tld}</span>
