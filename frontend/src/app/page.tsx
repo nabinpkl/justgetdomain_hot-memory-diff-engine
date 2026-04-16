@@ -37,7 +37,7 @@ export default function Home() {
 
         {/* Marquee proof strip + disclaimer */}
         <DomainMarquee />
-        <div className="px-6 pb-6 max-w-[960px] mx-auto">
+        <div className="px-6 pt-6 pb-6 max-w-[960px] mx-auto">
           <DisclaimerCard className="border-0 px-0 py-0 text-[0.68rem] justify-center" />
         </div>
 

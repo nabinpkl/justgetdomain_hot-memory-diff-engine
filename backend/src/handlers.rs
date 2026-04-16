@@ -183,6 +183,7 @@ pub struct StatsResponse {
     pub updated_at_ms: i64,
     pub tld_count: usize,
     pub entries: usize,
+    pub total_available: usize,
     pub index_loaded: bool,
     pub snapshot_age_seconds: Option<i64>,
     pub batch: BatchStatusView,
@@ -201,9 +202,9 @@ pub struct BatchStatusView {
 
 pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResponse> {
     let status: BatchStatus = (**state.batch.load()).clone();
-    let (tld_count, entries, index_loaded) = match state.index.load_full() {
-        Some(idx) => (idx.all_tlds().len(), idx.entries_len(), true),
-        None => (0, 0, false),
+    let (tld_count, entries, total_available, index_loaded) = match state.index.load_full() {
+        Some(idx) => (idx.all_tlds().len(), idx.entries_len(), idx.total_available(), true),
+        None => (0, 0, 0, false),
     };
     let now_ms = chrono::Utc::now().timestamp_millis();
     let snapshot_age_seconds = status
@@ -214,6 +215,7 @@ pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResp
         updated_at_ms: status.snapshot_updated_at_ms.unwrap_or(0),
         tld_count,
         entries,
+        total_available,
         index_loaded,
         snapshot_age_seconds,
         batch: BatchStatusView {

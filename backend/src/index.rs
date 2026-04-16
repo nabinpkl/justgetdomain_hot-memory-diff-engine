@@ -26,6 +26,7 @@ pub struct DomainIndex {
     by_alpha: Vec<usize>,
     by_tld_count: Vec<usize>,
     by_shortest: Vec<usize>,
+    total_available: usize,
 }
 
 #[derive(Debug)]
@@ -140,8 +141,9 @@ impl DomainIndex {
         });
 
         let count = entries.len();
+        let total_available: usize = entries.iter().map(|e| e.available_count).sum();
         let elapsed = start.elapsed();
-        info!(count, tld_count, ?elapsed, "domain index built");
+        info!(count, tld_count, total_available, ?elapsed, "domain index built");
 
         Self {
             entries,
@@ -149,6 +151,7 @@ impl DomainIndex {
             by_alpha,
             by_tld_count,
             by_shortest,
+            total_available,
         }
     }
 
@@ -160,6 +163,11 @@ impl DomainIndex {
     /// Number of indexed entries (words with at least one available TLD).
     pub fn entries_len(&self) -> usize {
         self.entries.len()
+    }
+
+    /// Sum of available TLDs across all entries (total registrable name+TLD pairs).
+    pub fn total_available(&self) -> usize {
+        self.total_available
     }
 
     fn sorted_indices(&self, sort: &SortMode) -> &[usize] {

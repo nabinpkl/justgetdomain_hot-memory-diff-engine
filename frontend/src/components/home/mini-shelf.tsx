@@ -41,6 +41,8 @@ export function MiniShelf({ title, total, domains, isLoading }: MiniShelfProps) 
       {isLoading ? (
         <ShelfSkeleton />
       ) : (
+        <div className="relative">
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-jgd-bg to-transparent" />
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
           {domains.map((d) => (
             <div
@@ -56,6 +58,7 @@ export function MiniShelf({ title, total, domains, isLoading }: MiniShelfProps) 
               +{remaining.toLocaleString()} more &rarr;
             </div>
           )}
+        </div>
         </div>
       )}
     </div>

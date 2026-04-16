@@ -2,47 +2,128 @@
 
 import { useEffect, useState } from "react";
 
-type Stats = { entries: number; index_loaded: boolean };
+type Stats = { total_available: number; index_loaded: boolean };
+type SearchResult = {
+  name: string;
+  tlds: string[];
+  length: number;
+  match_count: number;
+};
+type ApiResponse = { total: number; results: SearchResult[] };
+
+function DomainGrid({
+  domains,
+}: {
+  domains: { name: string; tld: string }[];
+}) {
+  if (domains.length === 0) return null;
+
+  const cols = 4;
+  const perCol = Math.ceil(domains.length / cols);
+  const columns = Array.from({ length: cols }, (_, c) =>
+    domains.slice(c * perCol, (c + 1) * perCol),
+  );
+
+  return (
+    <div
+      className="hidden lg:flex gap-3 items-start overflow-hidden select-none pointer-events-none"
+      style={{
+        opacity: 0.45,
+        filter: "blur(0.3px)",
+        maskImage:
+          "linear-gradient(to right, transparent 0%, black 20%), linear-gradient(to bottom, black 55%, transparent 100%)",
+        maskComposite: "intersect",
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent 0%, black 20%), linear-gradient(to bottom, black 55%, transparent 100%)",
+        WebkitMaskComposite: "source-in",
+      }}
+    >
+      {columns.map((col, c) => (
+        <div
+          key={c}
+          className="flex flex-col gap-3 shrink-0"
+          style={{ marginTop: c % 2 === 1 ? "1.5rem" : 0 }}
+        >
+          {col.map((d) => (
+            <div
+              key={`${d.name}.${d.tld}`}
+              className="px-4 py-2.5 rounded-lg bg-jgd-surface/30 border border-jgd-border/50 text-[0.82rem] text-jgd-dim font-mono whitespace-nowrap"
+            >
+              {d.name}
+              <span className="text-jgd-accent/40">.{d.tld}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function HeroSection() {
   const [count, setCount] = useState<number | null>(null);
+  const [domains, setDomains] = useState<{ name: string; tld: string }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
+
     fetch("/api/stats")
       .then((r) => (r.ok ? (r.json() as Promise<Stats>) : null))
       .then((data) => {
-        if (!cancelled && data?.index_loaded) setCount(data.entries);
+        if (!cancelled && data?.index_loaded) setCount(data.total_available);
       })
       .catch(() => {});
+
+    fetch("/api/search?sort=random&seed=99&limit=24")
+      .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setDomains(
+          data.results.map((d) => ({
+            name: d.name,
+            tld: d.tlds[0]?.replace(/^\./, "") ?? "com",
+          })),
+        );
+      })
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
   }, []);
 
   return (
-    <section className="px-6 pt-[clamp(3.5rem,12vh,7.5rem)] pb-12 max-w-[720px]">
-      <h1 className="jgd-fade-up font-serif text-[clamp(2.5rem,7vw,4rem)] font-normal italic tracking-[-0.02em] leading-[1.1] text-jgd-text mb-5">
-        Just get a domain.
-      </h1>
+    <section className="px-6 sm:px-10 pt-[clamp(3.5rem,10vh,7rem)] pb-12 max-w-[1400px] mx-auto overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 items-start">
+        {/* Left: text */}
+        <div>
+          <h1 className="jgd-fade-up font-serif text-[clamp(3rem,8vw,5.5rem)] font-normal italic tracking-[-0.03em] leading-[1.05] text-jgd-text mb-6">
+            Just get
+            <br />
+            a domain.
+          </h1>
 
-      <p className="jgd-fade-up [animation-delay:0.15s] text-[1.06rem] text-jgd-dim leading-[1.7] max-w-[520px]">
-        We scanned every short domain combination. The taken ones are gone.
-        What&apos;s left is yours to browse.
-      </p>
+          <p className="jgd-fade-up [animation-delay:0.15s] text-[clamp(1rem,1.8vw,1.25rem)] text-jgd-dim leading-[1.7] max-w-[520px]">
+            We scanned every short domain combination. The taken ones are gone.
+            What&apos;s left is yours to browse.
+          </p>
 
-      <div className="jgd-fade-up [animation-delay:0.3s] mt-8 flex items-center gap-1.5">
-        {count !== null ? (
-          <span className="flex items-center gap-1.5 text-[0.82rem] tracking-wide text-jgd-accent font-medium">
-            <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent shrink-0" />
-            {count.toLocaleString()} domains available now
-          </span>
-        ) : (
-          <span className="flex items-center gap-1.5 text-[0.82rem] tracking-wide text-jgd-muted">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-jgd-muted shrink-0" />
-            Loading availability&hellip;
-          </span>
-        )}
+          <div className="jgd-fade-up [animation-delay:0.3s] mt-8 flex items-center gap-1.5">
+            {count !== null ? (
+              <span className="flex items-center gap-1.5 text-[0.88rem] tracking-wide text-jgd-accent font-medium">
+                <span className="jgd-pulse inline-block w-1.5 h-1.5 rounded-full bg-jgd-accent shrink-0" />
+                {count.toLocaleString()} domains available now
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-[0.88rem] tracking-wide text-jgd-muted">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-jgd-muted shrink-0" />
+                Loading availability&hellip;
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right: decorative domain grid (desktop only) */}
+        <DomainGrid domains={domains} />
       </div>
     </section>
   );

@@ -239,8 +239,16 @@
   animation: jgd-marquee-left 35s linear infinite;
 }
 
+@utility jgd-marquee-left-slow {
+  animation: jgd-marquee-left 50s linear infinite;
+}
+
 @utility jgd-marquee-right {
   animation: jgd-marquee-right 35s linear infinite;
+}
+
+@utility jgd-marquee-right-fast {
+  animation: jgd-marquee-right 25s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -252,7 +260,9 @@
   .jgd-pulse,
   .jgd-blink,
   .jgd-marquee-left,
-  .jgd-marquee-right {
+  .jgd-marquee-left-slow,
+  .jgd-marquee-right,
+  .jgd-marquee-right-fast {
     animation: none;
   }
 }

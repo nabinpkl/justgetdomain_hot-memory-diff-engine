@@ -40,7 +40,7 @@ export function MiniShelvesSection() {
     let cancelled = false;
 
     SHELF_CONFIGS.forEach((config, idx) => {
-      const url = `/api/search?tlds=${encodeURIComponent(config.tlds)}&sort=random&seed=${config.seed}&limit=12`;
+      const url = `/api/search?tlds=${encodeURIComponent(config.tlds)}&sort=random&seed=${config.seed}&limit=20`;
       fetch(url)
         .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
         .then((data) => {
@@ -79,15 +79,15 @@ export function MiniShelvesSection() {
   if (allLoaded && !hasAnyShelves) return null;
 
   return (
-    <section className="py-[clamp(2.5rem,8vh,5rem)] px-6">
-      <div className="max-w-[720px]">
-        <p className="text-[0.65rem] uppercase tracking-[4px] mb-4 text-jgd-accent">
+    <section className="py-[clamp(2.5rem,8vh,5rem)] px-6 sm:px-10">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
           A taste
         </p>
-        <h2 className="mb-2 font-serif text-[clamp(1.5rem,3.5vw,2rem)] font-normal tracking-[-0.5px] leading-[1.3] text-jgd-text max-w-[480px]">
+        <h2 className="mb-3 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.25] text-jgd-text max-w-[520px]">
           Browse by category, not by guessing.
         </h2>
-        <p className="text-[0.88rem] text-jgd-dim leading-[1.6] max-w-[460px] mb-8">
+        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[500px] mb-10">
           Domains organized by vibe, TLD, and length. Scroll, discover, save the
           ones that click.
         </p>

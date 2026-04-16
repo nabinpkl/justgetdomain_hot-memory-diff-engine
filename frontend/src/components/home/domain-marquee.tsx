@@ -30,28 +30,38 @@ function PillStrip({ domains }: { domains: { name: string; tld: string }[] }) {
   );
 }
 
+type Speed = "normal" | "slow" | "fast";
+
+const LEFT_CLASSES: Record<Speed, string> = {
+  normal: "jgd-marquee-left",
+  slow: "jgd-marquee-left-slow",
+  fast: "jgd-marquee-left",
+};
+
+const RIGHT_CLASSES: Record<Speed, string> = {
+  normal: "jgd-marquee-right",
+  slow: "jgd-marquee-right",
+  fast: "jgd-marquee-right-fast",
+};
+
 function MarqueeRow({
   domains,
   direction,
+  speed = "normal",
 }: {
   domains: { name: string; tld: string }[];
   direction: "left" | "right";
+  speed?: Speed;
 }) {
+  const cls =
+    direction === "left" ? LEFT_CLASSES[speed] : RIGHT_CLASSES[speed];
+
   return (
     <div className="overflow-hidden relative">
-      {/* Gradient fades */}
       <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-jgd-bg to-transparent" />
       <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-jgd-bg to-transparent" />
 
-      {/* Two identical strips back-to-back. Each strip has internal gap-3
-          plus a trailing pr-3 so the gap between strip-end → strip-start
-          is identical to the internal gaps. translateX(-50%) then loops
-          perfectly since both halves are pixel-identical. */}
-      <div
-        className={`flex w-max will-change-transform ${
-          direction === "left" ? "jgd-marquee-left" : "jgd-marquee-right"
-        }`}
-      >
+      <div className={`flex w-max will-change-transform ${cls}`}>
         <PillStrip domains={domains} />
         <PillStrip domains={domains} />
       </div>
@@ -64,7 +74,7 @@ export function DomainMarquee() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/search?sort=random&seed=42&limit=40")
+    fetch("/api/search?sort=random&seed=42&limit=60")
       .then((r) => (r.ok ? (r.json() as Promise<ApiResponse>) : null))
       .then((data) => {
         if (cancelled || !data) return;
@@ -83,7 +93,7 @@ export function DomainMarquee() {
   if (domains.length === 0) {
     return (
       <section className="py-4">
-        <div className="h-[88px] flex items-center justify-center">
+        <div className="h-[132px] flex items-center justify-center">
           <span className="text-[0.75rem] text-jgd-muted tracking-wide">
             Loading domains&hellip;
           </span>
@@ -92,15 +102,17 @@ export function DomainMarquee() {
     );
   }
 
-  const mid = Math.ceil(domains.length / 2);
-  const row1 = domains.slice(0, mid);
-  const row2 = domains.slice(mid);
+  const third = Math.ceil(domains.length / 3);
+  const row1 = domains.slice(0, third);
+  const row2 = domains.slice(third, third * 2);
+  const row3 = domains.slice(third * 2);
 
   return (
     <section className="jgd-fade-up [animation-delay:0.45s] pb-4">
       <div className="flex flex-col gap-3">
-        <MarqueeRow domains={row1} direction="left" />
-        <MarqueeRow domains={row2} direction="right" />
+        <MarqueeRow domains={row1} direction="left" speed="normal" />
+        <MarqueeRow domains={row2} direction="right" speed="fast" />
+        <MarqueeRow domains={row3} direction="left" speed="slow" />
       </div>
       <p className="text-center mt-4 text-[0.65rem] uppercase tracking-[3px] text-jgd-muted">
         These are real &middot; available right now &middot; verified

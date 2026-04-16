@@ -18,28 +18,28 @@ const FEATURES = [
 
 export function TrustSection() {
   return (
-    <section className="py-[clamp(3.5rem,8vh,5rem)] px-6">
-      <div className="max-w-[720px]">
-        <p className="text-[0.65rem] uppercase tracking-[4px] mb-4 text-jgd-accent">
+    <section className="py-[clamp(3.5rem,8vh,5rem)] px-6 sm:px-10">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
           The approach
         </p>
-        <h2 className="mb-8 font-serif text-[clamp(1.5rem,3.5vw,2rem)] font-normal tracking-[-0.5px] leading-[1.3] text-jgd-text max-w-[460px]">
+        <h2 className="mb-10 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.25] text-jgd-text max-w-[500px]">
           Senseful discovery, not blind search.
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {FEATURES.map((f) => (
             <article
               key={f.num}
-              className="rounded-lg border border-jgd-border bg-jgd-surface/30 px-5 py-5"
+              className="rounded-lg border border-jgd-border bg-jgd-surface/30 px-7 py-7"
             >
-              <p className="text-[0.65rem] tracking-[2px] mb-2 text-jgd-accent">
+              <p className="text-[0.72rem] tracking-[2px] mb-3 text-jgd-accent">
                 {f.num}
               </p>
-              <h3 className="mb-2 font-serif text-[1.05rem] font-normal text-jgd-text">
+              <h3 className="mb-3 font-serif text-[1.2rem] font-normal text-jgd-text">
                 {f.title}
               </h3>
-              <p className="text-[0.85rem] text-jgd-dim leading-[1.7]">
+              <p className="text-[0.95rem] text-jgd-dim leading-[1.7]">
                 {f.desc}
               </p>
             </article>
