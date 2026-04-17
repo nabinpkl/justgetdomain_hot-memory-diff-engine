@@ -6,6 +6,9 @@ Two drafts of the same idea. The short one is for LinkedIn, the long one is the 
 
 ## Section 1: LinkedIn short
 
+why leetcode still matter (Calculator analogy)
+it might not matter every day but on scale it really makes the difference.
+
 Spent a few weekends on a project: a domain search tool that flips the usual UX. Instead of guessing names one at a time to see what's taken, pre-scan every short candidate and surface only what's actually available.
 
 The scan job is the interesting part. Set diff ~7,586 candidate names against a 5.6 GB file with 319 million registered domains, write out the available set.
