@@ -2,15 +2,16 @@ use clap::Parser;
 use justgetdomain::batch_runner;
 use justgetdomain::scanner::ScannerKind;
 use justgetdomain::snapshot;
+use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use std::time::Instant;
 
 #[derive(Parser)]
 #[command(
-    name = "batch",
-    about = "Scan an existing domains.txt against the candidate dictionary \
-             and write a snapshot. Meant for manual runs — the server runs \
-             the scheduled batch automatically, including download + extract."
+    name = "domain-scan",
+    about = "Diff a candidate dictionary against a sorted registered-domains file \
+             and write out the available set as a snapshot. Supports two scan \
+             algorithms (binary, linear) for side-by-side timing comparison."
 )]
 struct Args {
     /// Path to the sorted domain data file (post-extract)
@@ -39,7 +40,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     eprintln!(
-        "[batch] building snapshot from {} using {} scanner",
+        "[domain-scan] building available domains snapshot from {} using {} scanner",
         args.data.display(),
         args.scanner.as_str(),
     );
@@ -47,7 +48,7 @@ fn main() -> anyhow::Result<()> {
     let snapshot = batch_runner::build_snapshot(&args.data, args.scanner)?;
     let scan_elapsed = scan_start.elapsed();
 
-    eprintln!("[batch] writing snapshot to {}", args.output.display());
+    eprintln!("[domain-scan] writing snapshot to {}", args.output.display());
     snapshot::save(&args.output, &snapshot)?;
 
     let loaded = snapshot::load(&args.output)?;
@@ -58,12 +59,20 @@ fn main() -> anyhow::Result<()> {
         .map(|m| m.len())
         .unwrap_or(0);
     eprintln!(
-        "[batch] snapshot saved: {} entries, {} TLDs, {:.1} KB | scanner={} scan_elapsed={:.2}s",
+        "[domain-scan] snapshot saved: {} entries, {} TLDs, {:.1} KB | scanner={} scan_elapsed={:.2}s",
         loaded.entries.len(),
         loaded.all_tlds.len(),
         file_size as f64 / 1024.0,
         args.scanner.as_str(),
         scan_elapsed.as_secs_f64(),
     );
+
+    // SHA256 of the snapshot bytes. Different scanner algorithms must produce
+    // byte-identical snapshots — printing the hash side by side in the screenshot
+    // is the proof, not just that file sizes match.
+    let bytes = std::fs::read(&args.output)?;
+    let hash = Sha256::digest(&bytes);
+    let hex: String = hash.iter().map(|b| format!("{:02x}", b)).collect();
+    eprintln!("[domain-scan] snapshot sha256: {}", hex);
     Ok(())
 }

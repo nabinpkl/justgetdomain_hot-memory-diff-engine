@@ -8,7 +8,7 @@ COPY Cargo.toml Cargo.lock ./
 # Create dummy src to build dependencies
 RUN mkdir -p src/bin data && \
     echo 'fn main() {}' > src/main.rs && \
-    echo 'fn main() {}' > src/bin/batch.rs && \
+    echo 'fn main() {}' > src/bin/domain_scan.rs && \
     echo '' > src/lib.rs && \
     echo '{}' > data/wordlist.json && \
     cargo build --release --bin server 2>/dev/null || true && \

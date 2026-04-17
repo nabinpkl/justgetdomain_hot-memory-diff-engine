@@ -7,6 +7,17 @@
 - No dead code — if something is removed, delete it entirely (files, imports, types, everything referencing it)
 - No backward compatibility layers — this is iteration-based development; just change the code directly
 
+# Writing rules (docs/LinkedInEngineeringPosts/ only)
+
+These rules apply when drafting or editing post content inside `docs/LinkedInEngineeringPosts/`. They do NOT apply to code comments, internal docs, `docs/ProductPositioning/`, or this file.
+
+- No em-dashes. They read as AI-written on sight. Use periods, commas, colons, or parens instead.
+- No "X is not Y, it's Z" cadence unless it really earns it.
+- Keep the numbers. They do the heavy lifting.
+- First person, plain words, short paragraphs.
+- Audience is peer engineers and technical hiring managers, not recruiters. Technical terms (O-notation, mmap, asymptotic) stay when they advance the story. Flex-for-flex's-sake (naming libraries just to sound senior) gets cut.
+- The post is a log, not content marketing. Skip hook-bait openers. The reader arrived from a resume link, not a scroll.
+
 # JustGetDomain.com
 
 # JustGetDomain.com — Build Context
