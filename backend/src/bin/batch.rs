@@ -1,7 +1,9 @@
 use clap::Parser;
 use justgetdomain::batch_runner;
+use justgetdomain::scanner::ScannerKind;
 use justgetdomain::snapshot;
 use std::path::PathBuf;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(
@@ -18,6 +20,12 @@ struct Args {
     /// Path to write the snapshot file
     #[arg(long, default_value = "data/snapshot.bin")]
     output: PathBuf,
+
+    /// Scan algorithm: `binary` (sort-aware, seconds) or `linear` (naive
+    /// full scan, minutes). Both produce identical snapshots — use this to
+    /// capture side-by-side timings.
+    #[arg(long, default_value = "binary")]
+    scanner: ScannerKind,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -30,8 +38,14 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    eprintln!("[batch] building snapshot from {}", args.data.display());
-    let snapshot = batch_runner::build_snapshot(&args.data)?;
+    eprintln!(
+        "[batch] building snapshot from {} using {} scanner",
+        args.data.display(),
+        args.scanner.as_str(),
+    );
+    let scan_start = Instant::now();
+    let snapshot = batch_runner::build_snapshot(&args.data, args.scanner)?;
+    let scan_elapsed = scan_start.elapsed();
 
     eprintln!("[batch] writing snapshot to {}", args.output.display());
     snapshot::save(&args.output, &snapshot)?;
@@ -44,10 +58,12 @@ fn main() -> anyhow::Result<()> {
         .map(|m| m.len())
         .unwrap_or(0);
     eprintln!(
-        "[batch] snapshot saved: {} entries, {} TLDs, {:.1} KB",
+        "[batch] snapshot saved: {} entries, {} TLDs, {:.1} KB | scanner={} scan_elapsed={:.2}s",
         loaded.entries.len(),
         loaded.all_tlds.len(),
         file_size as f64 / 1024.0,
+        args.scanner.as_str(),
+        scan_elapsed.as_secs_f64(),
     );
     Ok(())
 }

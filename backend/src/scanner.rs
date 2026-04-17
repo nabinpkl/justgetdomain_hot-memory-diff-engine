@@ -1,5 +1,6 @@
 use memmap2::Mmap;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io;
 use std::path::Path;
@@ -17,6 +18,55 @@ pub struct ScanOutput {
     pub all_tlds: Vec<String>,
 }
 
+/// Which scanning algorithm to run. Swappable at runtime via config so we
+/// can A/B two algorithms against the same 5.6 GB input and record both
+/// timings — the point being that exploiting the sort order turns minutes
+/// into seconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ScannerKind {
+    /// Sort-aware: binary-search the mmap'd file for each candidate prefix.
+    /// O(k · (log n + t)).
+    Binary,
+    /// Naive: walk every line, check candidate membership, aggregate.
+    /// O(n) regardless of candidate set size — ignores that the file is sorted.
+    Linear,
+}
+
+impl ScannerKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ScannerKind::Binary => "binary",
+            ScannerKind::Linear => "linear",
+        }
+    }
+}
+
+impl std::str::FromStr for ScannerKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "binary" | "binsearch" | "bsearch" => Ok(ScannerKind::Binary),
+            "linear" | "scan" | "naive" => Ok(ScannerKind::Linear),
+            other => Err(format!("unknown scanner '{other}' (expected 'binary' or 'linear')")),
+        }
+    }
+}
+
+/// Public entry — dispatch to the requested implementation. Both impls are
+/// interchangeable: identical `ScanOutput` semantics, mmap'd input, same
+/// TLD filtering rules. Only the algorithm differs.
+pub fn scan(
+    kind: ScannerKind,
+    path: &Path,
+    candidates: &FxHashSet<String>,
+) -> io::Result<ScanOutput> {
+    match kind {
+        ScannerKind::Binary => scan_binary(path, candidates),
+        ScannerKind::Linear => scan_linear(path, candidates),
+    }
+}
+
 /// Binary-search the sorted domain file for each candidate word.
 ///
 /// Instead of reading 319M lines, we mmap the file and binary-search
@@ -25,7 +75,7 @@ pub struct ScanOutput {
 ///
 /// Complexity: O(k * (log(n) + t)) where k = candidates, n = file size,
 /// t = average TLDs per word. Typically seconds instead of minutes.
-pub fn scan_domains(
+fn scan_binary(
     path: &Path,
     candidates: &FxHashSet<String>,
 ) -> io::Result<ScanOutput> {
@@ -191,4 +241,102 @@ fn skip_past_newline(data: &[u8], pos: usize) -> usize {
     } else {
         data.len()
     }
+}
+
+/// Naive linear scan. Mmaps the file and walks every line regardless of
+/// where candidates sit. Kept intentionally simple — the whole point is to
+/// contrast against the sort-aware binary search. Same input, same output,
+/// dramatically different wall time.
+///
+/// Complexity: O(n) lines × O(1) candidate lookup. For a 5.6 GB / 319M-line
+/// file this is minutes. The binary-search variant is seconds.
+fn scan_linear(
+    path: &Path,
+    candidates: &FxHashSet<String>,
+) -> io::Result<ScanOutput> {
+    let file = File::open(path)?;
+    let mmap = unsafe { Mmap::map(&file)? };
+    let data = &mmap[..];
+
+    let start = Instant::now();
+
+    let mut per_candidate: FxHashMap<&str, Vec<String>> =
+        FxHashMap::with_capacity_and_hasher(candidates.len(), Default::default());
+    let mut all_tlds_set: FxHashSet<String> = FxHashSet::default();
+
+    let mut pos = 0usize;
+    let mut lines_seen: u64 = 0;
+
+    while pos < data.len() {
+        let line_end = memchr_newline(data, pos);
+        let line = &data[pos..line_end];
+        pos = skip_past_newline(data, line_end);
+        lines_seen += 1;
+
+        if lines_seen % 10_000_000 == 0 {
+            eprintln!(
+                "[progress] {lines_seen} lines scanned | {:.1}s",
+                start.elapsed().as_secs_f64(),
+            );
+        }
+
+        // Split on the first '.' → (name, tld). Skip lines without a dot.
+        let Some(dot) = line.iter().position(|&b| b == b'.') else {
+            continue;
+        };
+        let name_bytes = &line[..dot];
+        let tld_bytes = &line[dot + 1..];
+
+        // Must be valid UTF-8 name; bail on garbage rather than crash.
+        let Ok(name) = std::str::from_utf8(name_bytes) else {
+            continue;
+        };
+
+        // Only pay the TLD-parse cost when the name is a candidate.
+        let Some(key) = candidates.get(name) else {
+            continue;
+        };
+
+        let Ok(tld) = std::str::from_utf8(tld_bytes) else {
+            continue;
+        };
+        let tld = tld.trim_end();
+        if tld.is_empty()
+            || tld.bytes().any(|b| b.is_ascii_digit())
+            || tld.contains('.')
+        {
+            continue;
+        }
+
+        if !all_tlds_set.contains(tld) {
+            all_tlds_set.insert(tld.to_string());
+        }
+        per_candidate
+            .entry(key.as_str())
+            .or_insert_with(Vec::new)
+            .push(tld.to_string());
+    }
+
+    // Emit results in the same alphabetical order as the binary impl.
+    let mut results: Vec<ScanResult> = per_candidate
+        .into_iter()
+        .map(|(word, tlds)| ScanResult {
+            word: word.to_string(),
+            registered_tlds: tlds,
+        })
+        .collect();
+    results.sort_by(|a, b| a.word.cmp(&b.word));
+
+    let mut all_tlds: Vec<String> = all_tlds_set.into_iter().collect();
+    all_tlds.sort();
+
+    let elapsed = start.elapsed();
+    eprintln!(
+        "[done] linear scan: {lines_seen} lines in {:.2}s | {} matched | {} unique TLDs",
+        elapsed.as_secs_f64(),
+        results.iter().filter(|r| !r.registered_tlds.is_empty()).count(),
+        all_tlds.len(),
+    );
+
+    Ok(ScanOutput { results, all_tlds })
 }

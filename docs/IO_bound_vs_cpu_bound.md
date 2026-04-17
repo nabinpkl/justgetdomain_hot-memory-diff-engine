@@ -1,4 +1,5 @@
 
+
 Exactly. Core pinning doesn't create capacity. It just reshuffles the same pie. You're right to catch that.
 
 **But here's the insight you're missing: the batch job is I/O bound, not CPU bound.**

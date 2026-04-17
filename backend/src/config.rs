@@ -4,6 +4,8 @@ use std::time::Duration;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono_tz::Tz;
 
+use crate::scanner::ScannerKind;
+
 /// Runtime configuration for the batch pipeline and scheduler.
 /// All fields come from env. Loaded once at boot — treat as immutable.
 #[derive(Debug, Clone)]
@@ -19,6 +21,10 @@ pub struct BatchConfig {
     pub stale_after_hours: u64,
     pub download_timeout: Duration,
     pub min_download_bytes: u64,
+    /// Which scan algorithm the batch pipeline runs. Set with `SCANNER` env.
+    /// Exists purely so we can flip it at boot and re-run the batch to
+    /// capture side-by-side timings for the portfolio write-up.
+    pub scanner_kind: ScannerKind,
 }
 
 impl BatchConfig {
@@ -69,6 +75,13 @@ impl BatchConfig {
         let timeout_secs: u64 = parse_env("DOWNLOAD_TIMEOUT_SECS", 1800)?;
         let min_download_bytes: u64 = parse_env("MIN_DOWNLOAD_BYTES", 100_000_000)?;
 
+        let scanner_kind: ScannerKind = match std::env::var("SCANNER") {
+            Ok(v) => v
+                .parse::<ScannerKind>()
+                .map_err(|e| anyhow!("SCANNER invalid: {e}"))?,
+            Err(_) => ScannerKind::Binary,
+        };
+
         Ok(Self {
             download_url,
             data_dir,
@@ -81,6 +94,7 @@ impl BatchConfig {
             stale_after_hours,
             download_timeout: Duration::from_secs(timeout_secs),
             min_download_bytes,
+            scanner_kind,
         })
     }
 

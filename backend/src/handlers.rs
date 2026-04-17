@@ -10,6 +10,7 @@ use tokio_stream::StreamExt;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::index::{AvailableBand, DomainIndex, SearchParams, SearchResult, SortMode};
+use crate::scanner::ScannerKind;
 use crate::state::{AppState, BatchStatus, Phase};
 
 fn load_index(state: &AppState) -> Result<Arc<DomainIndex>, Response> {
@@ -203,6 +204,9 @@ pub struct StatsResponse {
     pub total_available: usize,
     pub index_loaded: bool,
     pub snapshot_age_seconds: Option<i64>,
+    /// Scanner currently configured (from env). This is what the *next*
+    /// batch will use — `batch.last_scan_kind` is what the *last* batch used.
+    pub configured_scanner: ScannerKind,
     pub batch: BatchStatusView,
 }
 
@@ -215,6 +219,8 @@ pub struct BatchStatusView {
     pub snapshot_updated_at_ms: Option<i64>,
     pub consecutive_failures: u32,
     pub next_scheduled_run_ms: Option<i64>,
+    pub last_scan_kind: Option<ScannerKind>,
+    pub last_scan_elapsed_ms: Option<u64>,
 }
 
 pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResponse> {
@@ -235,6 +241,7 @@ pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResp
         total_available,
         index_loaded,
         snapshot_age_seconds,
+        configured_scanner: state.config.scanner_kind,
         batch: BatchStatusView {
             phase: status.phase,
             last_success_at_ms: status.last_success_at_ms,
@@ -243,6 +250,8 @@ pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResp
             snapshot_updated_at_ms: status.snapshot_updated_at_ms,
             consecutive_failures: status.consecutive_failures,
             next_scheduled_run_ms: status.next_scheduled_run_ms,
+            last_scan_kind: status.last_scan_kind,
+            last_scan_elapsed_ms: status.last_scan_elapsed_ms,
         },
     })
 }

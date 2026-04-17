@@ -8,6 +8,7 @@ use tokio::sync::Mutex;
 use crate::categories::Categories;
 use crate::config::BatchConfig;
 use crate::index::DomainIndex;
+use crate::scanner::ScannerKind;
 
 /// Shared application state. Handlers read from it lock-free; the scheduler
 /// swaps a new index into place atomically when a batch succeeds.
@@ -70,6 +71,12 @@ pub struct BatchStatus {
     pub snapshot_updated_at_ms: Option<i64>,
     pub consecutive_failures: u32,
     pub next_scheduled_run_ms: Option<i64>,
+    /// Which scanner ran in the last batch. Surfaced on /stats so screenshots
+    /// can label the run without needing to correlate against logs.
+    pub last_scan_kind: Option<ScannerKind>,
+    /// Wall-clock time of just the scan step (not the full batch). This is
+    /// the headline number for the binary-vs-linear comparison.
+    pub last_scan_elapsed_ms: Option<u64>,
 }
 
 pub fn now_ms() -> i64 {

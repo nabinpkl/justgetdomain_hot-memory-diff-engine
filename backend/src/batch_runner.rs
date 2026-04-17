@@ -10,7 +10,7 @@ use tracing::{error, info, warn};
 
 use crate::dictionary;
 use crate::index::DomainIndex;
-use crate::scanner;
+use crate::scanner::{self, ScannerKind};
 use crate::snapshot::{self, Snapshot, SnapshotEntry};
 use crate::state::{AppState, Phase, now_ms};
 
@@ -101,19 +101,26 @@ async fn do_run_batch(state: &Arc<AppState>) -> Result<()> {
 
     // 3. Scan (CPU-bound → spawn_blocking)
     state.update_batch(|s| s.phase = Phase::Scanning);
-    info!("scanning domains file");
+    let scanner_kind = cfg.scanner_kind;
+    info!(scanner = scanner_kind.as_str(), "scanning domains file");
     let sc_start = Instant::now();
     let data_path = cfg.domains_txt_path.clone();
-    let snapshot = tokio::task::spawn_blocking(move || build_snapshot(&data_path))
+    let snapshot = tokio::task::spawn_blocking(move || build_snapshot(&data_path, scanner_kind))
         .await
         .map_err(|e| anyhow!("scan task join error: {e}"))?
         .context("scan failed")?;
+    let scan_elapsed_ms = sc_start.elapsed().as_millis() as u64;
     info!(
+        scanner = scanner_kind.as_str(),
         entries = snapshot.entries.len(),
         tlds = snapshot.all_tlds.len(),
-        elapsed_ms = sc_start.elapsed().as_millis(),
+        elapsed_ms = scan_elapsed_ms,
         "scan finished"
     );
+    state.update_batch(|s| {
+        s.last_scan_kind = Some(scanner_kind);
+        s.last_scan_elapsed_ms = Some(scan_elapsed_ms);
+    });
 
     // 4. Persist snapshot (atomic tmp+rename inside snapshot::save)
     let snapshot_path = cfg.snapshot_path.clone();
@@ -273,10 +280,11 @@ fn extract_zip(zip_path: &Path, output_path: &Path) -> Result<u64> {
 }
 
 /// Scan domains.txt against the candidate dictionary and assemble a Snapshot.
-/// Shared code path with the legacy `bin/batch` CLI.
-pub fn build_snapshot(data_path: &Path) -> Result<Snapshot> {
+/// Shared code path with the `bin/batch` CLI. `kind` selects the scan
+/// algorithm — both produce identical snapshots; only wall-time differs.
+pub fn build_snapshot(data_path: &Path, kind: ScannerKind) -> Result<Snapshot> {
     let candidates = dictionary::load_candidates();
-    let scan_output = scanner::scan_domains(data_path, &candidates)
+    let scan_output = scanner::scan(kind, data_path, &candidates)
         .with_context(|| format!("scan {}", data_path.display()))?;
 
     let mut results = scan_output.results;
