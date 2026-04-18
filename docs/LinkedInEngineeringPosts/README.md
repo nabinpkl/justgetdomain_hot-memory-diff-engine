@@ -12,6 +12,10 @@ Folder-wide writing rules live in `AGENTS.md` at the repo root, so they load int
 - Engineering pragmatism. Using a local LLM instead of Claude for the 370K word tagging, because cost.
 - Trade-off articulation. What I chose not to build and why. "No tests in this project" is a defensible position if framed well.
 
+- On the debug overhead post you joked about: it's a real post, not a joke. "I benchmarked in debug mode and the ratio was 26x; in release it was 9x; here's what that tells you about where LLMs still suggest things that work in dev and fail in prod" is a genuinely good second post, and it chains off this one naturally. Keep it in the drawer.
+-One small thing to tuck away for later: the 0.12s observation is a legitimate systems post on its own. "Why my binary search sometimes runs 20x faster than itself" is a good standalone piece about page cache behavior, and it chains naturally off this one. Third post in the drawer now, after the debug-vs-release one.
+
+
 ## Files in this folder
 
 - `leetcode_matters_at_scale.md`: post 1, algorithmic reasoning. In progress.

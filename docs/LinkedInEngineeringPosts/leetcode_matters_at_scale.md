@@ -1,10 +1,31 @@
 # LeetCode matters at scale
 
-Two drafts of the same idea. The short one is for LinkedIn, the long one is the article version. Iterate here, not in a Google Doc. Folder-wide writing rules live in `AGENTS.md`.
+Two drafts of the same idea. The short one is for LinkedIn, the long one is the article version. Iterate here, not in a Google Doc.
+
+## Writing rules (docs/LinkedInEngineeringPosts/ only)
+
+These rules apply when drafting or editing post content inside `docs/LinkedInEngineeringPosts/`. They do NOT apply to code comments, internal docs, `docs/ProductPositioning/`, or this file.
+
+- No em-dashes. They read as AI-written on sight. Use periods, commas, colons, or parens instead.
+- No "X is not Y, it's Z" cadence unless it really earns it.
+- Keep the numbers. They do the heavy lifting.
+- First person, plain words, short paragraphs.
+- Audience is peer engineers and technical hiring managers, not recruiters. Technical terms (O-notation, mmap, asymptotic) stay when they advance the story. Flex-for-flex's-sake (naming libraries just to sound senior) gets cut.
+- The post is a log, not content marketing. Skip hook-bait openers. The reader arrived from a resume link, not a scroll.
+
+
 
 ---
 
 ## Section 1: LinkedIn short
+
+My contrarian take on why Leetcode/DSA still matters for Engineers?
+
+It might not matter everyday.
+
+It same as saying learning arthimatic by hand dont matter when calculator exists (This has been repeated theme).
+
+I was working on …
 
 why leetcode still matter (Calculator analogy)
 it might not matter every day but on scale it really makes the difference.
