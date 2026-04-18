@@ -100,9 +100,9 @@ export function RollDiceButton() {
         type="button"
         onClick={handleRoll}
         disabled={rolling}
-        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-sm text-[0.78rem] font-mono cursor-pointer transition-colors border border-jgd-accent/45 bg-jgd-accent-dim text-jgd-accent hover:bg-jgd-accent-mid hover:border-jgd-accent/70 disabled:opacity-60 disabled:cursor-wait"
+        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-sm text-[0.78rem] font-mono cursor-pointer transition-colors border border-jgd-border bg-jgd-surface/60 text-jgd-text hover:border-jgd-text/25 hover:bg-jgd-surface disabled:opacity-60 disabled:cursor-wait"
       >
-        <Dice5 size={13} strokeWidth={2} />
+        <Dice5 size={13} strokeWidth={2} className="text-jgd-accent/70" />
         Roll a dice
       </button>
 

@@ -143,9 +143,9 @@
   --sidebar-ring: oklch(0.556 0 0);
 
   /* JustGetDomain brand tokens — dark mode overrides.
-     Floor: L 0.16 (Material). Text: L 0.93 (no glare).
+     Floor: L 0 (pure black). Text: L 0.93 (no glare).
      Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
-  --jgd-bg: oklch(0.16 0 0);
+  --jgd-bg: oklch(0 0 0);
   --jgd-surface: oklch(0.20 0 0);
   --jgd-text: oklch(0.93 0 0);
   --jgd-dim: oklch(0.72 0 0);
@@ -154,7 +154,7 @@
   --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
   --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
   --jgd-border: oklch(0.27 0 0);
-  --jgd-nav: oklch(0.16 0 0 / 0.92);
+  --jgd-nav: oklch(0 0 0 / 0.92);
 }
 
 @layer base {
