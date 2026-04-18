@@ -5,19 +5,19 @@ Drafts below, matching the structure of your iteration file. Both observe the ru
 
 ## Section 1: LinkedIn short
 
-Spent a few weekends on justgetdomain.com, a domain search tool that flips the usual UX. Instead of guessing names one at a time to check availability, pre-scan every short candidate and surface only what's actually available. The scan job went from 18 to 20 seconds down to 2 to 3 seconds after I noticed the input file was sorted. The binary search took one line. The noticing took a week.
+Spent a few weekends on justgetdomain.com, a domain search tool that flips the usual UX. Instead of guessing names one at a time to check availability, pre-scan every short candidate and surface only what's actually available. The scan job went from 18 to 20 seconds down to 2 to 3 seconds after I noticed the input file was sorted. The binary search was straightforward. The noticing took a week.
 
-The job: take around 7,586 candidate names, figure out which TLDs are already registered for each, persist the rest. The data is a single 5.6 GB file, 319 million lines, one `name.tld` per line, sorted alphabetically.
+The job: take around 7,586 candidate names, figure out which TLDs are already registered for each, persist the rest. 
 
-First version was naive. Walk every line, split on the first dot, hash check the name, aggregate. Clean Rust, release build, correct output. Rust was deliberate, I wanted the algorithmic floor with no language overhead. 18 to 20 seconds per run.
+The data is a single 5.6 GB file, 319 million lines, one `name.tld` per line, sorted alphabetically.
+
+First version was naive. Walk every line, split on the first dot, hash check the name, aggregate. Clean Rust code, correct output. Rust was deliberate, I wanted the algorithmic floor with no language overhead. 18 to 20 seconds per run.
 
 I asked Claude to make it faster. It suggested buffered reads, byte-level parsing instead of `String::split`, rayon parallelism. Micro-optimizations. Each good for 2 to 3x.
 
-Then I re-read the data description I'd been staring at for a week.
+Then I re-read the docs, the file is sorted alphabetically.
 
-The file is sorted alphabetically.
-
-Binary search the mmap'd file for each candidate instead of walking it. `O(k log n)` instead of `O(n)`. 18 to 20 seconds dropped to 2 to 3 seconds. Same hardware, same file, same output. About 8x from one line of reading comprehension.
+Binary search the mmap'd file for each candidate instead of walking it. `O(k log n)` instead of `O(n)`. 18 to 20 seconds dropped to 2 to 3 seconds. Same hardware, same file, same output. About 8x win from one line of reading comprehension.
 
 Here's what's interesting. Claude wrote the binary search in one shot the moment I asked for it. The bottleneck was never implementation. It was noticing the invariant existed.
 
@@ -38,11 +38,13 @@ P.S. Numbers are ranges across several release-mode runs on the same machine. Th
 ## Section 2: Article
 
 
-### Noticing the invariant: an 8x speedup I almost missed
+### The invariant was in the docs: An 8x speedup I almost missed
+
+I'm building a domain search tool. The idea is to flip the UX of how you usually look for a domain. Instead of guessing names and checking availability one by one, pre-scan every short candidate, filter out what's already registered, and show you only names you can actually buy.
+
+So the goal was: Scan 319 million lines (5.6GB) to find availability for ~7,500 candidates.
 
 You don't see many posts like this because most production wins live behind NDAs. Engineers ship real speedups at their day job and the numbers never leave the internal wiki. I can show you this one because the data and the code are mine, on a project that isn't a business. The before and after are real.
-
-I'm building a domain search tool. The idea is to flip how you usually look for a domain. Instead of guessing names and checking availability one by one, pre-scan every short candidate, filter out what's already registered, and show you only names you can actually buy.
 
 The data source is a single text file that refreshes daily. 5.6 GB. 319 million lines. One `name.tld` per line.
 
