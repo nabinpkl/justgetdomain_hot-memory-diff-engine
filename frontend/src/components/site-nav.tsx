@@ -51,7 +51,7 @@ export function SiteNav() {
       <div className="flex items-center gap-4">
         <Link
           href="/explore"
-          className={`text-[0.75rem] tracking-[1.5px] uppercase transition-opacity hover:opacity-100 ${pathname === "/explore" ? "text-jgd-accent" : "text-jgd-text opacity-90"}`}
+          className={`text-[0.75rem] tracking-[1.5px] uppercase transition-opacity hover:opacity-100 ${pathname === "/explore" ? "text-jgd-accent" : "text-jgd-text opacity-75"}`}
         >
           Explore Domains
         </Link>
