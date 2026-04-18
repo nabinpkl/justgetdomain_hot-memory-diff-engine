@@ -1,9 +1,6 @@
 node_modules
 .next
-.open-next
 .vercel
-.wrangler
-.dev.vars*
 .env*
 !.env.example
 .DS_Store

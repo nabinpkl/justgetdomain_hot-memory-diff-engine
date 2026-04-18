@@ -35,6 +35,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/server /app/server
 
-EXPOSE 3001
+EXPOSE 8001
 
 ENTRYPOINT ["/app/server"]

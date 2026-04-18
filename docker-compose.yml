@@ -1,34 +1,37 @@
 services:
   api:
+    container_name: justgetdomain-api
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${PORT:-8001}:${PORT:-8001}"
     env_file:
       - ./.env
-    environment:
-      - PORT=8000
-      - RUST_LOG=${RUST_LOG:-info}
-      - DATA_DIR=/app/data
-      - SNAPSHOT_PATH=/app/data/snapshot.bin
-      - DOMAINS_TXT_PATH=/app/data/domains.txt
-      - DOMAINS_ZIP_PATH=/app/data/domains.zip
     volumes:
       - ./backend/data:/app/data
     restart: unless-stopped
 
   web:
+    container_name: justgetdomain-web
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        API_URL: http://api:8000
+        API_URL: http://api:${PORT:-8001}
         NEXT_PUBLIC_STATICFORMS_API_KEY: ${NEXT_PUBLIC_STATICFORMS_API_KEY}
     ports:
-      - "3006:3006"
+      - "3000:3000"
     environment:
-      - API_URL=http://api:8000
+      - API_URL=http://api:${PORT:-8001}
     depends_on:
       - api
     restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["prod"]
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run
