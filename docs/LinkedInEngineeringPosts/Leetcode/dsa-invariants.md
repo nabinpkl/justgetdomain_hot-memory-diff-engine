@@ -5,33 +5,30 @@ Drafts below, matching the structure of your iteration file. Both observe the ru
 
 ## Section 1: LinkedIn short
 
-Spent a few weekends on justgetdomain.com, a domain search tool that flips the usual UX. Instead of guessing names one at a time to check availability, pre-scan every short candidate and surface only what's actually available. The scan job went from 18 to 20 seconds down to 2 to 3 seconds after I noticed the input file was sorted. The binary search was straightforward. The noticing took a week.
+Spent a few weekends on a project, a domain search tool that flips the usual UX. Instead of guessing names one at a time to check availability, pre-scan every short candidate and surface only what's actually available.
 
-The job: take around 7,586 candidate names, figure out which TLDs are already registered for each, persist the rest. 
+The domain scan job went from 18 to 20 seconds down to 2 to 3 seconds after I noticed the input file was sorted. The binary search was straightforward. The noticing took a week.
 
-The data is a single 5.6 GB file, 319 million lines, one `name.tld` per line, sorted alphabetically.
 
-First version was naive. Walk every line, split on the first dot, hash check the name, aggregate. Clean Rust code, correct output. Rust was deliberate, I wanted the algorithmic floor with no language overhead. 18 to 20 seconds per run.
+The job: take around 7,586 candidate names, figure out which TLDs are already registered for each, persist the rest. The data is a single 5.6 GB file, 319 million lines, sorted alphabetically.
 
-I asked Claude to make it faster. It suggested buffered reads, byte-level parsing instead of `String::split`, rayon parallelism. Micro-optimizations. Each good for 2 to 3x.
+First version was naive. Walk every line, hash check each name, aggregate. Clean Rust, release build, correct output. I picked Rust because a commodity utility like this should be fast. 18 to 20 seconds per run.
 
-Then I re-read the docs, the file is sorted alphabetically.
+I asked Claude to make it faster. Buffered reads, byte-level parsing, rayon parallelism. Each good for 2 to 3x.
 
-Binary search the mmap'd file for each candidate instead of walking it. `O(k log n)` instead of `O(n)`. 18 to 20 seconds dropped to 2 to 3 seconds. Same hardware, same file, same output. About 8x win from one line of reading comprehension.
+Then I re-read the docs I'd been staring at for a week. The file is sorted alphabetically.
 
-Here's what's interesting. Claude wrote the binary search in one shot the moment I asked for it. The bottleneck was never implementation. It was noticing the invariant existed.
+Binary search the mmap'd file for each candidate instead of walking it. O(k log n) instead of O(n). 18 to 20 seconds dropped to 2 to 3 seconds. Same hardware, same file, same output. About 8x from one line of reading comprehension.
 
-And look at the magnitudes. The stacked micro-ops Claude suggested would have landed somewhere in the 8 to 12x range if everything compounded, overlapping with the invariant win. The question was never which gives the bigger number. The question was which one I would have gotten to without reading the docs.
+Claude wrote the binary search in one shot the moment I asked for it. The bottleneck was never implementation. It was noticing the invariant existed.
 
-The reflex is what matters. Stare at any input and ask what's sorted, what's monotonic, what you can exploit. Without it you optimize inside the shape you already chose. You get faster at being wrong. The wrong algorithm, tuned beautifully, is still the wrong algorithm.
+The reflex is what matters. Stare at any input and ask what's sorted, what's monotonic, what you can exploit. Without it you optimize inside the shape you already chose and get faster at being wrong. The wrong algorithm, tuned beautifully, is still the wrong algorithm.
 
 Same reason learning addition by hand still matters in the calculator era. The calculator handles arithmetic. It won't tell you when you asked the wrong question.
 
 Implementation you can hand to an LLM. Noticing, you can't. Not yet.
 
-P.S. Numbers are ranges across several release-mode runs on the same machine. The data and the code are mine, which is the only reason the before and after exist outside an NDA.
-
-`#rust #systemsengineering #performance`
+#rust #systemsengineering #performance
 
 ---
 
@@ -54,7 +51,7 @@ The job: take around 7,586 candidate names, figure out which TLDs are already re
 
 It took 18 to 20 seconds per run.
 
-Rust was deliberate. The point of the exercise was to see the algorithmic floor, not language overhead. Twenty minutes in Python would have made the optimization story "rewrite it in a faster language," which isn't interesting. With Rust out of the way, the 18 to 20 seconds is pure algorithm cost, and the speedup later is pure algorithm win.
+I picked Rust because the whole thesis of justgetdomain is that a commodity utility like this should be free and fast, and users wait on the scan every time the snapshot rebuilds. So 18 to 20 seconds was pure algorithm cost, no language overhead hiding in the number.
 
 I asked Claude to make it faster. It suggested exactly what you'd expect. Buffered reads. Byte-level parsing instead of `String::split`. Parallelize with rayon. All good advice. Every one a 2 to 3x micro-optimization, stacking to maybe 8 to 12x if everything compounded cleanly.
 
