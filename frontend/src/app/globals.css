@@ -147,9 +147,9 @@
      Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
   --jgd-bg: oklch(0 0 0);
   --jgd-surface: oklch(0.20 0 0);
-  --jgd-text: oklch(0.93 0 0);
-  --jgd-dim: oklch(0.72 0 0);
-  --jgd-muted: oklch(0.45 0 0);
+  --jgd-text: oklch(0.95 0 0);
+  --jgd-dim: oklch(0.78 0 0);
+  --jgd-muted: oklch(0.57 0 0);
   --jgd-accent: oklch(0.75 0.18 142);
   --jgd-accent-dim: oklch(0.75 0.18 142 / 0.12);
   --jgd-accent-mid: oklch(0.75 0.18 142 / 0.25);
