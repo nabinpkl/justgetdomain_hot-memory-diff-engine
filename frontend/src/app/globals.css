@@ -167,6 +167,7 @@
   html {
     @apply font-sans;
     color-scheme: light;
+    scroll-behavior: smooth;
   }
   html.dark {
     color-scheme: dark;

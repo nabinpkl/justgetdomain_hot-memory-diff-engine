@@ -18,9 +18,9 @@ export function DomainPill({
 }: DomainPillProps) {
   const content = (
     <>
-      <span className="font-mono text-jgd-dim whitespace-nowrap">
+      <span className="font-mono text-jgd-text whitespace-nowrap">
         {name}
-        <span className="text-jgd-accent/55">.{tld}</span>
+        <span className="text-jgd-accent">.{tld}</span>
       </span>
       {showMeta && (
         <span className="text-[0.62rem] font-mono text-jgd-muted tracking-wide">

@@ -57,7 +57,7 @@ export function ShelfRow({ config, q }: ShelfRowProps) {
   if (!isLoading && domains.length === 0) return null;
 
   return (
-    <div className="mb-10">
+    <div id={`shelf-${config.id}`} className="mb-10 scroll-mt-20">
       {/* Header */}
       <div className="flex items-baseline justify-between mb-1 px-6 sm:px-10">
         <div className="flex items-baseline gap-3 flex-wrap">
