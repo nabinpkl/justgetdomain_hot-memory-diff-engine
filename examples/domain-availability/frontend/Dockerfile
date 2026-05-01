@@ -10,9 +10,7 @@ RUN pnpm install --frozen-lockfile
 # ─── Build ──────────────────────────────────────────────────────────────
 FROM base AS builder
 ARG API_URL=http://api:8000
-ARG NEXT_PUBLIC_STATICFORMS_API_KEY
 ENV API_URL=${API_URL}
-ENV NEXT_PUBLIC_STATICFORMS_API_KEY=${NEXT_PUBLIC_STATICFORMS_API_KEY}
 ENV DOCKER_BUILD=1
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules

@@ -14,7 +14,7 @@ Engineer onboarding for the `hot-memory-diff-engine` workspace. For project cont
 ├── examples/
 │   ├── domain-availability/        Live integration. Backend serves api.justgetdomain.com.
 │   │   ├── backend/                Rust (Axum, Tokio). Uses both crates.
-│   │   └── frontend/               Next.js. Will move under examples/ in #19.
+│   │   └── frontend/               Next.js homepage / search UI for the live demo.
 │   └── breach-password-check/      CLI. Uses streaming-set-diff only. Proves the crate is generic.
 ├── docs/
 │   ├── PERFORMANCE.md              Measured numbers + reproducible commands.

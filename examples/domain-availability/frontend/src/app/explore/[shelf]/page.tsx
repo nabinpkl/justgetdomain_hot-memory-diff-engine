@@ -23,6 +23,8 @@ type SearchResponse = {
   total: number;
   total_combos: number;
   results: SearchResult[];
+  /** Client-measured round-trip time for this page fetch (ms). */
+  _fetchMs?: number;
 };
 
 type Domain = { name: string; tld: string };
@@ -97,12 +99,15 @@ export default function ShelfPage({
     queryKey: ["shelf", config.id, seed],
     initialPageParam: 0,
     queryFn: async ({ pageParam, signal }) => {
+      const t0 = performance.now();
       const res = await fetch(
         buildSearchUrl(config, seed, pageParam as number),
         { signal },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as SearchResponse;
+      const json = (await res.json()) as SearchResponse;
+      json._fetchMs = performance.now() - t0;
+      return json;
     },
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((sum, p) => sum + p.results.length, 0);
@@ -117,6 +122,7 @@ export default function ShelfPage({
   );
   const total = query.data?.pages[0]?.total ?? 0;
   const totalCombos = query.data?.pages[0]?.total_combos ?? 0;
+  const firstPageMs = query.data?.pages[0]?._fetchMs ?? null;
   const loadedCount = domains.length;
   const isInitialLoading = query.isPending;
 
@@ -167,9 +173,25 @@ export default function ShelfPage({
           {config.description}
         </p>
         <div className="jgd-fade-up [animation-delay:0.15s] text-[0.82rem] font-mono text-jgd-muted">
-          {isInitialLoading
-            ? "\u2026"
-            : `${totalCombos.toLocaleString()} available combos · ${total.toLocaleString()} names`}
+          {isInitialLoading ? (
+            "\u2026"
+          ) : (
+            <>
+              {totalCombos.toLocaleString()} available combos &middot;{" "}
+              {total.toLocaleString()} names
+              {firstPageMs != null && (
+                <>
+                  {" · "}
+                  <span
+                    className="text-jgd-accent"
+                    title="Client-measured round trip from /search request to JSON parsed. Backend lookup itself is microseconds; the rest is network + serialization."
+                  >
+                    returned in {firstPageMs.toFixed(1)} ms
+                  </span>
+                </>
+              )}
+            </>
+          )}
         </div>
       </section>
 

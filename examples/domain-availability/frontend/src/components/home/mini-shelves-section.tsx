@@ -44,14 +44,14 @@ export function MiniShelvesSection() {
     <section className="py-[clamp(2.5rem,8vh,5rem)] px-6 sm:px-10">
       <div className="max-w-[1400px] mx-auto">
         <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
-          A taste
+          Live demo
         </p>
-        <h2 className="mb-3 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.25] text-jgd-text max-w-[520px]">
-          Browse by category, not by guessing.
+        <h2 className="mb-3 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.25] text-jgd-text max-w-[640px]">
+          Each shelf is one <code className="font-mono text-[0.85em] text-jgd-accent">/search</code> call against the live index.
         </h2>
-        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[500px] mb-10">
-          Domains organized by vibe, TLD, and length. Scroll, discover, save the
-          ones that click.
+        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[560px] mb-10">
+          Filtered by TLD, length, and category. Served from process memory on
+          a single Rust binary, swapped in nightly without dropping a request.
         </p>
 
         {shelves.map((config) => (

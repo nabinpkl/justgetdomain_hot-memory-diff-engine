@@ -1,10 +1,9 @@
 import { DisclaimerCard } from "@/components/disclaimer-card";
-import { WaitlistForm } from "@/components/waitlist-form";
 import { HeroSection } from "@/components/home/hero-section";
+import { LiveStatsStrip } from "@/components/home/live-stats-strip";
 import { DomainMarquee } from "@/components/home/domain-marquee";
-import { ComparisonBlock } from "@/components/home/comparison-block";
+import { MechanismBlock } from "@/components/home/mechanism-block";
 import { MiniShelvesSection } from "@/components/home/mini-shelves-section";
-import { TrustSection } from "@/components/home/trust-section";
 import { LinkedInBlock } from "@/components/home/linkedin-block";
 
 const jsonLd = {
@@ -32,38 +31,25 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="overflow-x-clip bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
-        {/* Hero */}
+        {/* Hero — builder thesis */}
         <HeroSection />
 
-        {/* Marquee proof strip + disclaimer */}
+        {/* Live numbers from /stats — refreshes every 30s */}
+        <LiveStatsStrip />
+
+        {/* Live evidence: scrolling pills of real available names */}
         <DomainMarquee />
         <div className="px-6 pt-6 pb-6 max-w-[960px] mx-auto">
           <DisclaimerCard className="border-0 px-0 py-0 text-[0.68rem] justify-center" />
         </div>
 
-        {/* Comparison: old way vs our way */}
-        <ComparisonBlock />
+        {/* The mechanism: read path / build path */}
+        <MechanismBlock />
 
-        {/* Browsable shelf previews */}
+        {/* Live demo: each shelf is one /search call against the index */}
         <MiniShelvesSection />
 
-        {/* Trust / approach */}
-        <TrustSection />
-
-        {/* Early access CTA */}
-        <section className="text-center relative py-[clamp(3.5rem,10vh,6rem)] border-t border-jgd-border">
-          <div className="relative max-w-[820px] mx-auto px-6">
-            <h2 className="mb-4 font-serif text-[clamp(1.5rem,3.5vw,2rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text">
-              Get early access
-            </h2>
-            <p className="text-[0.88rem] mx-auto mb-10 text-center text-jgd-dim max-w-[600px] leading-[1.9]">
-              We&apos;ll let you know when the index goes live. No spam.
-            </p>
-            <WaitlistForm />
-          </div>
-        </section>
-
-        {/* LinkedIn / built by */}
+        {/* Built by */}
         <LinkedInBlock />
       </div>
     </>

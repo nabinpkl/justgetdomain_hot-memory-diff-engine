@@ -15,11 +15,10 @@ services:
   web:
     container_name: justgetdomain-web
     build:
-      context: ./frontend
+      context: ./examples/domain-availability/frontend
       dockerfile: Dockerfile
       args:
         API_URL: http://api:${PORT:-8001}
-        NEXT_PUBLIC_STATICFORMS_API_KEY: ${NEXT_PUBLIC_STATICFORMS_API_KEY}
     ports:
       - "3000:3000"
     environment:

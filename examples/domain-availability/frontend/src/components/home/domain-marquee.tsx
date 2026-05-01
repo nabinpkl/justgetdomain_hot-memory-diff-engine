@@ -115,7 +115,7 @@ export function DomainMarquee() {
         <MarqueeRow domains={row3} direction="left" speed="slow" />
       </div>
       <p className="text-center mt-4 text-[0.65rem] uppercase tracking-[3px] text-jgd-muted">
-        These are real &middot; available right now &middot; verified
+        Live snapshot &middot; ~7,500 entries &middot; rebuilt nightly
       </p>
     </section>
   );
