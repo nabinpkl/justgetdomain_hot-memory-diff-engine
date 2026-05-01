@@ -1,0 +1,8 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/hot-index",
+    "crates/streaming-set-diff",
+    "examples/domain-availability/backend",
+    "examples/breach-password-check",
+]

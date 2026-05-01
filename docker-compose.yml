@@ -2,14 +2,14 @@ services:
   api:
     container_name: justgetdomain-api
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: examples/domain-availability/backend/Dockerfile
     ports:
       - "${PORT:-8001}:${PORT:-8001}"
     env_file:
       - ./.env
     volumes:
-      - ./backend/data:/app/data
+      - ./examples/domain-availability/backend/data:/app/data
     restart: unless-stopped
 
   web:

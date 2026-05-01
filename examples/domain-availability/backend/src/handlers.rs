@@ -1,8 +1,10 @@
 use std::sync::Arc;
+use std::time::Instant;
 
 use axum::Json;
-use axum::extract::{Query, State};
+use axum::extract::{Query, Request, State};
 use axum::http::{StatusCode, header};
+use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -13,17 +15,50 @@ use crate::index::{AvailableBand, DomainIndex, SearchParams, SearchResult, SortM
 use crate::scanner::ScannerKind;
 use crate::state::{AppState, BatchStatus, Phase};
 
-fn load_index(state: &AppState) -> Result<Arc<DomainIndex>, Response> {
-    match state.index.load_full() {
-        Some(idx) => Ok(idx),
-        None => {
-            let body = Json(json!({
-                "status": "warming_up",
-                "message": "index not loaded yet; first batch in progress"
-            }));
-            Err((StatusCode::SERVICE_UNAVAILABLE, body).into_response())
+/// Axum middleware: wraps every request, records its total elapsed
+/// time in µs into the lifetime histogram on `AppState`. Cheap — one
+/// `Instant` + one mutex'd `record` per request.
+pub async fn metrics_middleware(
+    State(state): State<Arc<AppState>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let start = Instant::now();
+    let response = next.run(request).await;
+    let micros = start.elapsed().as_micros() as u64;
+    state.record_request_latency(micros);
+    response
+}
+
+/// Resident Set Size of the current process, in bytes. Linux-only;
+/// returns `None` on platforms without `/proc/self/status` or when the
+/// `VmRSS:` line is missing/malformed.
+fn read_rss_bytes() -> Option<u64> {
+    let status = std::fs::read_to_string("/proc/self/status").ok()?;
+    for line in status.lines() {
+        if let Some(rest) = line.strip_prefix("VmRSS:") {
+            // Format: "VmRSS:    12345 kB"
+            let kb: u64 = rest.split_whitespace().next()?.parse().ok()?;
+            return Some(kb * 1024);
         }
     }
+    None
+}
+
+/// Borrow the live index. Returns the wrapping `Arc<Option<DomainIndex>>`
+/// so it can be moved across `spawn_blocking`; callers unwrap the inner
+/// `Option` after this returns `Ok` (the `Some` is guaranteed by the
+/// pre-check here).
+fn load_index(state: &AppState) -> Result<Arc<Option<DomainIndex>>, Response> {
+    let arc = state.index.load_full();
+    if arc.is_none() {
+        let body = Json(json!({
+            "status": "warming_up",
+            "message": "index not loaded yet; first batch in progress"
+        }));
+        return Err((StatusCode::SERVICE_UNAVAILABLE, body).into_response());
+    }
+    Ok(arc)
 }
 
 // ─── /search (paginated REST) ──────────────────────────────────────────
@@ -56,10 +91,11 @@ pub async fn search_handler(
     State(state): State<Arc<AppState>>,
     Query(query): Query<SearchQuery>,
 ) -> Response {
-    let index = match load_index(&state) {
+    let arc = match load_index(&state) {
         Ok(i) => i,
         Err(resp) => return resp,
     };
+    let index = arc.as_ref().as_ref().expect("load_index guarantees Some");
     let params = parse_search_params(&query);
     let offset = query.offset.unwrap_or(0);
     let limit = query.limit.unwrap_or(50).min(200);
@@ -79,7 +115,7 @@ pub async fn stream_handler(
     State(state): State<Arc<AppState>>,
     Query(query): Query<SearchQuery>,
 ) -> Response {
-    let index = match load_index(&state) {
+    let arc = match load_index(&state) {
         Ok(i) => i,
         Err(resp) => return resp,
     };
@@ -88,6 +124,7 @@ pub async fn stream_handler(
     let (tx, rx) = tokio::sync::mpsc::channel::<SearchResult>(64);
 
     tokio::task::spawn_blocking(move || {
+        let index = arc.as_ref().as_ref().expect("load_index guarantees Some");
         for result in index.search_iter(&params) {
             if tx.blocking_send(result).is_err() {
                 break;
@@ -113,10 +150,11 @@ pub async fn stream_handler(
 // ─── /tlds ─────────────────────────────────────────────────────────────
 
 pub async fn tlds_handler(State(state): State<Arc<AppState>>) -> Response {
-    let index = match load_index(&state) {
+    let arc = match load_index(&state) {
         Ok(i) => i,
         Err(resp) => return resp,
     };
+    let index = arc.as_ref().as_ref().expect("load_index guarantees Some");
     Json(index.all_tlds().to_vec()).into_response()
 }
 
@@ -140,10 +178,11 @@ pub async fn tlds_for_handler(
     State(state): State<Arc<AppState>>,
     Query(query): Query<TldsForQuery>,
 ) -> Response {
-    let index = match load_index(&state) {
+    let arc = match load_index(&state) {
         Ok(i) => i,
         Err(resp) => return resp,
     };
+    let index = arc.as_ref().as_ref().expect("load_index guarantees Some");
     let offset = query.offset.unwrap_or(0);
     let limit = query.limit.unwrap_or(100).min(500);
 
@@ -183,7 +222,7 @@ pub async fn health_handler() -> Json<HealthResponse> {
 // ─── /ready (readiness: index loaded) ──────────────────────────────────
 
 pub async fn ready_handler(State(state): State<Arc<AppState>>) -> Response {
-    if state.index.load().is_some() {
+    if state.index.load().as_ref().is_some() {
         (StatusCode::OK, Json(json!({ "ready": true }))).into_response()
     } else {
         (
@@ -193,6 +232,7 @@ pub async fn ready_handler(State(state): State<Arc<AppState>>) -> Response {
             .into_response()
     }
 }
+
 
 // ─── /stats ────────────────────────────────────────────────────────────
 
@@ -208,6 +248,23 @@ pub struct StatsResponse {
     /// batch will use — `batch.last_scan_kind` is what the *last* batch used.
     pub configured_scanner: ScannerKind,
     pub batch: BatchStatusView,
+    pub runtime: RuntimeStats,
+}
+
+/// Runtime observability surfaced for the homepage live-stats strip.
+/// Lifetime accumulators since process start.
+#[derive(Serialize)]
+pub struct RuntimeStats {
+    /// Total request count seen by the metrics middleware.
+    pub request_count: u64,
+    /// Whole-handler latency in microseconds (routing + parse +
+    /// lookup + serialize). `None` if no requests recorded yet.
+    pub p50_request_us: Option<u64>,
+    pub p99_request_us: Option<u64>,
+    pub max_request_us: Option<u64>,
+    /// Resident Set Size of the serving process in bytes (Linux only;
+    /// `None` on other platforms).
+    pub rss_bytes: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -225,7 +282,8 @@ pub struct BatchStatusView {
 
 pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResponse> {
     let status: BatchStatus = (**state.batch.load()).clone();
-    let (tld_count, entries, total_available, index_loaded) = match state.index.load_full() {
+    let arc = state.index.load_full();
+    let (tld_count, entries, total_available, index_loaded) = match arc.as_ref() {
         Some(idx) => (idx.all_tlds().len(), idx.entries_len(), idx.total_available(), true),
         None => (0, 0, 0, false),
     };
@@ -233,6 +291,29 @@ pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResp
     let snapshot_age_seconds = status
         .snapshot_updated_at_ms
         .map(|t| (now_ms - t) / 1000);
+
+    // Snapshot the histogram at this instant. Lock duration is a few µs.
+    let runtime = {
+        let h = state.request_latency_us.lock().expect("histogram poisoned");
+        let count = h.len();
+        if count == 0 {
+            RuntimeStats {
+                request_count: 0,
+                p50_request_us: None,
+                p99_request_us: None,
+                max_request_us: None,
+                rss_bytes: read_rss_bytes(),
+            }
+        } else {
+            RuntimeStats {
+                request_count: count,
+                p50_request_us: Some(h.value_at_percentile(50.0)),
+                p99_request_us: Some(h.value_at_percentile(99.0)),
+                max_request_us: Some(h.max()),
+                rss_bytes: read_rss_bytes(),
+            }
+        }
+    };
 
     Json(StatsResponse {
         updated_at_ms: status.snapshot_updated_at_ms.unwrap_or(0),
@@ -253,6 +334,7 @@ pub async fn stats_handler(State(state): State<Arc<AppState>>) -> Json<StatsResp
             last_scan_kind: status.last_scan_kind,
             last_scan_elapsed_ms: status.last_scan_elapsed_ms,
         },
+        runtime,
     })
 }
 

@@ -1,7 +1,8 @@
 use clap::Parser;
-use justgetdomain::batch_runner;
-use justgetdomain::scanner::ScannerKind;
-use justgetdomain::snapshot;
+use domain_availability::batch_runner;
+use domain_availability::scanner::ScannerKind;
+use domain_availability::snapshot::Snapshot;
+use hot_index::persistence;
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use std::time::Instant;
@@ -49,9 +50,9 @@ fn main() -> anyhow::Result<()> {
     let scan_elapsed = scan_start.elapsed();
 
     eprintln!("[domain-scan] writing snapshot to {}", args.output.display());
-    snapshot::save(&args.output, &snapshot)?;
+    persistence::rkyv::save(&args.output, &snapshot)?;
 
-    let loaded = snapshot::load(&args.output)?;
+    let loaded: Snapshot = persistence::rkyv::load(&args.output)?;
     assert_eq!(loaded.entries.len(), snapshot.entries.len());
     assert_eq!(loaded.all_tlds.len(), snapshot.all_tlds.len());
 

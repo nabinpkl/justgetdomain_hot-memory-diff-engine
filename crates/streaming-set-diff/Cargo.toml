@@ -1,0 +1,23 @@
+[package]
+name = "streaming-set-diff"
+version = "0.1.0"
+edition = "2024"
+description = "Single-pass set-difference over a sorted source streamed line-by-line."
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+# Adds a 10M-line corpus size to the throughput benches. Off by default
+# — keeps `cargo bench` runtime under a few minutes on routine runs.
+long-bench = []
+
+[dependencies]
+rustc-hash = "2.1"
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false }
+rand = "0.8"
+
+[[bench]]
+name = "throughput"
+harness = false

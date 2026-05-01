@@ -1,5 +1,5 @@
 [package]
-name = "justgetdomain"
+name = "domain-availability"
 version = "0.1.0"
 edition = "2024"
 
@@ -12,6 +12,9 @@ name = "domain-scan"
 path = "src/bin/domain_scan.rs"
 
 [dependencies]
+hot-index = { path = "../../../crates/hot-index", features = ["rkyv"] }
+streaming-set-diff = { path = "../../../crates/streaming-set-diff" }
+arc-swap = "1.7"
 clap = { version = "4", features = ["derive"] }
 rkyv = { version = "0.8", features = ["bytecheck"] }
 axum = { version = "0.8.8", features = ["macros"] }
@@ -25,7 +28,6 @@ memmap2 = "0.9"
 tracing = "0.1.44"
 tokio-stream = "0.1"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-arc-swap = "1.7"
 reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls"] }
 futures-util = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
@@ -34,3 +36,4 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 anyhow = "1"
 thiserror = "1"
 sha2 = "0.10"
+hdrhistogram = "7"

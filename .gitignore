@@ -2,10 +2,13 @@
 *.gz
 *.zip
 *.txt
-!backend/data/words_selective.txt
+!examples/domain-availability/backend/data/words_selective.txt
+!examples/breach-password-check/data/*.txt
 
 .DS_Store
 
 *.bin
 
 .env
+
+target/

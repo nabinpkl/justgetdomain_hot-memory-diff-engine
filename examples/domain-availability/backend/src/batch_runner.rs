@@ -11,8 +11,9 @@ use tracing::{error, info, warn};
 use crate::dictionary;
 use crate::index::DomainIndex;
 use crate::scanner::{self, ScannerKind};
-use crate::snapshot::{self, Snapshot, SnapshotEntry};
+use crate::snapshot::{Snapshot, SnapshotEntry};
 use crate::state::{AppState, Phase, now_ms};
+use hot_index::persistence;
 
 /// Orchestrates one end-to-end batch:
 /// download → extract → scan → persist → atomic in-memory swap.
@@ -122,15 +123,17 @@ async fn do_run_batch(state: &Arc<AppState>) -> Result<()> {
         s.last_scan_elapsed_ms = Some(scan_elapsed_ms);
     });
 
-    // 4. Persist snapshot (atomic tmp+rename inside snapshot::save)
+    // 4. Persist snapshot (atomic tmp+rename via hot_index::persistence::rkyv)
     let snapshot_path = cfg.snapshot_path.clone();
     let snapshot_for_save = Arc::new(snapshot);
     let snapshot_for_save_clone = Arc::clone(&snapshot_for_save);
     let saved_path = snapshot_path.clone();
-    tokio::task::spawn_blocking(move || snapshot::save(&saved_path, &snapshot_for_save_clone))
-        .await
-        .map_err(|e| anyhow!("snapshot save task join error: {e}"))?
-        .context("snapshot save failed")?;
+    tokio::task::spawn_blocking(move || {
+        persistence::rkyv::save(&saved_path, &*snapshot_for_save_clone)
+    })
+    .await
+    .map_err(|e| anyhow!("snapshot save task join error: {e}"))?
+    .context("snapshot save failed")?;
 
     let snapshot_mtime_ms = read_mtime_ms(&snapshot_path);
 
@@ -144,7 +147,7 @@ async fn do_run_batch(state: &Arc<AppState>) -> Result<()> {
     })
     .await
     .map_err(|e| anyhow!("index build join error: {e}"))?;
-    state.index.store(Some(Arc::new(index)));
+    state.index.swap(Some(index));
     info!(
         elapsed_ms = idx_start.elapsed().as_millis(),
         "index swapped"

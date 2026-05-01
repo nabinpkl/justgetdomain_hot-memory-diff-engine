@@ -1,0 +1,31 @@
+[package]
+name = "hot-index"
+version = "0.1.0"
+edition = "2024"
+description = "Hot-swappable in-memory lookup indexes — atomic publish, lock-free reads."
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+bincode = ["dep:bincode", "dep:serde"]
+rkyv = ["dep:rkyv"]
+# Adds a 10M-entry size to the lookup benches. Off by default — keeps
+# `cargo bench` runtime under a minute on routine runs.
+long-bench = []
+
+[dependencies]
+arc-swap = "1.7"
+rustc-hash = "2.1"
+serde = { version = "1", features = ["derive"], optional = true }
+bincode = { version = "2", features = ["serde"], optional = true }
+rkyv = { version = "0.8", features = ["bytecheck"], optional = true }
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+tempfile = "3"
+criterion = { version = "0.5", default-features = false }
+rand = "0.8"
+
+[[bench]]
+name = "lookup"
+harness = false

@@ -7,13 +7,14 @@ use axum::routing::get;
 use tower_http::cors::CorsLayer;
 use tracing::{info, warn};
 
-use justgetdomain::categories::Categories;
-use justgetdomain::config::BatchConfig;
-use justgetdomain::handlers;
-use justgetdomain::index::DomainIndex;
-use justgetdomain::scheduler;
-use justgetdomain::snapshot;
-use justgetdomain::state::{AppState, now_ms};
+use domain_availability::categories::Categories;
+use domain_availability::config::BatchConfig;
+use domain_availability::handlers;
+use domain_availability::index::DomainIndex;
+use domain_availability::scheduler;
+use domain_availability::snapshot::Snapshot;
+use domain_availability::state::{AppState, now_ms};
+use hot_index::persistence;
 
 #[tokio::main]
 async fn main() {
@@ -48,7 +49,7 @@ async fn main() {
 
     // Try to load an existing snapshot so we can serve immediately on boot.
     // A missing snapshot is fine — scheduler will run the first batch.
-    let (initial_index, initial_mtime) = match snapshot::load(&config.snapshot_path) {
+    let (initial_index, initial_mtime) = match persistence::rkyv::load::<Snapshot, _>(&config.snapshot_path) {
         Ok(snap) => {
             let start = Instant::now();
             let entries = snap.entries.len();
@@ -66,7 +67,7 @@ async fn main() {
                 elapsed_ms = start.elapsed().as_millis(),
                 "loaded existing snapshot"
             );
-            (Some(Arc::new(idx)), mtime)
+            (Some(idx), mtime)
         }
         Err(e) => {
             warn!(error = %e, "no snapshot on disk; server will serve 503 until first batch completes");
@@ -110,6 +111,10 @@ async fn main() {
         .route("/tlds-for", get(handlers::tlds_for_handler))
         .route("/categories", get(handlers::categories_handler))
         .route("/stats", get(handlers::stats_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            handlers::metrics_middleware,
+        ))
         .layer(cors)
         .with_state(state.clone());
 
