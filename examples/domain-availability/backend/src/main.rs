@@ -34,6 +34,7 @@ async fn main() {
     };
 
     info!(
+        downloads_enabled = config.downloads_enabled,
         url = %config.redacted_url(),
         start_hour = config.start_hour,
         window_hours = config.window_hours,
@@ -70,6 +71,15 @@ async fn main() {
             (Some(idx), mtime)
         }
         Err(e) => {
+            if !config.downloads_enabled {
+                eprintln!(
+                    "FATAL: no snapshot at {} and DOWNLOAD_DOMAINS=false; \
+                     either provide a snapshot or set DOWNLOAD_DOMAINS=true. \
+                     Underlying load error: {e:#}",
+                    config.snapshot_path.display()
+                );
+                std::process::exit(1);
+            }
             warn!(error = %e, "no snapshot on disk; server will serve 503 until first batch completes");
             (None, None)
         }
@@ -129,11 +139,17 @@ async fn main() {
     info!(%addr, "server started");
 
     // Scheduler runs in background. It will kick off the first batch
-    // immediately if no snapshot was loaded.
-    let scheduler_state = state.clone();
-    tokio::spawn(async move {
-        scheduler::run(scheduler_state).await;
-    });
+    // immediately if no snapshot was loaded. Only spawned when downloads
+    // are enabled — otherwise the on-disk snapshot is the source of truth
+    // and there is nothing for the scheduler to do.
+    if state.config.downloads_enabled {
+        let scheduler_state = state.clone();
+        tokio::spawn(async move {
+            scheduler::run(scheduler_state).await;
+        });
+    } else {
+        info!("downloads disabled; scheduler not started, serving on-disk snapshot only");
+    }
 
     axum::serve(listener, app).await.unwrap();
 }

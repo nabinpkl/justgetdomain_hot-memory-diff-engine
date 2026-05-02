@@ -10,7 +10,13 @@ use crate::scanner::ScannerKind;
 /// All fields come from env. Loaded once at boot — treat as immutable.
 #[derive(Debug, Clone)]
 pub struct BatchConfig {
-    pub download_url: String,
+    /// When false, the scheduler is never started and no nightly download
+    /// runs. The server boots from the on-disk snapshot and serves it as-is.
+    /// Re-enable by setting `DOWNLOAD_DOMAINS=true`.
+    pub downloads_enabled: bool,
+    /// Provider URL for the nightly zip. Required only when
+    /// `downloads_enabled` is true; ignored otherwise.
+    pub download_url: Option<String>,
     pub data_dir: PathBuf,
     pub snapshot_path: PathBuf,
     pub domains_txt_path: PathBuf,
@@ -29,11 +35,19 @@ pub struct BatchConfig {
 
 impl BatchConfig {
     pub fn from_env() -> Result<Self> {
-        let download_url = std::env::var("DOMAINS_DOWNLOAD_URL")
-            .context("DOMAINS_DOWNLOAD_URL is required (provider URL with API key)")?;
-        if download_url.trim().is_empty() {
-            bail!("DOMAINS_DOWNLOAD_URL is empty");
-        }
+        let downloads_enabled = parse_bool_env("DOWNLOAD_DOMAINS", false);
+
+        let download_url = if downloads_enabled {
+            let url = std::env::var("DOMAINS_DOWNLOAD_URL").context(
+                "DOMAINS_DOWNLOAD_URL is required when DOWNLOAD_DOMAINS=true",
+            )?;
+            if url.trim().is_empty() {
+                bail!("DOMAINS_DOWNLOAD_URL is empty (DOWNLOAD_DOMAINS=true)");
+            }
+            Some(url)
+        } else {
+            None
+        };
 
         let data_dir = std::env::var("DATA_DIR")
             .map(PathBuf::from)
@@ -83,6 +97,7 @@ impl BatchConfig {
         };
 
         Ok(Self {
+            downloads_enabled,
             download_url,
             data_dir,
             snapshot_path,
@@ -99,13 +114,30 @@ impl BatchConfig {
     }
 
     /// URL with path masked — safe to log. Keeps scheme + host only.
+    /// Returns "<disabled>" when downloads are off, and "<invalid-url>" if
+    /// configured but unparseable.
     pub fn redacted_url(&self) -> String {
-        if let Some(scheme_end) = self.download_url.find("://") {
-            let rest = &self.download_url[scheme_end + 3..];
+        let Some(url) = self.download_url.as_deref() else {
+            return "<disabled>".to_string();
+        };
+        if let Some(scheme_end) = url.find("://") {
+            let rest = &url[scheme_end + 3..];
             let host = rest.split('/').next().unwrap_or("");
-            return format!("{}://{host}/<redacted>", &self.download_url[..scheme_end]);
+            return format!("{}://{host}/<redacted>", &url[..scheme_end]);
         }
         "<invalid-url>".to_string()
+    }
+}
+
+/// Parse a boolean env var with truthy values: true / 1 / yes / on (case-insensitive).
+/// Anything else (including unset) returns the default.
+fn parse_bool_env(key: &str, default: bool) -> bool {
+    match std::env::var(key) {
+        Ok(v) => matches!(
+            v.trim().to_ascii_lowercase().as_str(),
+            "true" | "1" | "yes" | "on"
+        ),
+        Err(_) => default,
     }
 }
 

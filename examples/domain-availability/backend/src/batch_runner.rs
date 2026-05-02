@@ -66,10 +66,13 @@ async fn do_run_batch(state: &Arc<AppState>) -> Result<()> {
         .with_context(|| format!("create data dir {}", cfg.data_dir.display()))?;
 
     // 1. Download ZIP → atomic rename
+    let download_url = cfg.download_url.as_deref().ok_or_else(|| {
+        anyhow!("downloads are disabled (DOWNLOAD_DOMAINS=false); refusing to run batch")
+    })?;
     info!(url = %cfg.redacted_url(), "downloading domain list");
     let dl_start = Instant::now();
     let bytes = download_to_file(
-        &cfg.download_url,
+        download_url,
         &cfg.domains_zip_path,
         cfg.download_timeout,
         cfg.min_download_bytes,
