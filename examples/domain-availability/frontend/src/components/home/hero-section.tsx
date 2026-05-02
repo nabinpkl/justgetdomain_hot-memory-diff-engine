@@ -97,18 +97,18 @@ export function HeroSection() {
           <p className="jgd-fade-up [animation-delay:0.1s] text-[clamp(1.05rem,1.6vw,1.2rem)] text-jgd-text leading-[1.5] max-w-[560px] mb-5">
             I got tired of that loop. So I pre-checked every short
             combination across 1,012 TLDs and built a browser for what&apos;s
-            actually free.
+            actually available.
           </p>
 
-          <p className="jgd-fade-up [animation-delay:0.15s] text-[0.98rem] text-jgd-dim leading-[1.7] max-w-[580px]">
-            The interesting part isn&apos;t the search UI. It&apos;s keeping a{" "}
-            <span className="text-jgd-text font-medium">5.6 GB</span>{" "}
-            availability index fresh nightly without ever taking the site
-            offline. The browser below answers in microseconds because the
-            whole set sits in RAM and gets atomically swapped after each
-            rebuild. Same shape fits anywhere a human (or an LLM) keeps
-            proposing names that turn out to be taken: usernames, package
-            names, tickers, ENS handles.{" "}
+          <p className="jgd-fade-up [animation-delay:0.15s] text-[0.98rem] text-jgd-dim leading-[1.7] max-w-[560px]">
+            Same shape fits anywhere e.g. when AI blindly keeps proposing
+            names that turn out to be taken: usernames, package names,
+            tickers, breached passwords.
+          </p>
+
+          <p className="jgd-fade-up [animation-delay:0.2s] text-[0.98rem] text-jgd-dim leading-[1.7] max-w-[560px] mt-4">
+            Built to feel instant so an agent can call it on every
+            candidate without hallucinating the non existence.{" "}
             <a
               href="https://github.com/nabinpkl/justgetdomain.com"
               target="_blank"
