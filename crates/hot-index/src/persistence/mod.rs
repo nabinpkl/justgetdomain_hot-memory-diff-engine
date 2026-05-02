@@ -3,10 +3,10 @@
 //! One shared atomic-write helper, [`atomic_write`], plus codec-specific
 //! `save` / `load` modules behind Cargo features:
 //!
-//! - [`bincode`] (feature `bincode`) — for any `T: serde::Serialize +
+//! - [`bincode`] (feature `bincode`)  for any `T: serde::Serialize +
 //!   serde::de::DeserializeOwned`. Smaller dep surface; full
 //!   materialization on load.
-//! - [`rkyv`] (feature `rkyv`) — for any `T: rkyv::Archive + …`. Larger
+//! - [`rkyv`] (feature `rkyv`)  for any `T: rkyv::Archive + …`. Larger
 //!   dep surface; faster cold-start through zero-copy framing.
 //!
 //! The two codecs are independent and can be enabled together; pick at
@@ -21,7 +21,7 @@
 //! # When not to use
 //!
 //! As a primary store. There is no WAL, no replication, no transactions.
-//! Lose the file, lose the snapshot — you must be able to rebuild from
+//! Lose the file, lose the snapshot  you must be able to rebuild from
 //! upstream.
 //!
 //! # Concurrency

@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 [features]
 default = []
 # Adds a 10M-line corpus size to the throughput benches. Off by default
-# — keeps `cargo bench` runtime under a few minutes on routine runs.
+#  keeps `cargo bench` runtime under a few minutes on routine runs.
 long-bench = []
 
 [dependencies]

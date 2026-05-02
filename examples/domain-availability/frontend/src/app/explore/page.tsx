@@ -80,7 +80,7 @@ export default function ExplorePage() {
           ))}
         </div>
         <p className="text-[0.72rem] text-jgd-muted mt-6 max-w-[480px] leading-[1.6]">
-          Availability is based on a daily snapshot. Names shown may have been claimed since the last update — always verify at your registrar. Shorter names are often premium-priced.
+          Availability is based on a daily snapshot. Names shown may have been claimed since the last update  always verify at your registrar. Shorter names are often premium-priced.
         </p>
       </footer>
 

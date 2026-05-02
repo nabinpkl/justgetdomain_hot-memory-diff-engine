@@ -2,7 +2,7 @@
 //! hashes and a giant sorted `HASH:COUNT` corpus, report which
 //! candidates appear and how many times.
 //!
-//! This example exists to prove [`streaming_set_diff`] is generic — it
+//! This example exists to prove [`streaming_set_diff`] is generic  it
 //! mirrors the domain-availability use case but with a totally
 //! different file format and value type.
 

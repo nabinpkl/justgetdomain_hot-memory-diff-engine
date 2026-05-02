@@ -3,7 +3,7 @@
 //! Wraps the library's two algorithms (linear and binary-search) behind
 //! the same [`ScannerKind`] enum the rest of the example uses for its
 //! A/B comparison. The only domain-specific code here is the line parser
-//! ([`DomainParser`]) — TLD validation rules that mirror what was inlined
+//! ([`DomainParser`])  TLD validation rules that mirror what was inlined
 //! in the previous bespoke scanner.
 
 use std::collections::HashMap;
@@ -98,7 +98,7 @@ impl LineParser for DomainParser {
     }
 }
 
-/// Public entry — dispatch to the requested algorithm in the library.
+/// Public entry  dispatch to the requested algorithm in the library.
 /// Both impls are interchangeable: identical [`ScanOutput`] semantics,
 /// same TLD filtering rules.
 pub fn scan(

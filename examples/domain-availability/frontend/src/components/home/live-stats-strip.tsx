@@ -86,7 +86,7 @@ export function LiveStatsStrip() {
       cancelled = true;
       clearInterval(id);
     };
-    // intentionally exclude `stats` — it's only read inside the catch to avoid
+    // intentionally exclude `stats`  it's only read inside the catch to avoid
     // clobbering a previously-good payload with an error state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -119,7 +119,7 @@ export function LiveStatsStrip() {
               value={
                 stats.runtime.p99_request_us != null
                   ? `${stats.runtime.p99_request_us.toLocaleString()} µs`
-                  : "—"
+                  : ""
               }
               sublabel={
                 stats.runtime.request_count > 0
@@ -132,7 +132,7 @@ export function LiveStatsStrip() {
               value={
                 stats.snapshot_age_seconds != null
                   ? formatAgo(stats.snapshot_age_seconds)
-                  : "—"
+                  : ""
               }
               sublabel="full index swapped atomically"
             />

@@ -94,7 +94,7 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* JustGetDomain brand tokens — light mode (default).
+  /* JustGetDomain brand tokens  light mode (default).
      Surfaces: L 0.99 / L 0.965. Text: L 0.18. Dim: L 0.46.
      Accent darkened to L 0.52 for AA contrast on white. */
   --jgd-bg: oklch(0.99 0 0);
@@ -142,7 +142,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* JustGetDomain brand tokens — dark mode overrides.
+  /* JustGetDomain brand tokens  dark mode overrides.
      Floor: L 0 (pure black). Text: L 0.93 (no glare).
      Secondary text: L 0.72 (7:1+ contrast). Borders: L 0.27. */
   --jgd-bg: oklch(0 0 0);

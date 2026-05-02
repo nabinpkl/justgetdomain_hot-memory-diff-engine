@@ -1,8 +1,8 @@
 {
-  "_comment": "Single source of truth for all candidate domain words and their shelf categories. Every word is assigned exactly one category. To add or move words, edit this file and redeploy — no other word list exists.",
+  "_comment": "Single source of truth for all candidate domain words and their shelf categories. Every word is assigned exactly one category. To add or move words, edit this file and redeploy  no other word list exists.",
   "nature": {
     "title": "Clean Tech & Energy",
-    "description": "Sustainable, renewable — cleantech, climate, energy brands",
+    "description": "Sustainable, renewable  cleantech, climate, energy brands",
     "words": [
       "acacia",
       "adder",
@@ -485,7 +485,7 @@
   },
   "tech": {
     "title": "Tech & Systems",
-    "description": "Speed, precision, systems — SaaS, devtools, startups",
+    "description": "Speed, precision, systems  SaaS, devtools, startups",
     "words": [
       "actor",
       "alarm",
@@ -716,7 +716,7 @@
   },
   "food": {
     "title": "Food & Taste",
-    "description": "Flavor-forward names — restaurants, food tech, lifestyle",
+    "description": "Flavor-forward names  restaurants, food tech, lifestyle",
     "words": [
       "aspic",
       "bacon",
@@ -978,7 +978,7 @@
   },
   "motion": {
     "title": "Motion & Flow",
-    "description": "Speed, action, momentum — sports, fintech, bold brands",
+    "description": "Speed, action, momentum  sports, fintech, bold brands",
     "words": [
       "agile",
       "alive",
@@ -1194,7 +1194,7 @@
   },
   "craft": {
     "title": "Craft & Build",
-    "description": "Make, shape, forge — studios, makers, artisan brands",
+    "description": "Make, shape, forge  studios, makers, artisan brands",
     "words": [
       "adze",
       "anvil",
@@ -1524,7 +1524,7 @@
   },
   "place": {
     "title": "Place & Space",
-    "description": "Locations, structures, geography — real estate, travel, local brands",
+    "description": "Locations, structures, geography  real estate, travel, local brands",
     "words": [
       "abbey",
       "abode",
@@ -1637,7 +1637,7 @@
   },
   "mind": {
     "title": "Mind & Ideas",
-    "description": "Thinking, feeling, abstract concepts — philosophy, wellness, education",
+    "description": "Thinking, feeling, abstract concepts  philosophy, wellness, education",
     "words": [
       "acumen",
       "acute",
@@ -1813,7 +1813,7 @@
   },
   "body": {
     "title": "Body & Health",
-    "description": "Anatomy, wellness, fitness — health tech, sports, medical brands",
+    "description": "Anatomy, wellness, fitness  health tech, sports, medical brands",
     "words": [
       "able",
       "ache",
@@ -1959,7 +1959,7 @@
   },
   "others": {
     "title": "Others",
-    "description": "General words — versatile, cross-industry brand names",
+    "description": "General words  versatile, cross-industry brand names",
     "words": [
       "abaci",
       "aback",

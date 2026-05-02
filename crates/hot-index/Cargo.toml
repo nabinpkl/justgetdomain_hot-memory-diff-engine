@@ -2,14 +2,14 @@
 name = "hot-index"
 version = "0.1.0"
 edition = "2024"
-description = "Hot-swappable in-memory lookup indexes — atomic publish, lock-free reads."
+description = "Hot-swappable in-memory lookup indexes  atomic publish, lock-free reads."
 license = "MIT OR Apache-2.0"
 
 [features]
 default = []
 bincode = ["dep:bincode", "dep:serde"]
 rkyv = ["dep:rkyv"]
-# Adds a 10M-entry size to the lookup benches. Off by default — keeps
+# Adds a 10M-entry size to the lookup benches. Off by default  keeps
 # `cargo bench` runtime under a minute on routine runs.
 long-bench = []
 

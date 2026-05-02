@@ -153,7 +153,7 @@ const SECTIONS: Section[] = [
         <code className="font-mono">apple.xyz</code> is unregistered. It has
         no opinion about whether you should register it. <strong>You should
         not.</strong> Trademark filtering, brand-collision checks,
-        business-existence verification, semantic typosquat detection —
+        business-existence verification, semantic typosquat detection 
         those are different products with different scopes. They belong{" "}
         <em>on top of</em> this engine, not inside it. The unshipped pieces
         are deliberately unshipped, not unfinished.
@@ -166,25 +166,27 @@ const SECTIONS: Section[] = [
 
 function SectionCard({ s }: { s: Section }) {
   return (
-    <article className="border-t border-jgd-border py-10 first:border-t-0 first:pt-0">
-      <p className="text-[0.66rem] uppercase tracking-[3px] text-jgd-accent mb-2">
+    <article className="border-t border-jgd-border py-10 first:border-t-0 first:pt-0 grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-x-14 gap-y-3">
+      <p className="text-[0.66rem] uppercase tracking-[3px] text-jgd-accent lg:pt-1">
         <span className="text-jgd-muted mr-3 font-mono">{s.num}</span>
         {s.kicker}
       </p>
-      <h3 className="font-serif text-[clamp(1.35rem,2.4vw,1.75rem)] font-normal tracking-[-0.3px] leading-[1.25] text-jgd-text mb-4 max-w-[640px]">
-        {s.title}
-      </h3>
-      <div className="text-[0.95rem] text-jgd-dim leading-[1.75] max-w-[680px] mb-4">
-        {s.body}
+      <div className="max-w-[720px]">
+        <h3 className="font-serif text-[clamp(1.35rem,2.4vw,1.75rem)] font-normal tracking-[-0.3px] leading-[1.25] text-jgd-text mb-4">
+          {s.title}
+        </h3>
+        <div className="text-[0.95rem] text-jgd-dim leading-[1.75] mb-4">
+          {s.body}
+        </div>
+        <a
+          href={s.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block text-[0.82rem] text-jgd-accent underline-offset-4 hover:underline"
+        >
+          {s.linkLabel} →
+        </a>
       </div>
-      <a
-        href={s.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-block text-[0.82rem] text-jgd-accent underline-offset-4 hover:underline"
-      >
-        {s.linkLabel} →
-      </a>
     </article>
   );
 }
@@ -192,21 +194,26 @@ function SectionCard({ s }: { s: Section }) {
 export function WriteupBlock() {
   return (
     <section className="px-6 sm:px-10 py-[clamp(3.5rem,8vh,5rem)] border-t border-jgd-border">
-      <div className="max-w-[1400px] mx-auto">
-        <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
-          What you&apos;re looking at
-        </p>
-        <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text max-w-[720px]">
-          Built to fix one frustration. Turned out to fix a class of them.
-        </h2>
-        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
-          The browser above came from getting tired of guessing domain
-          names that turn out to be taken. The shape of the fix — a tiny
-          in-process verification tool that an agent or a human can call
-          freely without waiting — turns out to apply far past domains.
-          Below is what that tool is, where else it fits, and why it matters
-          more in the LLM era than it would have a few years ago.
-        </p>
+      <div className="max-w-[1180px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-x-14 gap-y-4 mb-14">
+          <p className="text-[0.72rem] uppercase tracking-[4px] text-jgd-accent lg:pt-2">
+            What you&apos;re looking at
+          </p>
+          <div className="max-w-[720px]">
+            <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text">
+              Built to fix one frustration. Turned out to fix a class of them.
+            </h2>
+            <p className="text-[1.05rem] text-jgd-dim leading-[1.7]">
+              The browser above came from getting tired of guessing domain
+              names that turn out to be taken. The shape of the fix  a
+              tiny in-process verification tool that an agent or a human
+              can call freely without waiting  turns out to apply far past
+              domains. Below is what that tool is, where else it fits, and
+              why it matters more in the LLM era than it would have a few
+              years ago.
+            </p>
+          </div>
+        </div>
 
         <div>
           {SECTIONS.map((s) => (

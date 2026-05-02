@@ -5,7 +5,7 @@
 //! holding a direct reference to the inner index.
 //!
 //! Run with `cargo bench -p hot-index`. Add `--features long-bench` for
-//! the 10M-entry size (slow — minutes per group).
+//! the 10M-entry size (slow  minutes per group).
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -137,7 +137,7 @@ fn bench_lookup_miss(c: &mut Criterion) {
 }
 
 fn bench_hot_swap_overhead(c: &mut Criterion) {
-    // Run at the largest size only — the question is overhead, not scaling.
+    // Run at the largest size only  the question is overhead, not scaling.
     let size = *SIZES.last().unwrap();
     let items = random_strings(size, 0xDEAD_BEEF);
     let fx = build_fx(&items);
@@ -147,7 +147,7 @@ fn bench_hot_swap_overhead(c: &mut Criterion) {
         .collect();
 
     let swap = HotSwap::new(fx);
-    // Direct reference to the inner index — bypasses the swap.load() call
+    // Direct reference to the inner index  bypasses the swap.load() call
     // entirely, baseline for the overhead measurement.
     let direct = swap.load_full();
 

@@ -8,13 +8,13 @@
 //!   of keys).
 //! - A large **source** on disk, possibly many GB, where each line carries
 //!   a key plus an associated value. The source is typically pre-sorted
-//!   by key so all records for the same key sit on consecutive lines —
+//!   by key so all records for the same key sit on consecutive lines 
 //!   but this crate doesn't require that for correctness, only the
 //!   downstream batch tooling does.
 //!
 //! You want, for each candidate, the list of values the source associates
 //! with it (often empty). Plus the list of candidates the source never
-//! mentioned — the *set difference*.
+//! mentioned  the *set difference*.
 //!
 //! # The algorithm
 //!
@@ -34,7 +34,7 @@
 //!   candidates. Dominated by n in practice.
 //! - **Space:** O(k * v) where v = average values per matched candidate.
 //!   The source is never held in memory.
-//! - **I/O:** sequential, single-pass — the source can be `mmap`'d or
+//! - **I/O:** sequential, single-pass  the source can be `mmap`'d or
 //!   read through a `BufReader` over an `xz`-decompressed pipe; the
 //!   crate doesn't care.
 //!
@@ -79,7 +79,7 @@ pub trait LineParser {
     /// the value side was malformed even though the key matched).
     fn parse_value(&self, line: &[u8]) -> Option<Self::Value>;
 
-    /// Byte prefix that every line matching `candidate` starts with — used
+    /// Byte prefix that every line matching `candidate` starts with  used
     /// by [`diff_sorted`] for the binary-search bound and the forward-walk
     /// stop condition. Default = the candidate's bytes.
     ///
@@ -108,7 +108,7 @@ pub struct DiffResult<V> {
     pub matches: HashMap<String, Vec<V>>,
 
     /// Every candidate the source never mentioned. Iteration order is
-    /// unspecified — sort downstream if needed.
+    /// unspecified  sort downstream if needed.
     pub unmatched: Vec<String>,
 }
 
@@ -133,7 +133,7 @@ impl<V> DiffResult<V> {
 ///
 /// Returns the first I/O error encountered while reading `source`.
 /// Lines that the parser rejects (returns `None` from either method)
-/// are silently skipped — the parser is the policy authority on what
+/// are silently skipped  the parser is the policy authority on what
 /// counts as malformed.
 pub fn diff<R, P>(
     source: R,
@@ -191,14 +191,14 @@ where
 /// # The contract
 ///
 /// **The source MUST be sorted by full-line bytes.** Within that natural
-/// sort, every line that matches a given candidate must be contiguous —
+/// sort, every line that matches a given candidate must be contiguous 
 /// the parser's [`candidate_search_prefix`](LineParser::candidate_search_prefix)
 /// must return a byte prefix that exactly delimits the candidate's range.
 ///
 /// The default `candidate_search_prefix` returns the candidate's bytes,
 /// which is correct only when the parser's keys are themselves
 /// monotonically sorted across consecutive source lines. Most parsers
-/// that drop a delimiter need to override — see the doc on the trait
+/// that drop a delimiter need to override  see the doc on the trait
 /// method.
 ///
 /// # When to use this over [`diff`]
@@ -206,7 +206,7 @@ where
 /// - Source: `O(k · log n + matches)` where k = candidates, n = source
 ///   bytes. For k = 10⁴ and n = 5 GB this is seconds vs minutes for the
 ///   linear variant.
-/// - Source must be `&[u8]` (typically `mmap`'d) — we need random
+/// - Source must be `&[u8]` (typically `mmap`'d)  we need random
 ///   access. [`diff`] takes any [`BufRead`] which is more flexible.
 ///
 /// Output is byte-identical to [`diff`] for any contract-conformant
@@ -225,7 +225,7 @@ where
         HashMap::with_capacity(candidates.len() / 4);
 
     // Sort candidates by their search prefix so the binary searches
-    // walk the source in ascending order — better cache locality on
+    // walk the source in ascending order  better cache locality on
     // huge mmap'd files. Sort by prefix (not by candidate string), since
     // that's what we binary-search against.
     let mut sorted: Vec<(&str, Vec<u8>)> = candidates
@@ -305,7 +305,7 @@ fn lower_bound_line_bytes(data: &[u8], prefix: &[u8]) -> usize {
         if line < prefix {
             lo = skip_past_newline(data, line_end);
         } else {
-            // Conservative: the lower bound is in [lo, mid] — the line
+            // Conservative: the lower bound is in [lo, mid]  the line
             // at p is >= prefix but a full line in [lo, mid) might also
             // satisfy. Setting hi = mid keeps the search line-aligned
             // and guarantees termination.
@@ -369,7 +369,7 @@ mod tests {
     use super::*;
     use std::io::Cursor;
 
-    /// Parser for `key:value` lines — string key, string value.
+    /// Parser for `key:value` lines  string key, string value.
     /// Used to exercise the trait surface with a non-default impl.
     struct ColonParser;
 
@@ -389,7 +389,7 @@ mod tests {
 
     /// Parser that mimics the domain-availability shape: `name.tld`
     /// with `name` as key, `tld` as value. Demonstrates that the same
-    /// trait surface fits a different delimiter — and overrides
+    /// trait surface fits a different delimiter  and overrides
     /// `candidate_search_prefix` to include the dot, since the source
     /// is sorted by full line and `name-sibling.tld` lines appear
     /// before `name.tld` lines (`-` < `.` in ASCII).
@@ -620,7 +620,7 @@ grape.net
 
     #[test]
     fn diff_sorted_contiguous_values_for_one_candidate() {
-        // 50 contiguous values for the same key — verify the forward
+        // 50 contiguous values for the same key  verify the forward
         // walk picks them all up after binary search lands.
         let mut s = String::new();
         for i in 0..50 {

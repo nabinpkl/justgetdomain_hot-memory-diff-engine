@@ -2,17 +2,17 @@
 //!
 //! Synthetic sorted corpus generated at bench time: lines are
 //! `<name>.<tld>` with `name` a random lowercase string and `tld` from
-//! a small set. Same input, two algorithms, byte-identical output —
+//! a small set. Same input, two algorithms, byte-identical output 
 //! the headline number is the speed ratio at scale.
 //!
 //! Throughput is reported as `Throughput::Bytes(corpus_len)` for both
 //! algorithms. For `diff` this is honest (it actually reads every byte).
 //! For `diff_sorted` it's the *apparent* throughput from the user's
-//! perspective — same input scale, much less wall time, much higher
+//! perspective  same input scale, much less wall time, much higher
 //! reported MB/s. That ratio is the point.
 //!
 //! Run with `cargo bench -p streaming-set-diff`. Add `--features
-//! long-bench` for a 10M-line corpus (slow — minutes per group).
+//! long-bench` for a 10M-line corpus (slow  minutes per group).
 
 use std::io::Cursor;
 

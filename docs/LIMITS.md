@@ -1,4 +1,4 @@
-# Limits — what this engine deliberately does not do
+# Limits  what this engine deliberately does not do
 
 This is a **discovery engine for the gaps in the registered-domain set**, not a recommender. It tells you which short strings are registrable. It does not tell you which ones you *should* register.
 
@@ -36,6 +36,6 @@ If you have any doubt, don't register. The cost of a UDRP loss is the domain plu
 
 ## What this means for the project
 
-This is what makes the repo a **builder artifact** instead of a **failed startup**. The engineering problem (microsecond reads from a 5.6 GB nightly-rebuilt corpus on a free-tier VM) is solved and shipped. The unshipped pieces — trademark filtering, registrar partnerships, search ranking — are *deliberately* unshipped because they are a different product I chose not to build, not unfinished work I gave up on.
+This is what makes the repo a **builder artifact** instead of a **failed startup**. The engineering problem (microsecond reads from a 5.6 GB nightly-rebuilt corpus on a free-tier VM) is solved and shipped. The unshipped pieces  trademark filtering, registrar partnerships, search ranking  are *deliberately* unshipped because they are a different product I chose not to build, not unfinished work I gave up on.
 
 If you want this to be a real domain-search product, the engine is the easy half. The hard half is the recommender + legal pipeline. That's the half I'm not building.

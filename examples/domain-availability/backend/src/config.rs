@@ -7,7 +7,7 @@ use chrono_tz::Tz;
 use crate::scanner::ScannerKind;
 
 /// Runtime configuration for the batch pipeline and scheduler.
-/// All fields come from env. Loaded once at boot — treat as immutable.
+/// All fields come from env. Loaded once at boot  treat as immutable.
 #[derive(Debug, Clone)]
 pub struct BatchConfig {
     /// When false, the scheduler is never started and no nightly download
@@ -113,7 +113,7 @@ impl BatchConfig {
         })
     }
 
-    /// URL with path masked — safe to log. Keeps scheme + host only.
+    /// URL with path masked  safe to log. Keeps scheme + host only.
     /// Returns "<disabled>" when downloads are off, and "<invalid-url>" if
     /// configured but unparseable.
     pub fn redacted_url(&self) -> String {

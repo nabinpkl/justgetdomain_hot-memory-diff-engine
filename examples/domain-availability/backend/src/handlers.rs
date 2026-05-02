@@ -16,7 +16,7 @@ use crate::scanner::ScannerKind;
 use crate::state::{AppState, BatchStatus, Phase};
 
 /// Axum middleware: wraps every request, records its total elapsed
-/// time in µs into the lifetime histogram on `AppState`. Cheap — one
+/// time in µs into the lifetime histogram on `AppState`. Cheap  one
 /// `Instant` + one mutex'd `record` per request.
 pub async fn metrics_middleware(
     State(state): State<Arc<AppState>>,
@@ -245,7 +245,7 @@ pub struct StatsResponse {
     pub index_loaded: bool,
     pub snapshot_age_seconds: Option<i64>,
     /// Scanner currently configured (from env). This is what the *next*
-    /// batch will use — `batch.last_scan_kind` is what the *last* batch used.
+    /// batch will use  `batch.last_scan_kind` is what the *last* batch used.
     pub configured_scanner: ScannerKind,
     pub batch: BatchStatusView,
     pub runtime: RuntimeStats,

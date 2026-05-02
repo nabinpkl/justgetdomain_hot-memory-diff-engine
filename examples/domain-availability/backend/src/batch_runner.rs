@@ -287,7 +287,7 @@ fn extract_zip(zip_path: &Path, output_path: &Path) -> Result<u64> {
 
 /// Scan domains.txt against the candidate dictionary and assemble a Snapshot.
 /// Shared code path with the `domain-scan` CLI. `kind` selects the scan
-/// algorithm — both produce identical snapshots; only wall-time differs.
+/// algorithm  both produce identical snapshots; only wall-time differs.
 pub fn build_snapshot(data_path: &Path, kind: ScannerKind) -> Result<Snapshot> {
     let candidates = dictionary::load_candidates();
     let scan_output = scanner::scan(kind, data_path, &candidates)

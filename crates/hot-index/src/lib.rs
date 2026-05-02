@@ -2,9 +2,9 @@
 //!
 //! Two pieces:
 //!
-//! - [`HotIndex`] — a small trait describing the read surface of a lookup
+//! - [`HotIndex`]  a small trait describing the read surface of a lookup
 //!   index (`get`, `contains`, `len`).
-//! - [`HotSwap`] — a wrapper around [`arc_swap::ArcSwap`] that lets a
+//! - [`HotSwap`]  a wrapper around [`arc_swap::ArcSwap`] that lets a
 //!   writer atomically replace the live value without blocking readers.
 //!
 //! A reader's [`HotSwap::load`] never blocks on a concurrent
@@ -21,9 +21,9 @@
 //! Two pluggable codecs share one atomic-write surface. Enable whichever
 //! Cargo feature matches your value's serialization story:
 //!
-//! - `bincode` — for `T: serde::Serialize + serde::de::DeserializeOwned`.
+//! - `bincode`  for `T: serde::Serialize + serde::de::DeserializeOwned`.
 //!   Smaller dep tree; full materialization on load.
-//! - `rkyv` — for `T: rkyv::Archive + …`. Larger dep tree; faster
+//! - `rkyv`  for `T: rkyv::Archive + …`. Larger dep tree; faster
 //!   cold-start through framed layout.
 //!
 //! Pick at the call site by which module's `save` / `load` you import:
@@ -35,7 +35,7 @@
 //!
 //! The intended lifecycle: build an index → `persistence::*::save` →
 //! process restart → `persistence::*::load` → wrap in [`HotSwap::new`] →
-//! resume serving. No WAL, no replication, no transactions — this is
+//! resume serving. No WAL, no replication, no transactions  this is
 //! crash-recovery for a workload whose source of truth lives upstream
 //! (the nightly batch input).
 
@@ -50,7 +50,7 @@ pub mod persistence;
 
 /// Read surface of a lookup index.
 ///
-/// Implementors are typically immutable snapshots — mutation happens by
+/// Implementors are typically immutable snapshots  mutation happens by
 /// building a new index and publishing it through [`HotSwap::swap`]
 /// rather than by mutating in place.
 pub trait HotIndex<K, V>: Send + Sync {
@@ -78,7 +78,7 @@ pub trait HotIndex<K, V>: Send + Sync {
 ///
 /// `FxHashMap` uses the `rustc-hash` non-cryptographic hasher, which is
 /// faster than `std::collections::HashMap`'s default for short keys at
-/// the cost of HashDoS resistance — appropriate for indexes built from
+/// the cost of HashDoS resistance  appropriate for indexes built from
 /// trusted batch input, not appropriate for keys derived from untrusted
 /// network input without prior validation.
 #[derive(Debug, Default, Clone)]
@@ -147,7 +147,7 @@ where
 /// via [`swap`](Self::swap); in-flight readers continue against the
 /// previous version until they drop their guards.
 ///
-/// `T` doesn't have to implement [`HotIndex`] — `HotSwap` works for any
+/// `T` doesn't have to implement [`HotIndex`]  `HotSwap` works for any
 /// value. The intended use is to wrap an immutable index built by a
 /// nightly batch, then swap it on rebuild.
 pub struct HotSwap<T> {
@@ -168,7 +168,7 @@ impl<T> HotSwap<T> {
     }
 
     /// Take a long-lived owned reference to the live snapshot. Use when
-    /// you need an `Arc<T>` that outlives the calling stack frame —
+    /// you need an `Arc<T>` that outlives the calling stack frame 
     /// e.g. cloning into a spawned task.
     pub fn load_full(&self) -> Arc<T> {
         self.inner.load_full()

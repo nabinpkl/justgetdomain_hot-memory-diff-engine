@@ -16,7 +16,7 @@ export type ShelfConfig = {
  * responds.
  */
 export const SHELF_CONFIGS: ShelfConfig[] = [
-  // By Vibe — real word-level categorization from the backend
+  // By Vibe  real word-level categorization from the backend
   {
     id: "tech",
     title: "Tech & Systems",

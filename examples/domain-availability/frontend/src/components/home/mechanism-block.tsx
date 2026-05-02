@@ -1,11 +1,11 @@
 const READ_PATH = [
   {
     metric: "35 ns",
-    text: "FxHashMap lookup at 1M entries — 2x std::HashSet (controlled bench)",
+    text: "FxHashMap lookup at 1M entries  2x std::HashSet (controlled bench)",
   },
   {
     metric: "47 ns",
-    text: "HotSwap::load() overhead — one Acquire atomic load + Guard refcount, never blocks readers",
+    text: "HotSwap::load() overhead  one Acquire atomic load + Guard refcount, never blocks readers",
   },
   {
     metric: "4 µs / 858 µs",
@@ -20,7 +20,7 @@ const READ_PATH = [
 const BUILD_PATH = [
   {
     metric: "623 MiB/s",
-    text: "sort-aware diff_sorted at 1M lines — 5x the naive linear scan",
+    text: "sort-aware diff_sorted at 1M lines  5x the naive linear scan",
   },
   {
     metric: "O(k · log n)",
@@ -28,7 +28,7 @@ const BUILD_PATH = [
   },
   {
     metric: "atomic swap",
-    text: "new index built in scratch memory, then arc-swap publish — no read locks, no per-key writes",
+    text: "new index built in scratch memory, then arc-swap publish  no read locks, no per-key writes",
   },
   {
     metric: "143 ms",
@@ -97,9 +97,9 @@ export function MechanismBlock() {
         <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
           Verification lives in the same process as the request handler. No
           network hop, no lock contention, no warm-up after a rebuild. The{" "}
-          <span className="text-jgd-text font-medium">read path</span> — what
+          <span className="text-jgd-text font-medium">read path</span>  what
           every <code className="font-mono text-jgd-accent">/search</code>{" "}
-          above hits — is lock-free and stays in microseconds even while the{" "}
+          above hits  is lock-free and stays in microseconds even while the{" "}
           <span className="text-jgd-text font-medium">build path</span> is
           assembling the next nightly snapshot in scratch memory and
           atomically publishing it. Readers never see a half-built index,

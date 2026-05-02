@@ -3,7 +3,7 @@
 //! Encoding: `rkyv::to_bytes` with the high-level API. Decoding uses
 //! `rkyv::from_bytes` (full materialization with bytecheck validation).
 //! Bound: `T: rkyv::Archive` plus the bevy of high-level
-//! serialize/deserialize/validation traits — which the `#[derive(Archive,
+//! serialize/deserialize/validation traits  which the `#[derive(Archive,
 //! Serialize, Deserialize)]` macros all generate for you.
 //!
 //! # When to prefer rkyv over bincode

@@ -49,7 +49,7 @@ async fn main() {
     let categories = Arc::new(Categories::load());
 
     // Try to load an existing snapshot so we can serve immediately on boot.
-    // A missing snapshot is fine — scheduler will run the first batch.
+    // A missing snapshot is fine  scheduler will run the first batch.
     let (initial_index, initial_mtime) = match persistence::rkyv::load::<Snapshot, _>(&config.snapshot_path) {
         Ok(snap) => {
             let start = Instant::now();
@@ -140,7 +140,7 @@ async fn main() {
 
     // Scheduler runs in background. It will kick off the first batch
     // immediately if no snapshot was loaded. Only spawned when downloads
-    // are enabled — otherwise the on-disk snapshot is the source of truth
+    // are enabled  otherwise the on-disk snapshot is the source of truth
     // and there is nothing for the scheduler to do.
     if state.config.downloads_enabled {
         let scheduler_state = state.clone();

@@ -16,7 +16,7 @@ use crate::scanner::ScannerKind;
 /// swaps a new index into place atomically when a batch succeeds.
 ///
 /// `index` uses [`HotSwap<Option<DomainIndex>>`] from the `hot-index`
-/// crate — `Option` because the first-boot path serves before the first
+/// crate  `Option` because the first-boot path serves before the first
 /// batch completes. `batch` stays on raw [`ArcSwap`] because its update
 /// pattern is per-field mutation via a closure, not full-value swap; it
 /// doesn't fit `HotSwap`'s build-once-publish-once model.
@@ -30,7 +30,7 @@ pub struct AppState {
     /// process restart.
     pub categories: Arc<Categories>,
     /// Per-request elapsed-time histogram in microseconds. Lifetime
-    /// (process-start) accumulator — homepage shows p50/p99 since boot.
+    /// (process-start) accumulator  homepage shows p50/p99 since boot.
     /// `StdMutex` (not tokio's) because access is short and synchronous;
     /// blocking briefly in an async context is fine for microsecond-held
     /// locks under modest load.
@@ -57,7 +57,7 @@ impl AppState {
     }
 
     /// Record one elapsed measurement in µs. Errors (lock poisoning,
-    /// out-of-range value) are silently dropped — this is observability,
+    /// out-of-range value) are silently dropped  this is observability,
     /// not correctness.
     pub fn record_request_latency(&self, micros: u64) {
         if let Ok(mut h) = self.request_latency_us.lock() {

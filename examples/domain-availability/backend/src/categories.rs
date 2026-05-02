@@ -106,7 +106,7 @@ impl Categories {
         }
     }
 
-    /// Empty taxonomy — used when the server boots before the dictionary is
+    /// Empty taxonomy  used when the server boots before the dictionary is
     /// available (e.g. in tests). Search degrades to "no category matches".
     pub fn empty() -> Self {
         Self {

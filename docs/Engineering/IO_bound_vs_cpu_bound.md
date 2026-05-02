@@ -12,15 +12,15 @@ So during batch, your 4 cores aren't actually contested. The batch barely uses o
 
 This is where Linux process scheduling teaches you something real. Instead of pinning cores, use `nice` levels. Run the batch at lowest priority. The OS scheduler then does something elegant:
 
-- If serving needs all 4 cores — batch gets almost nothing, pauses naturally
-- If serving is idle — batch gets all 4 cores, finishes fast
-- If serving is moderate — batch fills the gaps
+- If serving needs all 4 cores  batch gets almost nothing, pauses naturally
+- If serving is idle  batch gets all 4 cores, finishes fast
+- If serving is moderate  batch fills the gaps
 
 You're not reserving capacity. You're saying "serve users first, batch gets leftovers." The total throughput is maximized because no core ever sits idle.
 
-**And this is the real scaling lesson:** the best resource management is not partitioning, it's prioritization. Partitioning (core pinning) guarantees waste — pinned cores sit idle when the assigned workload doesn't need them. Priority-based scheduling wastes nothing.
+**And this is the real scaling lesson:** the best resource management is not partitioning, it's prioritization. Partitioning (core pinning) guarantees waste  pinned cores sit idle when the assigned workload doesn't need them. Priority-based scheduling wastes nothing.
 
-**The next level of that same lesson:** when priority-based scheduling on one machine isn't enough, you scale horizontally. Second VM. Batch runs there, serving runs here. But that's the same principle — separation by priority, just across machines instead of processes.
+**The next level of that same lesson:** when priority-based scheduling on one machine isn't enough, you scale horizontally. Second VM. Batch runs there, serving runs here. But that's the same principle  separation by priority, just across machines instead of processes.
 
 **For your learning lab, try both.** Run batch without `nice`, measure serving latency. Run with `nice -n 19`, measure again. You'll see the difference is tiny because the batch is I/O bound anyway. But you'll have proven it with data, which is worth more than any architecture doc telling you so.
 

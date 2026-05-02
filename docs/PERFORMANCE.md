@@ -2,15 +2,15 @@
 
 This doc pins every performance claim the project makes to a measured number with a reproducible command. Numbers come from three places:
 
-- **Criterion benches** (`cargo bench -p <crate>`) — controlled, statistically-confident, single-threaded, warm-cache.
-- **Live `/stats` endpoint** — runtime observability from the production process at `api.justgetdomain.com`. Whole-handler latency (routing + parse + lookup + serialize), since process start.
-- **Container logs** — one-shot measurements (snapshot load time on boot, batch wall-clock).
+- **Criterion benches** (`cargo bench -p <crate>`)  controlled, statistically-confident, single-threaded, warm-cache.
+- **Live `/stats` endpoint**  runtime observability from the production process at `api.justgetdomain.com`. Whole-handler latency (routing + parse + lookup + serialize), since process start.
+- **Container logs**  one-shot measurements (snapshot load time on boot, batch wall-clock).
 
 The doc is also honest about what it does *not* measure. Section 9 lists the gaps. A perf doc that claims everything is suspect.
 
 ---
 
-## 1. TL;DR — homepage numbers
+## 1. TL;DR  homepage numbers
 
 | Number                                       | Value           | How to reproduce                                                |
 |----------------------------------------------|-----------------|-----------------------------------------------------------------|
@@ -25,11 +25,11 @@ The doc is also honest about what it does *not* measure. Section 9 lists the gap
 
 ---
 
-## 2. Read path — controlled (criterion)
+## 2. Read path  controlled (criterion)
 
 Synthetic data: random lowercase strings, length 6–12. 1024 cycling probes per bench, `black_box` on every lookup. Single-threaded, warm-cache, x86-64 Linux on an Oracle Ampere ARM free-tier VM.
 
-### Hits — `contains(&key)` where the key IS in the set
+### Hits  `contains(&key)` where the key IS in the set
 
 | Impl           | 1K entries | 100K entries | 1M entries |
 |----------------|-----------:|-------------:|-----------:|
@@ -37,7 +37,7 @@ Synthetic data: random lowercase strings, length 6–12. 1024 cycling probes per
 | `std::HashSet` |   26.29 ns |     48.11 ns |     57.29 ns |
 | `BTreeSet`     |  102.63 ns |    413.90 ns |    752.55 ns |
 
-### Misses — key is NOT in the set
+### Misses  key is NOT in the set
 
 | Impl           | 1K     | 100K     | 1M       |
 |----------------|-------:|---------:|---------:|
@@ -55,15 +55,15 @@ Synthetic data: random lowercase strings, length 6–12. 1024 cycling probes per
 
 ### Findings
 
-1. **`FxHashIndex` is ~2x faster than `std::HashSet`** across all sizes. Justified, not load-bearing — for HashDoS-resistant workloads `std::HashSet` adds a few dozen nanoseconds, usually fine.
-2. **`BTreeSet` is 5–20x slower.** Don't reach for it as a primary lookup just because you might want sorted iteration later — hold a separate sorted index of references instead.
+1. **`FxHashIndex` is ~2x faster than `std::HashSet`** across all sizes. Justified, not load-bearing  for HashDoS-resistant workloads `std::HashSet` adds a few dozen nanoseconds, usually fine.
+2. **`BTreeSet` is 5–20x slower.** Don't reach for it as a primary lookup just because you might want sorted iteration later  hold a separate sorted index of references instead.
 3. **Misses are ~3x faster than hits for hash impls** because misses skip the `String::eq` check on the candidate key. The domain workload is mostly misses (most candidates aren't in the registered set), so this asymmetry is in our favor.
-4. **Lookup latency scales sub-linearly with size** (FxHash 14 → 26 → 35 ns from 1K → 100K → 1M) — the growth is cache effects, not algorithmic. Production reads under cache pressure will be 1.5–2x what the bench shows.
-5. **`HotSwap::load()` adds ~47 ns per lookup** — atomic-ordering machinery (Acquire load + `Guard` create/drop). Fine for serve-time. The wrong pattern is calling `.load()` inside an inner lookup loop; the right pattern is calling `.load_full()` once per request and iterating against the resulting `Arc` (which is exactly what the example handlers do).
+4. **Lookup latency scales sub-linearly with size** (FxHash 14 → 26 → 35 ns from 1K → 100K → 1M)  the growth is cache effects, not algorithmic. Production reads under cache pressure will be 1.5–2x what the bench shows.
+5. **`HotSwap::load()` adds ~47 ns per lookup**  atomic-ordering machinery (Acquire load + `Guard` create/drop). Fine for serve-time. The wrong pattern is calling `.load()` inside an inner lookup loop; the right pattern is calling `.load_full()` once per request and iterating against the resulting `Arc` (which is exactly what the example handlers do).
 
 ---
 
-## 3. Read path — live (production)
+## 3. Read path  live (production)
 
 `api.justgetdomain.com` runs the example backend (`examples/domain-availability/backend`) on a single Oracle free-tier VM behind a Cloudflare Tunnel. Whole-handler latency, lifetime histogram since process start, captured by `metrics_middleware` in `handlers.rs`.
 
@@ -85,13 +85,13 @@ Sample output, after a small smoke test:
 
 ### Why the live p99 (858 µs) is so much larger than the controlled per-lookup (35 ns)
 
-The criterion bench measures one `contains`. The live number measures the full handler — routing, query parsing, the lookup + filter + sort logic in `DomainIndex::search`, and JSON serialization of up to `limit` results. For a `/search?q=app&limit=10` request with sort and category filters, the index does ~7,500 internal entry checks, each with multiple TLD-set comparisons. That's not 35 ns per request; it's tens of microseconds of work in the index plus serialization.
+The criterion bench measures one `contains`. The live number measures the full handler  routing, query parsing, the lookup + filter + sort logic in `DomainIndex::search`, and JSON serialization of up to `limit` results. For a `/search?q=app&limit=10` request with sort and category filters, the index does ~7,500 internal entry checks, each with multiple TLD-set comparisons. That's not 35 ns per request; it's tens of microseconds of work in the index plus serialization.
 
 The bench number tells you the index is fast. The live number tells you what the user actually waits.
 
 ---
 
-## 4. Batch path — controlled (criterion)
+## 4. Batch path  controlled (criterion)
 
 Synthetic sorted corpus: random 6–12 char names × 1–5 TLDs from a small set. 10K candidates, half hits / half misses. Throughput reported as `Throughput::Bytes(corpus_len)` for both algorithms.
 
@@ -107,7 +107,7 @@ Synthetic sorted corpus: random 6–12 char names × 1–5 TLDs from a small set
 1. **At 100K lines the two algorithms tie within 3%.** Binary-search overhead (sort candidates + `lower_bound` per candidate) competes with the linear scan's simplicity. Don't reach for `diff_sorted` on small inputs.
 2. **At 1M lines `diff_sorted` is ~5x faster** (21 ms vs 103 ms). The sort-aware advantage shows up.
 3. **The crossover is between 100K and 1M lines** for this synthetic shape. Real corpora will shift it depending on candidate density and per-line cost.
-4. **Linear throughput rises with size** (87 → 127 MiB/s) — per-iteration constant overhead amortizes.
+4. **Linear throughput rises with size** (87 → 127 MiB/s)  per-iteration constant overhead amortizes.
 
 ### Extrapolated to the 5.6 GB nightly source
 
@@ -116,7 +116,7 @@ Synthetic sorted corpus: random 6–12 char names × 1–5 TLDs from a small set
 | `diff`        | ~44 s                         |
 | `diff_sorted` | ~9 s                          |
 
-Real production wall-clock is bounded by I/O when the source isn't fully page-cached. The original AGENTS.md framing of "minutes vs seconds" is **directionally right but oversells `diff`** at the in-memory case — linear is workable for the nightly batch (under a minute). The dramatic win for binary-search shows up most when (a) the source isn't cached and (b) the candidate set is small relative to the corpus.
+Real production wall-clock is bounded by I/O when the source isn't fully page-cached. The original AGENTS.md framing of "minutes vs seconds" is **directionally right but oversells `diff`** at the in-memory case  linear is workable for the nightly batch (under a minute). The dramatic win for binary-search shows up most when (a) the source isn't cached and (b) the candidate set is small relative to the corpus.
 
 ---
 
@@ -178,9 +178,9 @@ There is no benchmark answering "what reads/sec can the index sustain while a wr
 Naming the gaps is what makes the doc credible:
 
 - **10M-scale lookups.** Available behind `cargo bench -p hot-index --features long-bench`; not run for this writeup.
-- **Memory over a full day cycle.** See §5 — the dual-index peak is theoretical, not measured.
-- **Concurrent reader throughput while a writer swaps.** See §7 — correctness is tested, throughput isn't.
-- **`bincode` vs `rkyv` head-to-head.** See §6 — the ADR cites trade-offs, not numbers.
+- **Memory over a full day cycle.** See §5  the dual-index peak is theoretical, not measured.
+- **Concurrent reader throughput while a writer swaps.** See §7  correctness is tested, throughput isn't.
+- **`bincode` vs `rkyv` head-to-head.** See §6  the ADR cites trade-offs, not numbers.
 - **Cold-cache vs warm-cache lookup latency.** All criterion runs are warm-cache. Production reads under cache contention from other work are ~1.5–2x slower than the bench shows.
 - **Per-route latency breakdown.** The histogram is a single global accumulator, not per-endpoint.
 - **Geographic latency.** Numbers above are at the origin server. Cloudflare adds tens of ms of edge time for end users; that's a different concern.
@@ -189,7 +189,7 @@ If any of these gaps becomes important to a claim being made elsewhere, file a t
 
 ---
 
-## 9. Reproducibility — every command in one place
+## 9. Reproducibility  every command in one place
 
 ```bash
 # Hot-index lookup benches (read path, controlled)

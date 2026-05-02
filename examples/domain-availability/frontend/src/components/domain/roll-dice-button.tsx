@@ -86,7 +86,7 @@ export function RollDiceButton() {
         setModalOpen(true);
       }
     } catch {
-      // swallow — button re-enables below
+      // swallow  button re-enables below
     } finally {
       setRolling(false);
     }

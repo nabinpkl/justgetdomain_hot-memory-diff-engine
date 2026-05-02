@@ -32,10 +32,10 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="overflow-x-clip bg-jgd-bg text-jgd-text font-sans font-medium leading-[1.7]">
-        {/* Hero — builder thesis */}
+        {/* Hero  builder thesis */}
         <HeroSection />
 
-        {/* Live numbers from /stats — refreshes every 30s */}
+        {/* Live numbers from /stats  refreshes every 30s */}
         {/* <LiveStatsStrip /> */}
 
         {/* Product taste: scrolling pills of real available names */}

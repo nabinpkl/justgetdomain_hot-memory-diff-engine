@@ -24,7 +24,7 @@ struct Args {
     output: PathBuf,
 
     /// Scan algorithm: `binary` (sort-aware, seconds) or `linear` (naive
-    /// full scan, minutes). Both produce identical snapshots — use this to
+    /// full scan, minutes). Both produce identical snapshots  use this to
     /// capture side-by-side timings.
     #[arg(long, default_value = "binary")]
     scanner: ScannerKind,
@@ -69,7 +69,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     // SHA256 of the snapshot bytes. Different scanner algorithms must produce
-    // byte-identical snapshots — printing the hash side by side in the screenshot
+    // byte-identical snapshots  printing the hash side by side in the screenshot
     // is the proof, not just that file sizes match.
     let bytes = std::fs::read(&args.output)?;
     let hash = Sha256::digest(&bytes);

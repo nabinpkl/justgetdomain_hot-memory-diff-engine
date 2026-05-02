@@ -58,20 +58,20 @@ cargo bench -p hot-index --features long-bench   # adds 10M-entry size
 
 ## Two invariants the code maintains
 
-These are load-bearing — break either and the whole architecture stops working.
+These are load-bearing  break either and the whole architecture stops working.
 
-1. **The read path never blocks on a writer.** Reads go through `HotSwap::load()`, which is one `Acquire` atomic load + a `Guard` that holds a refcount on the current snapshot. Writers replace the snapshot via `HotSwap::swap(new)` — atomic pointer publish, never blocks readers, drops the old snapshot when the last `Guard` is released.
+1. **The read path never blocks on a writer.** Reads go through `HotSwap::load()`, which is one `Acquire` atomic load + a `Guard` that holds a refcount on the current snapshot. Writers replace the snapshot via `HotSwap::swap(new)`  atomic pointer publish, never blocks readers, drops the old snapshot when the last `Guard` is released.
 
 2. **The build path never mutates the live snapshot.** Each batch builds an entirely new `DomainIndex` (or whatever value `T` you're holding) in scratch memory, then publishes it. There are no per-key updates, no in-place mutations, no read-write locks. This is what makes invariant #1 free.
 
-The unit test `hot_index::tests::readers_see_monotonic_swaps` asserts both — a writer thread doing 1000 swaps in a tight loop concurrent with a reader doing 1000 loads, asserting reads never observe a backwards-moving value.
+The unit test `hot_index::tests::readers_see_monotonic_swaps` asserts both  a writer thread doing 1000 swaps in a tight loop concurrent with a reader doing 1000 loads, asserting reads never observe a backwards-moving value.
 
 ---
 
 ## Conventions
 
 - **No backward-compatibility shims.** This is iteration-based. Change the code directly, delete the old shape.
-- **No dead code.** If something is removed, delete it entirely — files, imports, types, every reference.
+- **No dead code.** If something is removed, delete it entirely  files, imports, types, every reference.
 - **No god components.** Extract a component / module when the boundary is real, not speculatively.
 - **Every backend feature change ends with `docker compose up -d --build api`** so the live `api.justgetdomain.com` reflects what's in `main`.
 - **Tests are part of crate-extraction done-ness**, not a follow-up. Each library crate ships with unit tests for the load-bearing invariant + at least one test exercising the trait/abstraction with a non-default impl.

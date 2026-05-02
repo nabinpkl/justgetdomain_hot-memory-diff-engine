@@ -29,7 +29,7 @@ n = source bytes, k = candidates, matches = total per-candidate value count.
 
 For the original use case (5.6 GB of registered domains, ~10 K candidates, source pre-sorted), `diff_sorted` does ~k · log₂(n) ≈ 10⁴ · 33 ≈ 330 K comparisons + a forward walk per candidate, vs `diff` reading every one of ~3·10⁸ lines.
 
-Output of the two functions is byte-identical for any well-formed sorted input — see the `parity_diff_and_diff_sorted_match` test.
+Output of the two functions is byte-identical for any well-formed sorted input  see the `parity_diff_and_diff_sorted_match` test.
 
 ## Space + I/O
 
@@ -70,6 +70,6 @@ assert_eq!(result.unmatched_count(), 1);   // kiwi
 - **Not sort-aware.** A future impl could exploit sorted input to binary-search candidates rather than scanning every line. The current impl is O(n) so the algorithm fits one screen.
 - **Not parallel.** A future impl could shard the source by byte range. Not done here.
 - **Not async.** Sync `Read` / `BufRead`. The batch is I/O bound on sequential reads; async wouldn't speed it up.
-- **Not a parser.** Bring your own [`LineParser`] — we handle streaming, you handle line format.
+- **Not a parser.** Bring your own [`LineParser`]  we handle streaming, you handle line format.
 
 Pair with [`hot-index`](../hot-index) to serve the result, and `snapshot-rdb` (sibling crate) to persist it across restarts.
