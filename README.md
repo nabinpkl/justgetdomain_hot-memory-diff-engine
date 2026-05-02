@@ -1,4 +1,4 @@
-# JustGetDomain An usecase of hot-memory-diff-engine
+# JustGetDomain an usecase of hot-memory-diff-engine
 
 The problem was I need to find set of available domains after taking difference from a set of 5.6gb 314 millions of lines of corpus. To tackle that problem I built a reusable library to solve a class of problem most teams reach for a database to solve, then pay for it with latency, operational surface, and a deployment cost.
 
