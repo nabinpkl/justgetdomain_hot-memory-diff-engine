@@ -12,18 +12,22 @@ type Section = {
 const SECTIONS: Section[] = [
   {
     num: "01",
-    kicker: "The pattern",
-    title: "A class of problems, not just a domain finder.",
+    kicker: "The frustration",
+    title: "Every “is this name taken” problem feels the same.",
     body: (
       <>
-        You have a candidate set that fits in RAM (thousands to millions of
-        keys). You have a multi-gigabyte sorted file with what each candidate
-        maps to. You want microsecond lookups for any candidate, rebuilt
-        nightly without downtime, on infrastructure you can afford. That&apos;s
-        the shape this workspace solves. Domain availability is one
-        instance. Password-breach checks are another. Geo-IP, sanctions,
-        allow/deny lists, threat-intel feeds, license-key validation — all
-        the same shape.
+        You want a domain. You guess one. Taken. You guess again. Taken. You
+        give up at six. The same loop hits when you name a startup, a
+        package, a username, a stock ticker, an ENS handle. Same loop hits
+        when a developer checks if a password leaked in a breach. Same loop
+        hits when an LLM proposes ten candidates and you have to figure out
+        which ones are even worth showing the user.
+        <br />
+        <br />
+        The shape is always the same: a small set of things you&apos;re
+        considering, a giant precomputed source of what&apos;s already taken
+        or known, and you want to know in real time which side each
+        candidate is on.
       </>
     ),
     href: REPO,
@@ -31,19 +35,22 @@ const SECTIONS: Section[] = [
   },
   {
     num: "02",
-    kicker: "What it gives you",
-    title: "Two reusable crates. Plug in your own corpus.",
+    kicker: "The agent angle",
+    title: "Why this kind of tool matters more in 2026 than it did in 2023.",
     body: (
       <>
-        <code className="font-mono text-jgd-accent">hot-index</code> holds
-        your data in process memory and serves reads in tens of nanoseconds.
-        <code className="font-mono text-jgd-accent"> streaming-set-diff</code>{" "}
-        builds the index from your sorted file in a single pass. Both crates
-        ship with the load-bearing invariants tested in unit tests, both
-        compose without a database, both run on a free-tier VM. Bring your
-        own <code className="font-mono">LineParser</code> for whatever
-        format your source uses — colons, dots, fixed-width hashes,
-        anything.
+        A chatbot suggesting startup names that are all registered isn&apos;t
+        a chatbot problem. It&apos;s a missing tool problem. The model has
+        no way to know.
+        <br />
+        <br />
+        Give the agent a verification tool that answers in microseconds and
+        it can call it on every single candidate it generates. Make that
+        tool a network hop and the agent either skips it (back to
+        hallucinating taken names) or pays a 10x latency tax per turn (back
+        to feeling slow). The verification step has to live in the same
+        address space as the loop. That&apos;s the constraint this workspace
+        is shaped around.
       </>
     ),
     href: `${REPO}/tree/main/crates`,
@@ -51,8 +58,8 @@ const SECTIONS: Section[] = [
   },
   {
     num: "03",
-    kicker: "Where else this fits",
-    title: "Same engine, different file format.",
+    kicker: "Beyond domains",
+    title: "Same shape, different file.",
     body: (
       <>
         The repo ships{" "}
@@ -69,18 +76,26 @@ const SECTIONS: Section[] = [
           HIBP-style
         </a>{" "}
         <code className="font-mono">HASH:COUNT</code> corpus and reports
-        which candidate hashes appear in breaches and how often. Same crates,
-        different parser, ~80 LOC of glue. The same pattern fits anywhere
-        you have a small candidate set against a huge sorted source —{" "}
+        which candidate hashes appear in breaches and how often. Same
+        engine, different parser, ~80 LOC of glue.
+        <br />
+        <br />
+        Anywhere a small candidate set meets a huge sorted source the same
+        tool shape applies: <span className="text-jgd-text">npm</span> /{" "}
+        <span className="text-jgd-text">PyPI</span> /{" "}
+        <span className="text-jgd-text">crates.io</span> name lookups
+        (registry dumps are public), <span className="text-jgd-text">ENS</span>{" "}
+        handle availability,{" "}
+        <span className="text-jgd-text">stock ticker</span> existence,{" "}
         <span className="text-jgd-text">geo-IP</span> /{" "}
-        <span className="text-jgd-text">ASN</span> ownership lookups,{" "}
+        <span className="text-jgd-text">ASN</span> ownership,{" "}
         <span className="text-jgd-text">sanctions</span> screening,{" "}
         <span className="text-jgd-text">DNS RBLs</span>,{" "}
         <span className="text-jgd-text">threat-intel</span> feeds,{" "}
         <span className="text-jgd-text">license-key</span> validation,{" "}
-        <span className="text-jgd-text">log-enrichment</span> pipelines. If
-        your source can be sorted by key on disk, you can build a
-        microsecond-latency lookup service for it on a single binary.
+        <span className="text-jgd-text">log enrichment</span>. If the source
+        can be sorted on a key, you can build a tool an agent (or a human)
+        can call without ever waiting on it.
       </>
     ),
     href: `${REPO}/tree/main/examples/breach-password-check`,
@@ -88,20 +103,20 @@ const SECTIONS: Section[] = [
   },
   {
     num: "04",
-    kicker: "What proves it",
-    title: "Live numbers from this very page.",
+    kicker: "The boring why",
+    title: "Why it actually feels instant.",
     body: (
       <>
-        Every search in the browser above hits the live{" "}
-        <code className="font-mono">/stats</code> endpoint. p99 end-to-end
-        latency, RSS, snapshot age — all measured on the running process,
-        not in slides. Reproducible benches in{" "}
-        <code className="font-mono">docs/PERFORMANCE.md</code>: 35 ns
-        FxHashMap lookup, 47 ns HotSwap overhead, 623 MiB/s build throughput
-        at 1M lines (5x the naive linear scan), ~115 MiB RSS for the
-        7,500-entry × 1,012-TLD production index. The doc names the gaps it
-        does <em>not</em> measure too — that&apos;s the part most perf docs
-        skip.
+        The numbers below are real and reproducible, but they&apos;re not
+        the headline. They&apos;re the reason this tool shape works on a $5
+        VM instead of needing a managed search service: 35 ns FxHashMap
+        lookup, 47 ns HotSwap overhead, 4 µs / 858 µs p50 / p99 end-to-end
+        on the live <code className="font-mono">/stats</code> endpoint, ~115
+        MiB RSS for the production index, 623 MiB/s build throughput.
+        <br />
+        <br />
+        The doc names the gaps it does <em>not</em> measure too. That&apos;s
+        the part most perf docs skip.
       </>
     ),
     href: `${REPO}/blob/main/docs/PERFORMANCE.md`,
@@ -109,8 +124,8 @@ const SECTIONS: Section[] = [
   },
   {
     num: "05",
-    kicker: "Why these choices",
-    title: "Eight ADRs for the non-obvious calls.",
+    kicker: "Decisions, not cleverness",
+    title: "Eight calls written down so future-me doesn’t relitigate them.",
     body: (
       <>
         Why <code className="font-mono">FxHashSet</code> over{" "}
@@ -120,9 +135,9 @@ const SECTIONS: Section[] = [
         <code className="font-mono">rkyv</code> as features (incompatible
         trait bounds, neither alone covers real callers). Why no{" "}
         <code className="font-mono">/check/&#123;name&#125;</code> endpoint
-        (recreates the GoDaddy UX this product was built to replace). Why
-        atomic snapshot swap, not RCU or per-key writes (the smallest unit
-        of update is the whole snapshot).
+        (recreates the one-at-a-time guessing loop this whole thing was
+        built to remove). Why atomic snapshot swap, not RCU or per-key
+        writes (the smallest unit of update is the whole snapshot).
       </>
     ),
     href: `${REPO}/blob/main/docs/DECISIONS.md`,
@@ -130,17 +145,18 @@ const SECTIONS: Section[] = [
   },
   {
     num: "06",
-    kicker: "What it isn't",
-    title: "Discovery, not recommendation.",
+    kicker: "Honest scope",
+    title: "What this isn’t.",
     body: (
       <>
         This engine returns <code className="font-mono">apple.xyz</code> if{" "}
         <code className="font-mono">apple.xyz</code> is unregistered. It has
         no opinion about whether you should register it. <strong>You should
-        not.</strong> Trademark filtering is a different product with a
-        different scope (USPTO/WIPO lookups, fuzzy matching, reviewer
-        queues, brand-owner intake, recurring legal review). The unshipped
-        pieces are deliberately unshipped, not unfinished.
+        not.</strong> Trademark filtering, brand-collision checks,
+        business-existence verification, semantic typosquat detection —
+        those are different products with different scopes. They belong{" "}
+        <em>on top of</em> this engine, not inside it. The unshipped pieces
+        are deliberately unshipped, not unfinished.
       </>
     ),
     href: `${REPO}/blob/main/docs/LIMITS.md`,
@@ -181,14 +197,15 @@ export function WriteupBlock() {
           What you&apos;re looking at
         </p>
         <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text max-w-[720px]">
-          A reusable engine, demonstrated through a domain finder.
+          Built to fix one frustration. Turned out to fix a class of them.
         </h2>
         <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
-          The browser above is one application of a more general capability:
-          microsecond-latency lookups against a giant sorted source, on a
-          single binary, with zero downtime during rebuilds. Below is what
-          that capability is, where else it fits, and how to verify the
-          claims.
+          The browser above came from getting tired of guessing domain
+          names that turn out to be taken. The shape of the fix — a tiny
+          in-process verification tool that an agent or a human can call
+          freely without waiting — turns out to apply far past domains.
+          Below is what that tool is, where else it fits, and why it matters
+          more in the LLM era than it would have a few years ago.
         </p>
 
         <div>

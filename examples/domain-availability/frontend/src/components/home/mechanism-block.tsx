@@ -92,16 +92,19 @@ export function MechanismBlock() {
           Under the hood
         </p>
         <h2 className="mb-3 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text">
-          For the curious: how the two crates fit together.
+          Why an agent could call this 100 times a turn without noticing.
         </h2>
         <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
-          Two paths share one binary and never block each other. The{" "}
-          <span className="text-jgd-text font-medium">read path</span> is what
+          Verification lives in the same process as the request handler. No
+          network hop, no lock contention, no warm-up after a rebuild. The{" "}
+          <span className="text-jgd-text font-medium">read path</span> — what
           every <code className="font-mono text-jgd-accent">/search</code>{" "}
-          above hits — lock-free, microsecond.{" "}
-          <span className="text-jgd-text font-medium">The build path</span>{" "}
-          runs once per night and atomically publishes a new snapshot when
-          done. Readers never see a half-built index, never wait on a writer.
+          above hits — is lock-free and stays in microseconds even while the{" "}
+          <span className="text-jgd-text font-medium">build path</span> is
+          assembling the next nightly snapshot in scratch memory and
+          atomically publishing it. Readers never see a half-built index,
+          never wait on a writer. That&apos;s the whole reason the loop
+          budget survives.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

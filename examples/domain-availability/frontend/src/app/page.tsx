@@ -13,7 +13,7 @@ const jsonLd = {
   name: "JustGetDomain",
   url: "https://justgetdomain.com",
   description:
-    "Recursively discovers every available short domain name so you don't have to search one by one. Browse 3, 4, and 5-letter domains that are actually available.",
+    "An in-process verification tool for taken-name problems: domains, usernames, package names, breached passwords. Microsecond lookups, nightly rebuilds with no downtime, no database. Designed as a tool an LLM agent can call freely on every candidate it generates.",
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web",
   offers: {
