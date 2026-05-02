@@ -89,9 +89,9 @@ export function HeroSection() {
         {/* Left: text */}
         <div>
           <h1 className="jgd-fade-up font-serif text-[clamp(1.85rem,4.2vw,3rem)] font-normal italic tracking-[-0.02em] leading-[1.1] text-jgd-text mb-6">
-            Sub-millisecond search over a
+            How to achieve a Sub-millisecond search over a
             <br />
-            giant sorted file.
+            giant file.
           </h1>
 
           <p className="jgd-fade-up [animation-delay:0.1s] text-[clamp(1.05rem,1.6vw,1.2rem)] text-jgd-text leading-[1.5] max-w-[560px] mb-5">
@@ -101,7 +101,7 @@ export function HeroSection() {
           <p className="jgd-fade-up [animation-delay:0.15s] text-[0.98rem] text-jgd-dim leading-[1.7] max-w-[580px]">
             The browser below finds available short domains across{" "}
             <span className="text-jgd-text font-medium">1,012 TLDs</span> in
-            microseconds. Two reusable Rust crates power it: one builds the
+            microseconds. Two systems power it: one builds the
             index nightly from a 5.6 GB sorted source, the other serves it
             from RAM with atomic snapshot swaps. The same pattern fits any
             candidate-vs-sorted-corpus problem: password breach lookups,

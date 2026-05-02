@@ -3,11 +3,14 @@ FROM rust:1.87-slim AS builder
 WORKDIR /app
 
 # Build context is the repo root so the workspace can resolve.
-# All examples must be copied because the workspace manifest lists each
-# of them as a member; missing manifests fail Cargo's workspace load.
+# Copy only the Rust workspace members listed in the root Cargo.toml.
+# The frontend lives under examples/ but is NOT a workspace member;
+# copying examples/ wholesale would bust this layer on every frontend
+# change and force a full cargo rebuild.
 COPY Cargo.toml Cargo.lock ./
 COPY crates/ ./crates/
-COPY examples/ ./examples/
+COPY examples/domain-availability/backend/ ./examples/domain-availability/backend/
+COPY examples/breach-password-check/ ./examples/breach-password-check/
 
 RUN cargo build --release -p domain-availability --bin server
 

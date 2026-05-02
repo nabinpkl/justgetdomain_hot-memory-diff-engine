@@ -36,7 +36,7 @@ export default function Home() {
         <HeroSection />
 
         {/* Live numbers from /stats — refreshes every 30s */}
-        <LiveStatsStrip />
+        {/* <LiveStatsStrip /> */}
 
         {/* Product taste: scrolling pills of real available names */}
         <DomainMarquee />
