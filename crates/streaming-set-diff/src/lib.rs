@@ -78,6 +78,26 @@ pub trait LineParser {
     /// integer parsing, etc.). Return `None` to drop the record (e.g.
     /// the value side was malformed even though the key matched).
     fn parse_value(&self, line: &[u8]) -> Option<Self::Value>;
+
+    /// Byte prefix that every line matching `candidate` starts with — used
+    /// by [`diff_sorted`] for the binary-search bound and the forward-walk
+    /// stop condition. Default = the candidate's bytes.
+    ///
+    /// Override when the parser drops a delimiter that participates in the
+    /// source's natural byte sort. Without the delimiter, parsed keys can
+    /// be non-monotonic across consecutive lines, which silently breaks
+    /// binary search.
+    ///
+    /// Example: domain data sorted by full line. `name.tld` parses to key
+    /// `name`, but the file sort places `name-sibling.tld` lines before
+    /// `name.tld` (`-` < `.` in ASCII). Returning `name` as the search
+    /// prefix would land binary search inside the `name-sibling.tld`
+    /// cluster, never reaching the `name.tld` lines. Returning `name.`
+    /// as the prefix gives a contiguous range that exactly matches the
+    /// candidate's lines.
+    fn candidate_search_prefix(&self, candidate: &str) -> Vec<u8> {
+        candidate.as_bytes().to_vec()
+    }
 }
 
 /// Output of a [`diff`] run.
@@ -168,9 +188,18 @@ where
 /// line of the source, this function binary-searches the source per
 /// candidate and walks forward to collect contiguous values.
 ///
-/// **The source MUST be sorted by parsed key.** If the parser produces
-/// keys that are not in ascending byte order across consecutive lines,
-/// results are unspecified (lines may be missed).
+/// # The contract
+///
+/// **The source MUST be sorted by full-line bytes.** Within that natural
+/// sort, every line that matches a given candidate must be contiguous —
+/// the parser's [`candidate_search_prefix`](LineParser::candidate_search_prefix)
+/// must return a byte prefix that exactly delimits the candidate's range.
+///
+/// The default `candidate_search_prefix` returns the candidate's bytes,
+/// which is correct only when the parser's keys are themselves
+/// monotonically sorted across consecutive source lines. Most parsers
+/// that drop a delimiter need to override — see the doc on the trait
+/// method.
 ///
 /// # When to use this over [`diff`]
 ///
@@ -180,9 +209,10 @@ where
 /// - Source must be `&[u8]` (typically `mmap`'d) — we need random
 ///   access. [`diff`] takes any [`BufRead`] which is more flexible.
 ///
-/// Output is byte-identical to [`diff`] for any well-formed sorted
-/// input. The included `parity_diff_and_diff_sorted_match` test asserts
-/// this on a hand-built corpus.
+/// Output is byte-identical to [`diff`] for any contract-conformant
+/// input. The included `parity_diff_and_diff_sorted_match*` tests assert
+/// this on hand-built corpora that exercise the prefix-collision
+/// failure mode.
 pub fn diff_sorted<P>(
     source: &[u8],
     parser: &P,
@@ -194,13 +224,18 @@ where
     let mut matches: HashMap<String, Vec<P::Value>> =
         HashMap::with_capacity(candidates.len() / 4);
 
-    // Sort candidates so the binary searches walk the source in
-    // ascending order — better cache locality on huge mmap'd files.
-    let mut sorted: Vec<&str> = candidates.iter().map(String::as_str).collect();
-    sorted.sort_unstable();
+    // Sort candidates by their search prefix so the binary searches
+    // walk the source in ascending order — better cache locality on
+    // huge mmap'd files. Sort by prefix (not by candidate string), since
+    // that's what we binary-search against.
+    let mut sorted: Vec<(&str, Vec<u8>)> = candidates
+        .iter()
+        .map(|c| (c.as_str(), parser.candidate_search_prefix(c)))
+        .collect();
+    sorted.sort_unstable_by(|a, b| a.1.cmp(&b.1));
 
-    for cand in sorted {
-        let start = lower_bound_line(source, parser, cand);
+    for (cand, prefix) in &sorted {
+        let start = lower_bound_line_bytes(source, prefix);
         let mut pos = start;
         let mut bucket: Vec<P::Value> = Vec::new();
 
@@ -209,18 +244,24 @@ where
             let line = strip_cr(&source[pos..line_end]);
             pos = skip_past_newline(source, line_end);
 
+            // Stop as soon as we leave the candidate's prefix range.
+            // Past this point, all subsequent lines have bytes > prefix.
+            if !line.starts_with(prefix.as_slice()) {
+                break;
+            }
+
+            // The line starts with the prefix. If the parser's prefix
+            // override is loose (default = candidate bytes), the line
+            // could still belong to a different key (e.g. candidate
+            // "apple" with prefix "apple" matches "apples:..." too).
+            // Confirm via parse_key before pushing.
             match parser.parse_key(line) {
-                None => continue,
-                Some(key) if key == cand => {
+                Some(key) if key == *cand => {
                     if let Some(value) = parser.parse_value(line) {
                         bucket.push(value);
                     }
                 }
-                Some(key) if key < cand => {
-                    // Binary search overshot or malformed cluster; skip.
-                    continue;
-                }
-                Some(_) => break,
+                _ => continue,
             }
         }
 
@@ -239,48 +280,60 @@ where
 }
 
 /// Binary-search the source for the byte offset of the first line whose
-/// parsed key is `>= target`. Lines the parser rejects are skipped
-/// forward.
-fn lower_bound_line<P: LineParser>(data: &[u8], parser: &P, target: &str) -> usize {
+/// raw bytes are `>= prefix` (lexicographic). Returns `data.len()` if
+/// no such line exists.
+///
+/// The search invariant is line-aligned: the loop only ever examines
+/// lines that start at or after the current `mid`, never partial lines.
+/// This avoids the line-snap-backwards correctness hazard.
+fn lower_bound_line_bytes(data: &[u8], prefix: &[u8]) -> usize {
     let mut lo: usize = 0;
     let mut hi: usize = data.len();
 
     while lo < hi {
         let mid = lo + (hi - lo) / 2;
-        let line_start = snap_to_line_start(data, mid);
-        let line_end = find_newline(data, line_start);
-        let line = strip_cr(&data[line_start..line_end]);
+        let p = next_line_start(data, mid);
+        if p >= hi {
+            // No full line starts in [mid, hi); the lower bound is in
+            // [lo, mid). Narrow the upper half.
+            hi = mid;
+            continue;
+        }
+        let line_end = find_newline(data, p);
+        let line = strip_cr(&data[p..line_end]);
 
-        match parser.parse_key(line) {
-            None => {
-                // Skip past this malformed line and keep searching the
-                // upper half. This can be wrong if many malformed lines
-                // cluster on a boundary; acceptable for the trusted-batch
-                // use case the crate is built for.
-                lo = skip_past_newline(data, line_end);
-            }
-            Some(key) if key < target => {
-                lo = skip_past_newline(data, line_end);
-            }
-            Some(_) => {
-                hi = line_start;
-            }
+        if line < prefix {
+            lo = skip_past_newline(data, line_end);
+        } else {
+            // Conservative: the lower bound is in [lo, mid] — the line
+            // at p is >= prefix but a full line in [lo, mid) might also
+            // satisfy. Setting hi = mid keeps the search line-aligned
+            // and guarantees termination.
+            hi = mid;
         }
     }
 
-    lo
+    next_line_start(data, lo)
 }
 
-/// Snap `pos` back to the start of the line that contains it.
-fn snap_to_line_start(data: &[u8], pos: usize) -> usize {
-    if pos == 0 || pos > data.len() {
+/// Position of the start of the next full line at or after `pos`.
+/// Returns `data.len()` if no full line starts at or after `pos`
+/// (i.e. the file has no `\n` at or after `pos`).
+fn next_line_start(data: &[u8], pos: usize) -> usize {
+    if pos == 0 {
         return 0;
     }
-    let mut i = pos.min(data.len() - 1);
-    while i > 0 && data[i - 1] != b'\n' {
-        i -= 1;
+    if pos >= data.len() {
+        return data.len();
     }
-    i
+    if data[pos - 1] == b'\n' {
+        return pos;
+    }
+    let mut i = pos;
+    while i < data.len() && data[i] != b'\n' {
+        i += 1;
+    }
+    if i < data.len() { i + 1 } else { data.len() }
 }
 
 /// Position of the newline at or after `pos`, or `data.len()` if none.
@@ -336,7 +389,10 @@ mod tests {
 
     /// Parser that mimics the domain-availability shape: `name.tld`
     /// with `name` as key, `tld` as value. Demonstrates that the same
-    /// trait surface fits a different delimiter.
+    /// trait surface fits a different delimiter — and overrides
+    /// `candidate_search_prefix` to include the dot, since the source
+    /// is sorted by full line and `name-sibling.tld` lines appear
+    /// before `name.tld` lines (`-` < `.` in ASCII).
     struct DotParser;
 
     impl LineParser for DotParser {
@@ -350,6 +406,12 @@ mod tests {
         fn parse_value(&self, line: &[u8]) -> Option<String> {
             let dot = line.iter().position(|&b| b == b'.')?;
             std::str::from_utf8(&line[dot + 1..]).ok().map(str::to_owned)
+        }
+
+        fn candidate_search_prefix(&self, candidate: &str) -> Vec<u8> {
+            let mut v = candidate.as_bytes().to_vec();
+            v.push(b'.');
+            v
         }
     }
 
@@ -589,5 +651,80 @@ grape.net
         let result = diff_sorted(source.as_bytes(), &DotParser, &cands);
         assert_eq!(result.matches.get("apple").unwrap(), &vec!["com".to_string()]);
         assert_eq!(result.matches.get("banana").unwrap(), &vec!["dev".to_string()]);
+    }
+
+    /// Regression: the source is sorted by full line, and `name-X.tld`
+    /// lines appear BEFORE `name.tld` lines (because `-` (0x2D) is less
+    /// than `.` (0x2E) in ASCII). The naive "binary-search by parsed
+    /// key" version would land in the `name-X.tld` cluster, see the
+    /// next line's parsed key as `> "name"`, break, and miss every
+    /// `name.tld` line. This test pins the fix.
+    #[test]
+    fn diff_sorted_finds_keys_with_hyphenated_siblings() {
+        let source = "\
+abaci-studios.de
+abaci-technologies.com
+abaci-us.com
+abaci-us.info
+abaci-us.net
+abaci-us.org
+abaci.academy
+abaci.agency
+abaci.com
+abacus.com
+";
+        let cands = candidates(&["abaci"]);
+        let result = diff_sorted(source.as_bytes(), &DotParser, &cands);
+
+        let bucket = result.matches.get("abaci").expect("abaci must match");
+        let mut got = bucket.clone();
+        got.sort();
+        assert_eq!(
+            got,
+            vec!["academy".to_string(), "agency".to_string(), "com".to_string()],
+        );
+        assert!(result.unmatched.is_empty());
+    }
+
+    /// Same shape as above, but cross-checked against [`diff`] (linear)
+    /// for byte-identical normalized output. The original parity test
+    /// used a corpus with no hyphenated siblings and so passed
+    /// vacuously even while the bug above was live in production.
+    #[test]
+    fn parity_diff_and_diff_sorted_match_with_hyphenated_siblings() {
+        let source = "\
+abaci-studios.de
+abaci-technologies.com
+abaci-us.com
+abaci-us.info
+abaci-us.org
+abaci.academy
+abaci.agency
+abaci.com
+abacus.com
+apple-pie.com
+apple-zone.com
+apple.com
+apple.dev
+banana-bread.com
+banana.com
+banana.dev
+zebra-zone.com
+zebra.com
+";
+        let cands = candidates(&[
+            "abaci", "apple", "banana", "zebra",
+            "abacus",  // single-line, no siblings
+            "ghost",   // unmatched
+        ]);
+
+        let linear = diff(Cursor::new(source), &DotParser, &cands).unwrap();
+        let sorted = diff_sorted(source.as_bytes(), &DotParser, &cands);
+        assert_eq!(normalize(&linear), normalize(&sorted));
+
+        // Sanity-check the actual content: abaci must have its 3 dot
+        // TLDs even though 5 hyphenated-sibling lines precede it.
+        let abaci = sorted.matches.get("abaci").unwrap();
+        assert_eq!(abaci.len(), 3);
     }
 }

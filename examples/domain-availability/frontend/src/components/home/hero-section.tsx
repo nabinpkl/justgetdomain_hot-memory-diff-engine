@@ -88,21 +88,24 @@ export function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 items-start">
         {/* Left: text */}
         <div>
-          <h1 className="jgd-fade-up font-serif text-[clamp(2.25rem,5.5vw,4rem)] font-normal italic tracking-[-0.02em] leading-[1.05] text-jgd-text mb-6">
-            Microsecond reads from a 5.6 GB
+          <h1 className="jgd-fade-up font-serif text-[clamp(1.85rem,4.2vw,3rem)] font-normal italic tracking-[-0.02em] leading-[1.1] text-jgd-text mb-6">
+            Sub-millisecond search over a
             <br />
-            nightly-rebuilt corpus.
+            giant sorted file.
           </h1>
 
-          <p className="jgd-fade-up [animation-delay:0.15s] text-[clamp(1rem,1.7vw,1.2rem)] text-jgd-dim leading-[1.7] max-w-[560px]">
-            <span className="text-jgd-text font-medium">35 ns</span> hash
-            lookups,{" "}
-            <span className="text-jgd-text font-medium">858 µs</span> p99
-            end-to-end,{" "}
-            <span className="text-jgd-text font-medium">~115 MiB</span> RSS.
-            Lock-free atomic-swap publish, sort-aware nightly diff at{" "}
-            <span className="text-jgd-text font-medium">623 MiB/s</span>. The
-            browser below is the index doing real work.{" "}
+          <p className="jgd-fade-up [animation-delay:0.1s] text-[clamp(1.05rem,1.6vw,1.2rem)] text-jgd-text leading-[1.5] max-w-[560px] mb-5">
+            No database. No cache. No downtime during rebuilds.
+          </p>
+
+          <p className="jgd-fade-up [animation-delay:0.15s] text-[0.98rem] text-jgd-dim leading-[1.7] max-w-[580px]">
+            The browser below finds available short domains across{" "}
+            <span className="text-jgd-text font-medium">1,012 TLDs</span> in
+            microseconds. Two reusable Rust crates power it: one builds the
+            index nightly from a 5.6 GB sorted source, the other serves it
+            from RAM with atomic snapshot swaps. The same pattern fits any
+            candidate-vs-sorted-corpus problem: password breach lookups,
+            geo-IP, sanctions screening, allow/deny lists.{" "}
             <a
               href="https://github.com/nabinpkl/justgetdomain.com"
               target="_blank"

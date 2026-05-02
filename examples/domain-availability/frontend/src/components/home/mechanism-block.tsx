@@ -38,10 +38,14 @@ const BUILD_PATH = [
 
 function PathCard({
   label,
+  crate,
+  crateHref,
   title,
   bullets,
 }: {
   label: string;
+  crate: string;
+  crateHref: string;
   title: string;
   bullets: { metric: string; text: string }[];
 }) {
@@ -49,6 +53,17 @@ function PathCard({
     <div className="rounded-sm border border-jgd-border bg-jgd-surface/30 px-7 py-7">
       <p className="text-[0.72rem] uppercase tracking-[3px] text-jgd-accent/80 mb-3">
         {label}
+        <span className="text-jgd-muted/70 mx-2" aria-hidden>
+          ·
+        </span>
+        <a
+          href={crateHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono normal-case tracking-normal text-jgd-accent hover:underline underline-offset-4"
+        >
+          {crate}
+        </a>
       </p>
       <h3 className="font-serif text-[1.25rem] font-normal text-jgd-text mb-5 leading-snug">
         {title}
@@ -71,28 +86,36 @@ function PathCard({
 
 export function MechanismBlock() {
   return (
-    <section className="pt-[clamp(2rem,5vh,3rem)] pb-[clamp(3.5rem,10vh,6rem)] px-6 sm:px-10">
+    <section className="pt-[clamp(2rem,5vh,3rem)] pb-[clamp(3.5rem,10vh,6rem)] px-6 sm:px-10 border-t border-jgd-border">
       <div className="max-w-[1400px] mx-auto">
         <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
-          The mechanism
+          Under the hood
         </p>
         <h2 className="mb-3 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text">
-          Two paths, one binary.
+          For the curious: how the two crates fit together.
         </h2>
-        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[640px] mb-12">
-          A read path serving microsecond hash lookups, and a build path that
-          rebuilds the entire index nightly from a 5.6 GB sorted source. They
-          share an atomic swap and never block each other.
+        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
+          Two paths share one binary and never block each other. The{" "}
+          <span className="text-jgd-text font-medium">read path</span> is what
+          every <code className="font-mono text-jgd-accent">/search</code>{" "}
+          above hits — lock-free, microsecond.{" "}
+          <span className="text-jgd-text font-medium">The build path</span>{" "}
+          runs once per night and atomically publishes a new snapshot when
+          done. Readers never see a half-built index, never wait on a writer.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <PathCard
             label="Read path"
+            crate="hot-index"
+            crateHref="https://github.com/nabinpkl/justgetdomain.com/tree/main/crates/hot-index"
             title="Lock-free, microsecond, never blocks on a writer."
             bullets={READ_PATH}
           />
           <PathCard
             label="Build path"
+            crate="streaming-set-diff"
+            crateHref="https://github.com/nabinpkl/justgetdomain.com/tree/main/crates/streaming-set-diff"
             title="Sort-aware diff, single-pass, atomic publish."
             bullets={BUILD_PATH}
           />

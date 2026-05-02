@@ -38,20 +38,20 @@ export default function Home() {
         {/* Live numbers from /stats — refreshes every 30s */}
         <LiveStatsStrip />
 
-        {/* Live evidence: scrolling pills of real available names */}
+        {/* Product taste: scrolling pills of real available names */}
         <DomainMarquee />
         <div className="px-6 pt-6 pb-6 max-w-[960px] mx-auto">
           <DisclaimerCard className="border-0 px-0 py-0 text-[0.68rem] justify-center" />
         </div>
 
-        {/* The mechanism: read path / build path */}
-        <MechanismBlock />
-
-        {/* Live demo: each shelf is one /search call against the index */}
+        {/* Product taste: each shelf is one /search call against the index */}
         <MiniShelvesSection />
 
-        {/* Six writeup sections: problem, libraries, performance, decisions, limits, other-fits */}
+        {/* The value pitch: pattern, libraries, where else this fits, evidence */}
         <WriteupBlock />
+
+        {/* Deep dive (for those who want the wiring) */}
+        <MechanismBlock />
 
         {/* Builder footer: identity, served-by, last deploy SHA, last index rebuild */}
         <BuilderFooter />

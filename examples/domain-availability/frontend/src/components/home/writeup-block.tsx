@@ -12,116 +12,50 @@ type Section = {
 const SECTIONS: Section[] = [
   {
     num: "01",
-    kicker: "The problem",
-    title: "Microsecond reads from a multi-gigabyte sorted source.",
+    kicker: "The pattern",
+    title: "A class of problems, not just a domain finder.",
     body: (
       <>
-        A small candidate set fits in RAM. The source of truth (registered
-        domains, breached password hashes, geo-IP ranges) sits sorted on disk
-        and weighs gigabytes. You want, for each candidate, what the source
-        says about it — at microsecond latency, from a single binary, rebuilt
-        nightly with no downtime during the swap.
+        You have a candidate set that fits in RAM (thousands to millions of
+        keys). You have a multi-gigabyte sorted file with what each candidate
+        maps to. You want microsecond lookups for any candidate, rebuilt
+        nightly without downtime, on infrastructure you can afford. That&apos;s
+        the shape this workspace solves. Domain availability is one
+        instance. Password-breach checks are another. Geo-IP, sanctions,
+        allow/deny lists, threat-intel feeds, license-key validation — all
+        the same shape.
       </>
     ),
-    href: `${REPO}#the-problem`,
-    linkLabel: "Read the full thesis on GitHub",
+    href: REPO,
+    linkLabel: "Read the workspace thesis",
   },
   {
     num: "02",
-    kicker: "The two crates",
-    title: "hot-index and streaming-set-diff.",
+    kicker: "What it gives you",
+    title: "Two reusable crates. Plug in your own corpus.",
     body: (
       <>
-        <code className="font-mono text-jgd-accent">hot-index</code> is the
-        serving side: a <code className="font-mono">HotIndex&lt;K, V&gt;</code>{" "}
-        trait, a default <code className="font-mono">FxHashIndex</code> impl,
-        and a <code className="font-mono">HotSwap</code> wrapper around{" "}
-        <code className="font-mono">arc-swap</code> for atomic publish.
-        Persistence ships behind interchangeable{" "}
-        <code className="font-mono">bincode</code> /{" "}
-        <code className="font-mono">rkyv</code> feature flags.{" "}
-        <code className="font-mono text-jgd-accent">streaming-set-diff</code>{" "}
-        is the building side: a{" "}
-        <code className="font-mono">LineParser</code> trait you implement
-        once, and two algorithms with byte-identical output —{" "}
-        <code className="font-mono">diff</code> (linear) and{" "}
-        <code className="font-mono">diff_sorted</code> (binary search per
-        candidate).
+        <code className="font-mono text-jgd-accent">hot-index</code> holds
+        your data in process memory and serves reads in tens of nanoseconds.
+        <code className="font-mono text-jgd-accent"> streaming-set-diff</code>{" "}
+        builds the index from your sorted file in a single pass. Both crates
+        ship with the load-bearing invariants tested in unit tests, both
+        compose without a database, both run on a free-tier VM. Bring your
+        own <code className="font-mono">LineParser</code> for whatever
+        format your source uses — colons, dots, fixed-width hashes,
+        anything.
       </>
     ),
     href: `${REPO}/tree/main/crates`,
-    linkLabel: "Browse the crates on GitHub",
+    linkLabel: "Browse the crates",
   },
   {
     num: "03",
-    kicker: "Performance",
-    title: "Every claim pinned to a measured number.",
+    kicker: "Where else this fits",
+    title: "Same engine, different file format.",
     body: (
       <>
-        35 ns hit / 11 ns miss on{" "}
-        <code className="font-mono">FxHashIndex</code> at 1M entries
-        (criterion). 47 ns overhead per{" "}
-        <code className="font-mono">HotSwap::load()</code>. 623 MiB/s for{" "}
-        <code className="font-mono">diff_sorted</code> at 1M lines (5x the
-        naive linear scan). 4 µs / 858 µs p50 / p99 whole-handler latency
-        from the live{" "}
-        <code className="font-mono">/stats</code> histogram. ~115 MiB resident
-        for the production index. The doc names every gap it does not
-        measure (10M-scale lookups, day-cycle memory, concurrent reader
-        throughput under writer swap).
-      </>
-    ),
-    href: `${REPO}/blob/main/docs/PERFORMANCE.md`,
-    linkLabel: "Read docs/PERFORMANCE.md",
-  },
-  {
-    num: "04",
-    kicker: "Decisions",
-    title: "ADR-style rationale for every non-obvious choice.",
-    body: (
-      <>
-        Eight short ADRs. Why{" "}
-        <code className="font-mono">FxHashSet</code> over{" "}
-        <code className="font-mono">std::HashSet</code> (2x faster, gives up
-        HashDoS resistance acceptable for trusted batch input). Why both{" "}
-        <code className="font-mono">bincode</code> and{" "}
-        <code className="font-mono">rkyv</code> (incompatible trait bounds,
-        forcing one cuts off real consumers). Why no{" "}
-        <code className="font-mono">/check/&#123;name&#125;</code> endpoint
-        (recreates the GoDaddy UX this product was built to replace). Why
-        atomic swap instead of RCU or per-key writes (the smallest unit of
-        update is the whole snapshot).
-      </>
-    ),
-    href: `${REPO}/blob/main/docs/DECISIONS.md`,
-    linkLabel: "Read docs/DECISIONS.md",
-  },
-  {
-    num: "05",
-    kicker: "Limits",
-    title: "Discovery, not recommendation.",
-    body: (
-      <>
-        This engine returns <code className="font-mono">apple.xyz</code> if{" "}
-        <code className="font-mono">apple.xyz</code> is unregistered. It has
-        no opinion about whether you should register it. You should not.
-        Trademark filtering is a different product — it needs USPTO/WIPO
-        lookups, fuzzy matching, a reviewer queue, a brand-owner intake, and
-        ongoing legal review. That is a recommender plus
-        trust-and-safety pipeline, not an indexing problem. The unshipped
-        pieces are deliberately unshipped, not unfinished.
-      </>
-    ),
-    href: `${REPO}/blob/main/docs/LIMITS.md`,
-    linkLabel: "Read docs/LIMITS.md",
-  },
-  {
-    num: "06",
-    kicker: "Other fits",
-    title: "This is one example of N.",
-    body: (
-      <>
-        The same two crates already power{" "}
+        The repo ships{" "}
         <code className="font-mono text-jgd-accent">
           breach-password-check
         </code>
@@ -134,16 +68,83 @@ const SECTIONS: Section[] = [
         >
           HIBP-style
         </a>{" "}
-        <code className="font-mono">HASH:COUNT</code> corpus and a list of
-        candidate hashes, and reports which appear in breaches. Different
-        file format, different value type, same{" "}
-        <code className="font-mono">streaming-set-diff</code>. The shape
-        generalizes to any candidate-against-large-sorted-corpus check —
-        geo-IP lookups, ASN ownership, sanctions lists, allow/deny sets.
+        <code className="font-mono">HASH:COUNT</code> corpus and reports
+        which candidate hashes appear in breaches and how often. Same crates,
+        different parser, ~80 LOC of glue. The same pattern fits anywhere
+        you have a small candidate set against a huge sorted source —{" "}
+        <span className="text-jgd-text">geo-IP</span> /{" "}
+        <span className="text-jgd-text">ASN</span> ownership lookups,{" "}
+        <span className="text-jgd-text">sanctions</span> screening,{" "}
+        <span className="text-jgd-text">DNS RBLs</span>,{" "}
+        <span className="text-jgd-text">threat-intel</span> feeds,{" "}
+        <span className="text-jgd-text">license-key</span> validation,{" "}
+        <span className="text-jgd-text">log-enrichment</span> pipelines. If
+        your source can be sorted by key on disk, you can build a
+        microsecond-latency lookup service for it on a single binary.
       </>
     ),
     href: `${REPO}/tree/main/examples/breach-password-check`,
     linkLabel: "See the breach-password-check example",
+  },
+  {
+    num: "04",
+    kicker: "What proves it",
+    title: "Live numbers from this very page.",
+    body: (
+      <>
+        Every search in the browser above hits the live{" "}
+        <code className="font-mono">/stats</code> endpoint. p99 end-to-end
+        latency, RSS, snapshot age — all measured on the running process,
+        not in slides. Reproducible benches in{" "}
+        <code className="font-mono">docs/PERFORMANCE.md</code>: 35 ns
+        FxHashMap lookup, 47 ns HotSwap overhead, 623 MiB/s build throughput
+        at 1M lines (5x the naive linear scan), ~115 MiB RSS for the
+        7,500-entry × 1,012-TLD production index. The doc names the gaps it
+        does <em>not</em> measure too — that&apos;s the part most perf docs
+        skip.
+      </>
+    ),
+    href: `${REPO}/blob/main/docs/PERFORMANCE.md`,
+    linkLabel: "Read docs/PERFORMANCE.md",
+  },
+  {
+    num: "05",
+    kicker: "Why these choices",
+    title: "Eight ADRs for the non-obvious calls.",
+    body: (
+      <>
+        Why <code className="font-mono">FxHashSet</code> over{" "}
+        <code className="font-mono">std::HashSet</code> (2x faster, gives up
+        HashDoS resistance acceptable for trusted batch input). Why both{" "}
+        <code className="font-mono">bincode</code> and{" "}
+        <code className="font-mono">rkyv</code> as features (incompatible
+        trait bounds, neither alone covers real callers). Why no{" "}
+        <code className="font-mono">/check/&#123;name&#125;</code> endpoint
+        (recreates the GoDaddy UX this product was built to replace). Why
+        atomic snapshot swap, not RCU or per-key writes (the smallest unit
+        of update is the whole snapshot).
+      </>
+    ),
+    href: `${REPO}/blob/main/docs/DECISIONS.md`,
+    linkLabel: "Read docs/DECISIONS.md",
+  },
+  {
+    num: "06",
+    kicker: "What it isn't",
+    title: "Discovery, not recommendation.",
+    body: (
+      <>
+        This engine returns <code className="font-mono">apple.xyz</code> if{" "}
+        <code className="font-mono">apple.xyz</code> is unregistered. It has
+        no opinion about whether you should register it. <strong>You should
+        not.</strong> Trademark filtering is a different product with a
+        different scope (USPTO/WIPO lookups, fuzzy matching, reviewer
+        queues, brand-owner intake, recurring legal review). The unshipped
+        pieces are deliberately unshipped, not unfinished.
+      </>
+    ),
+    href: `${REPO}/blob/main/docs/LIMITS.md`,
+    linkLabel: "Read docs/LIMITS.md",
   },
 ];
 
@@ -179,9 +180,16 @@ export function WriteupBlock() {
         <p className="text-[0.72rem] uppercase tracking-[4px] mb-5 text-jgd-accent">
           What you&apos;re looking at
         </p>
-        <h2 className="mb-12 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text max-w-[640px]">
-          A Rust workspace, two reusable crates, one live consumer.
+        <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text max-w-[720px]">
+          A reusable engine, demonstrated through a domain finder.
         </h2>
+        <p className="text-[1.05rem] text-jgd-dim leading-[1.7] max-w-[680px] mb-12">
+          The browser above is one application of a more general capability:
+          microsecond-latency lookups against a giant sorted source, on a
+          single binary, with zero downtime during rebuilds. Below is what
+          that capability is, where else it fits, and how to verify the
+          claims.
+        </p>
 
         <div>
           {SECTIONS.map((s) => (

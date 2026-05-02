@@ -87,6 +87,15 @@ impl LineParser for DomainParser {
         }
         Some(tld.to_string())
     }
+
+    /// Append the dot delimiter so the binary search lands at the start
+    /// of the candidate's `name.tld` cluster, not somewhere in the
+    /// preceding `name-sibling.tld` block (`-` < `.` in ASCII).
+    fn candidate_search_prefix(&self, candidate: &str) -> Vec<u8> {
+        let mut v = candidate.as_bytes().to_vec();
+        v.push(b'.');
+        v
+    }
 }
 
 /// Public entry — dispatch to the requested algorithm in the library.
