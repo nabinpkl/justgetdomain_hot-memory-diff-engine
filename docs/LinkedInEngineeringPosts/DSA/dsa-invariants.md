@@ -1,40 +1,4 @@
 
-Drafts below, matching the structure of your iteration file. Both observe the rules in the file header. I flagged a handful of specific calls at the bottom that you should sanity check before shipping.
-
----
-
-## Section 1: LinkedIn short
-
-Spent a few weekends on a project, a domain search tool that flips the usual UX. Instead of guessing names one at a time to check availability, pre-scan every short candidate and surface only what's actually available.
-
-The domain scan job went from 18 to 20 seconds down to 2 to 3 seconds after I noticed the input file was sorted. The binary search was straightforward. The noticing took a week.
-
-
-The job: take around 7,586 candidate names, figure out which TLDs are already registered for each, persist the rest. The data is a single 5.6 GB file, 319 million lines, sorted alphabetically.
-
-First version was naive. Walk every line, hash check each name, aggregate. Clean Rust, release build, correct output. I picked Rust because a commodity utility like this should be fast. 18 to 20 seconds per run.
-
-I asked Claude to make it faster. Buffered reads, byte-level parsing, rayon parallelism. Each good for 2 to 3x.
-
-Then I re-read the docs I'd been staring at for a week. The file is sorted alphabetically.
-
-Binary search the mmap'd file for each candidate instead of walking it. O(k log n) instead of O(n). 18 to 20 seconds dropped to 2 to 3 seconds. Same hardware, same file, same output. About 8x from one line of reading comprehension.
-
-Claude wrote the binary search in one shot the moment I asked for it. The bottleneck was never implementation. It was noticing the invariant existed.
-
-The reflex is what matters. Stare at any input and ask what's sorted, what's monotonic, what you can exploit. Without it you optimize inside the shape you already chose and get faster at being wrong. The wrong algorithm, tuned beautifully, is still the wrong algorithm.
-
-Same reason learning addition by hand still matters in the calculator era. The calculator handles arithmetic. It won't tell you when you asked the wrong question.
-
-Implementation you can hand to an LLM. Noticing, you can't. Not yet.
-
-#rust #systemsengineering #performance
-
----
-
-## Section 2: Article
-
-
 ### The invariant was in the docs: An 8x speedup I almost missed
 
 I'm building a domain search tool. The idea is to flip the UX of how you usually look for a domain. Instead of guessing names and checking availability one by one, pre-scan every short candidate, filter out what's already registered, and show you only names you can actually buy.

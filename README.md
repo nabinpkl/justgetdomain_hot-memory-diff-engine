@@ -1,4 +1,4 @@
-# hot-memory-diff-engine
+# JustGetDomain An Example of hot-memory-diff-engine
 
 A Rust workspace for building hot-swappable in-memory indexes from huge sorted sources on disk. Microsecond reads, atomic publish-once-per-batch, no database, single-process. Currently powers [justgetdomain.com](https://justgetdomain.com), one example of N.
 
