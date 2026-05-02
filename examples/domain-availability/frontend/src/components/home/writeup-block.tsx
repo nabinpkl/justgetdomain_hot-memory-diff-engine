@@ -13,21 +13,16 @@ const SECTIONS: Section[] = [
   {
     num: "01",
     kicker: "The frustration",
-    title: "Every “is this name taken” problem feels the same.",
+    title: "Every “is this name taken” problem looks the same.",
     body: (
       <>
-        You want a domain. You guess one. Taken. You guess again. Taken. You
-        give up at six. The same loop hits when you name a startup, a
-        package, a username, a stock ticker, an ENS handle. Same loop hits
-        when a developer checks if a password leaked in a breach. Same loop
-        hits when an LLM proposes ten candidates and you have to figure out
-        which ones are even worth showing the user.
+        You guess a name. Taken. You guess another. Taken. The same loop
+        hits for startup names, packages, usernames, tickers, ENS handles,
+        breached passwords, and every LLM that proposes ten candidates
+        without knowing which exist.
         <br />
         <br />
-        The shape is always the same: a small set of things you&apos;re
-        considering, a giant precomputed source of what&apos;s already taken
-        or known, and you want to know in real time which side each
-        candidate is on.
+        Small candidate set. Huge precomputed source. Real-time answer.
       </>
     ),
     href: REPO,
@@ -36,21 +31,18 @@ const SECTIONS: Section[] = [
   {
     num: "02",
     kicker: "The agent angle",
-    title: "Why this kind of tool matters more in 2026 than it did in 2023.",
+    title: "Why it matters more in 2026 than in 2023.",
     body: (
       <>
-        A chatbot suggesting startup names that are all registered isn&apos;t
-        a chatbot problem. It&apos;s a missing tool problem. The model has
-        no way to know.
+        A chatbot suggesting all-taken names isn&apos;t a model problem.
+        It&apos;s a missing tool problem.
         <br />
         <br />
         Give the agent a verification tool that answers in microseconds and
-        it can call it on every single candidate it generates. Make that
-        tool a network hop and the agent either skips it (back to
-        hallucinating taken names) or pays a 10x latency tax per turn (back
-        to feeling slow). The verification step has to live in the same
-        address space as the loop. That&apos;s the constraint this workspace
-        is shaped around.
+        it can call it on every candidate. Put the same tool behind a
+        network hop and the agent either skips it (back to hallucinating)
+        or pays a 10x per-turn latency tax (back to feeling slow).
+        Verification has to live in the same address space as the loop.
       </>
     ),
     href: `${REPO}/tree/main/crates`,
@@ -66,36 +58,34 @@ const SECTIONS: Section[] = [
         <code className="font-mono text-jgd-accent">
           breach-password-check
         </code>
-        , a CLI that takes a sorted{" "}
+        : feed it a sorted{" "}
         <a
           href="https://haveibeenpwned.com/Passwords"
           target="_blank"
           rel="noopener noreferrer"
           className="text-jgd-accent underline-offset-4 hover:underline"
         >
-          HIBP-style
+          HIBP
         </a>{" "}
-        <code className="font-mono">HASH:COUNT</code> corpus and reports
-        which candidate hashes appear in breaches and how often. Same
-        engine, different parser, ~80 LOC of glue.
+        <code className="font-mono">HASH:COUNT</code> corpus and it tells
+        you which candidate hashes leaked. Same engine, different parser,
+        ~80 LOC of glue.
         <br />
         <br />
-        Anywhere a small candidate set meets a huge sorted source the same
-        tool shape applies: <span className="text-jgd-text">npm</span> /{" "}
+        Same shape works for <span className="text-jgd-text">npm</span> /{" "}
         <span className="text-jgd-text">PyPI</span> /{" "}
-        <span className="text-jgd-text">crates.io</span> name lookups
-        (registry dumps are public), <span className="text-jgd-text">ENS</span>{" "}
-        handle availability,{" "}
-        <span className="text-jgd-text">stock ticker</span> existence,{" "}
+        <span className="text-jgd-text">crates.io</span> name checks
+        (registry dumps are public),{" "}
+        <span className="text-jgd-text">ENS</span> handles,{" "}
+        <span className="text-jgd-text">stock tickers</span>,{" "}
         <span className="text-jgd-text">geo-IP</span> /{" "}
-        <span className="text-jgd-text">ASN</span> ownership,{" "}
-        <span className="text-jgd-text">sanctions</span> screening,{" "}
+        <span className="text-jgd-text">ASN</span>,{" "}
+        <span className="text-jgd-text">sanctions</span>,{" "}
         <span className="text-jgd-text">DNS RBLs</span>,{" "}
-        <span className="text-jgd-text">threat-intel</span> feeds,{" "}
-        <span className="text-jgd-text">license-key</span> validation,{" "}
-        <span className="text-jgd-text">log enrichment</span>. If the source
-        can be sorted on a key, you can build a tool an agent (or a human)
-        can call without ever waiting on it.
+        <span className="text-jgd-text">threat-intel</span>,{" "}
+        <span className="text-jgd-text">license keys</span>,{" "}
+        <span className="text-jgd-text">log enrichment</span>. Anything
+        sortable by key.
       </>
     ),
     href: `${REPO}/tree/main/examples/breach-password-check`,
@@ -107,16 +97,13 @@ const SECTIONS: Section[] = [
     title: "Why it actually feels instant.",
     body: (
       <>
-        The numbers below are real and reproducible, but they&apos;re not
-        the headline. They&apos;re the reason this tool shape works on a $5
-        VM instead of needing a managed search service: 35 ns FxHashMap
-        lookup, 47 ns HotSwap overhead, 4 µs / 858 µs p50 / p99 end-to-end
-        on the live <code className="font-mono">/stats</code> endpoint, ~115
-        MiB RSS for the production index, 623 MiB/s build throughput.
+        The numbers aren&apos;t the headline. They&apos;re why this fits on
+        a $5 VM instead of needing a managed search service: 35 ns lookup,
+        47 ns swap overhead, 4 µs / 858 µs p50 / p99 end-to-end, ~115 MiB
+        RSS, 623 MiB/s build throughput.
         <br />
         <br />
-        The doc names the gaps it does <em>not</em> measure too. That&apos;s
-        the part most perf docs skip.
+        The doc also names the gaps it doesn&apos;t measure.
       </>
     ),
     href: `${REPO}/blob/main/docs/PERFORMANCE.md`,
@@ -125,19 +112,19 @@ const SECTIONS: Section[] = [
   {
     num: "05",
     kicker: "Decisions, not cleverness",
-    title: "Eight calls written down so future-me doesn’t relitigate them.",
+    title: "Eight non-obvious calls, written down.",
     body: (
       <>
         Why <code className="font-mono">FxHashSet</code> over{" "}
-        <code className="font-mono">std::HashSet</code> (2x faster, gives up
-        HashDoS resistance acceptable for trusted batch input). Why both{" "}
+        <code className="font-mono">std::HashSet</code> (2x faster,
+        HashDoS-acceptable for trusted batch input). Why both{" "}
         <code className="font-mono">bincode</code> and{" "}
         <code className="font-mono">rkyv</code> as features (incompatible
-        trait bounds, neither alone covers real callers). Why no{" "}
+        trait bounds). Why no{" "}
         <code className="font-mono">/check/&#123;name&#125;</code> endpoint
-        (recreates the one-at-a-time guessing loop this whole thing was
-        built to remove). Why atomic snapshot swap, not RCU or per-key
-        writes (the smallest unit of update is the whole snapshot).
+        (recreates the one-at-a-time loop this was built to remove). Why
+        atomic snapshot swap (the smallest unit of update is the whole
+        snapshot).
       </>
     ),
     href: `${REPO}/blob/main/docs/DECISIONS.md`,
@@ -149,14 +136,13 @@ const SECTIONS: Section[] = [
     title: "What this isn’t.",
     body: (
       <>
-        This engine returns <code className="font-mono">apple.xyz</code> if{" "}
-        <code className="font-mono">apple.xyz</code> is unregistered. It has
-        no opinion about whether you should register it. <strong>You should
+        Returns <code className="font-mono">apple.xyz</code> if{" "}
+        <code className="font-mono">apple.xyz</code> is unregistered. Has
+        no opinion on whether you should register it. <strong>You should
         not.</strong> Trademark filtering, brand-collision checks,
-        business-existence verification, semantic typosquat detection 
-        those are different products with different scopes. They belong{" "}
-        <em>on top of</em> this engine, not inside it. The unshipped pieces
-        are deliberately unshipped, not unfinished.
+        business-existence verification, semantic typosquat detection: all
+        different products, different scopes. They belong on top of this
+        engine, not inside it.
       </>
     ),
     href: `${REPO}/blob/main/docs/LIMITS.md`,
@@ -201,16 +187,12 @@ export function WriteupBlock() {
           </p>
           <div className="max-w-[720px]">
             <h2 className="mb-4 font-serif text-[clamp(1.8rem,4vw,2.5rem)] font-normal tracking-[-0.5px] leading-[1.2] text-jgd-text">
-              Built to fix one frustration. Turned out to fix a class of them.
+              One frustration. A class of solutions.
             </h2>
             <p className="text-[1.05rem] text-jgd-dim leading-[1.7]">
-              The browser above came from getting tired of guessing domain
-              names that turn out to be taken. The shape of the fix  a
-              tiny in-process verification tool that an agent or a human
-              can call freely without waiting  turns out to apply far past
-              domains. Below is what that tool is, where else it fits, and
-              why it matters more in the LLM era than it would have a few
-              years ago.
+              A tiny in-process verification tool that an agent or a human
+              can call freely, without waiting. Built for domains. The same
+              shape applies to anything you can pre-list.
             </p>
           </div>
         </div>
