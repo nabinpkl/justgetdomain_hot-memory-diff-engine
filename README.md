@@ -1,8 +1,8 @@
-# hot-memory-diff-engine
+# JustGetDomain An usecase of hot-memory-diff-engine
 
-A reusable answer to a class of problem most teams reach for a database to solve, then pay for it with latency, operational surface, and a deployment story that doesn't fit on one VM.
+The problem was I need to find set of available domains after taking difference from a set of 5.6gb 314 millions of lines of corpus. To tackle that problem I built a reusable library to solve a class of problem most teams reach for a database to solve, then pay for it with latency, operational surface, and a deployment cost.
 
-[justgetdomain.com](https://justgetdomain.com) is the live demo. The repo is the pattern.
+[justgetdomain.com](https://justgetdomain.com) is the live demo of this pattern where I was able to serve the large results in subseconds.
 
 ---
 
