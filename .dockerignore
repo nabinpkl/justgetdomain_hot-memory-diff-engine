@@ -3,8 +3,6 @@ target/
 **/node_modules/
 .next/
 **/.next/
-.git/
-frontend/
 docs/
 examples/domain-availability/backend/data/domains.txt
 examples/domain-availability/backend/data/snapshot.bin

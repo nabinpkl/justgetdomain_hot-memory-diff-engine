@@ -4,7 +4,8 @@ import { LiveStatsStrip } from "@/components/home/live-stats-strip";
 import { DomainMarquee } from "@/components/home/domain-marquee";
 import { MechanismBlock } from "@/components/home/mechanism-block";
 import { MiniShelvesSection } from "@/components/home/mini-shelves-section";
-import { LinkedInBlock } from "@/components/home/linkedin-block";
+import { WriteupBlock } from "@/components/home/writeup-block";
+import { BuilderFooter } from "@/components/home/builder-footer";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -49,8 +50,11 @@ export default function Home() {
         {/* Live demo: each shelf is one /search call against the index */}
         <MiniShelvesSection />
 
-        {/* Built by */}
-        <LinkedInBlock />
+        {/* Six writeup sections: problem, libraries, performance, decisions, limits, other-fits */}
+        <WriteupBlock />
+
+        {/* Builder footer: identity, served-by, last deploy SHA, last index rebuild */}
+        <BuilderFooter />
       </div>
     </>
   );

@@ -7,7 +7,6 @@ node_modules
 *.log
 Dockerfile
 .dockerignore
-.git
 .gitignore
 README.md
 AGENTS.md

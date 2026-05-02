@@ -15,8 +15,8 @@ services:
   web:
     container_name: justgetdomain-web
     build:
-      context: ./examples/domain-availability/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: examples/domain-availability/frontend/Dockerfile
       args:
         API_URL: http://api:${PORT:-8001}
     ports:

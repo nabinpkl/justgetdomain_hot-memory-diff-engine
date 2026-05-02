@@ -4,17 +4,25 @@ WORKDIR /app
 
 # ─── Dependencies ───────────────────────────────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY examples/domain-availability/frontend/package.json \
+     examples/domain-availability/frontend/pnpm-lock.yaml \
+     examples/domain-availability/frontend/pnpm-workspace.yaml \
+     ./
 RUN pnpm install --frozen-lockfile
 
 # ─── Build ──────────────────────────────────────────────────────────────
 FROM base AS builder
+# `git` is needed so next.config.ts can resolve the deploy SHA via
+# `git rev-parse --short HEAD` at build time. Build context is the repo root,
+# which includes .git (see root .dockerignore).
+RUN apk add --no-cache git
 ARG API_URL=http://api:8000
 ENV API_URL=${API_URL}
 ENV DOCKER_BUILD=1
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY .git ./.git
+COPY examples/domain-availability/frontend/ ./
 RUN pnpm build
 
 # ─── Runtime ────────────────────────────────────────────────────────────
