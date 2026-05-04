@@ -5,10 +5,11 @@ import type { FilterGroup } from "./shelf-configs";
 import { RollDiceButton } from "./roll-dice-button";
 
 const FILTERS: { key: FilterGroup; label: string }[] = [
-  { key: "all", label: "All Categories" },
-  { key: "length", label: "By Length" },
-  { key: "tld", label: "By TLD" },
-  { key: "vibe", label: "By Vibe" },
+  { key: "all", label: "All Shelves" },
+  { key: "core", label: "All Available" },
+  { key: "length", label: "Short Names" },
+  { key: "tld", label: "TLDs" },
+  { key: "topic", label: "Topics" },
 ];
 
 type FilterPillsProps = {

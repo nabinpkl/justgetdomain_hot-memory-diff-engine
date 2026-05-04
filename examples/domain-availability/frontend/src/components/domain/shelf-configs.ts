@@ -6,120 +6,49 @@ export type ShelfConfig = {
   lengths?: string;
   minLength?: number;
   categories?: string;
-  group: "vibe" | "tld" | "length";
+  group: "core" | "tld" | "length" | "topic";
 };
 
-/**
- * Vibe shelves map to backend-curated word categories (see
- * `backend/data/wordlist.json`). Titles and descriptions mirror the ones on
- * the backend so the UI reads coherently even before `/api/categories`
- * responds.
- */
 export const SHELF_CONFIGS: ShelfConfig[] = [
-  // By Vibe  real word-level categorization from the backend
   {
-    id: "tech",
-    title: "Tech & Systems",
-    description:
-      "Speed, precision, systems for SaaS, devtools, startups",
-    categories: "tech",
-    group: "vibe",
+    id: "all",
+    title: "All Available",
+    description: "Every available name in the live snapshot.",
+    group: "core",
   },
   {
-    id: "craft",
-    title: "Craft & Build",
-    description:
-      "Make, shape, forge for studios, makers, artisan brands",
-    categories: "craft",
-    group: "vibe",
+    id: "shortnames",
+    title: "Short Names",
+    description: "Available 3, 4, and 5 character names.",
+    lengths: "3,4,5",
+    group: "length",
   },
   {
-    id: "nature",
-    title: "Clean Tech & Energy",
-    description:
-      "Sustainable, renewable for cleantech, climate, energy brands",
-    categories: "nature",
-    group: "vibe",
-  },
-  {
-    id: "food",
-    title: "Food & Taste",
-    description:
-      "Flavor-forward names for restaurants, food tech, lifestyle",
-    categories: "food",
-    group: "vibe",
-  },
-  {
-    id: "motion",
-    title: "Motion & Flow",
-    description:
-      "Speed, action, momentum for sports, fintech, bold brands",
-    categories: "motion",
-    group: "vibe",
-  },
-
-  // By TLD
-  {
-    id: "app",
-    title: ".app Domains",
-    description:
-      "The app-store TLD. Signals software, tools, products",
-    tlds: ".app",
-    group: "tld",
-  },
-  {
-    id: "dev",
-    title: ".dev Domains",
-    description: "By developers, for developers. Your builder identity",
+    id: "developer",
+    title: "Developer TLDs",
+    description: "Live available names on .dev.",
     tlds: ".dev",
     group: "tld",
   },
   {
-    id: "io",
-    title: ".io Domains",
-    description:
-      "The startup classic. Still the default for tech products",
-    tlds: ".io",
+    id: "tech",
+    title: "Tech",
+    description: "Tech-category words available on .dev, .tech, and .ai.",
+    categories: "tech",
+    tlds: ".dev,.tech,.ai",
+    group: "topic",
+  },
+  {
+    id: "ai",
+    title: "AI",
+    description: "All available names on .ai.",
+    tlds: ".ai",
     group: "tld",
-  },
-
-  // By Length
-  {
-    id: "3-letter",
-    title: "3-Letter Names",
-    description:
-      "The rarest namespace. Every available one surfaced",
-    lengths: "3",
-    group: "length",
-  },
-  {
-    id: "4-letter",
-    title: "4-Letter Names",
-    description:
-      "The sweet spot for brandable names. Short, memorable, available",
-    lengths: "4",
-    group: "length",
-  },
-  {
-    id: "5-letter",
-    title: "5-Letter Names",
-    description:
-      "Real words, compound fragments, memorable slugs. The widest net",
-    lengths: "5",
-    group: "length",
-  },
-  {
-    id: "longer",
-    title: "Others",
-    description:
-      "Longer picks. Six characters and up, for when short is taken",
-    minLength: 6,
-    group: "length",
   },
 ];
 
 /** The first 3 configs used as homepage teasers. */
-export const HOMEPAGE_SHELF_IDS = ["nature", "app", "tech"] as const;
+export const HOMEPAGE_SHELF_IDS = ["shortnames", "developer", "tech"] as const;
 
 export function getHomepageShelves(): ShelfConfig[] {
   return SHELF_CONFIGS.filter((c) =>
@@ -127,7 +56,7 @@ export function getHomepageShelves(): ShelfConfig[] {
   );
 }
 
-export type FilterGroup = "all" | "vibe" | "tld" | "length";
+export type FilterGroup = "all" | "core" | "tld" | "length" | "topic";
 
 export function filterShelves(
   group: FilterGroup,

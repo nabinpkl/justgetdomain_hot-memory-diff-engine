@@ -60,28 +60,14 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      {/* Stats footer */}
       <footer className="px-6 sm:px-10 py-12 border-t border-jgd-border mt-8">
-        <div className="max-w-[1400px] mx-auto flex gap-10 flex-wrap">
-          {[
-            { n: "3–8", l: "Character range" },
-            { n: "100%", l: "Pre-verified" },
-            {
-              n: "Daily",
-              l: "Data refresh",
-            },
-          ].map(({ n, l }) => (
-            <div key={l}>
-              <div className="text-[1.25rem] font-mono font-bold text-jgd-accent/70">
-                {n}
-              </div>
-              <div className="text-[0.75rem] text-jgd-muted mt-0.5">{l}</div>
-            </div>
-          ))}
+        <div className="max-w-[1400px] mx-auto">
+          <p className="text-[0.72rem] text-jgd-muted max-w-[520px] leading-[1.6]">
+            Results come from the live in-memory snapshot served by the API.
+            Names shown may have been claimed since the last update, so always
+            verify at your registrar before buying.
+          </p>
         </div>
-        <p className="text-[0.72rem] text-jgd-muted mt-6 max-w-[480px] leading-[1.6]">
-          Availability is based on a daily snapshot. Names shown may have been claimed since the last update  always verify at your registrar. Shorter names are often premium-priced.
-        </p>
       </footer>
 
       {/* Saved bar */}

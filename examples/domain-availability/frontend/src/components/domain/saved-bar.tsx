@@ -16,7 +16,7 @@ export function SavedBar() {
       <div className="max-w-[1400px] mx-auto flex items-center gap-4">
         {/* Label */}
         <span className="text-[0.68rem] font-mono uppercase tracking-widest text-jgd-accent/60 shrink-0">
-          Saved ({items.length})
+          Watchlist ({items.length})
         </span>
 
         {/* Saved pills */}
@@ -28,7 +28,9 @@ export function SavedBar() {
               className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-sm bg-jgd-accent-dim/30 border border-jgd-accent/20 text-[0.78rem] font-mono text-jgd-text cursor-pointer transition-colors hover:border-jgd-accent/40"
             >
               {domain}
-              <span className="text-jgd-muted text-[0.68rem]">&times;</span>
+              <span className="text-jgd-muted text-[0.68rem]" aria-hidden>
+                &times;
+              </span>
             </button>
           ))}
         </div>

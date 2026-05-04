@@ -3,15 +3,14 @@
 import type { ShelfConfig } from "./shelf-configs";
 
 export function CategoryJumpNav({ shelves }: { shelves: ShelfConfig[] }) {
-  const vibes = shelves.filter((s) => s.group === "vibe");
-  if (vibes.length === 0) return null;
+  if (shelves.length === 0) return null;
 
   return (
     <nav aria-label="Jump to category" className="flex items-center gap-1 flex-wrap">
       <span className="text-[0.65rem] uppercase tracking-[1.5px] text-jgd-muted mr-1 shrink-0">
         Jump to
       </span>
-      {vibes.map((config) => (
+      {shelves.map((config) => (
         <a
           key={config.id}
           href={`#shelf-${config.id}`}

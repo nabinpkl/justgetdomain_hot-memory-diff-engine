@@ -26,7 +26,7 @@ export const useShortlist = create<ShortlistState>()(
       clear: () => set({ items: [] }),
     }),
     {
-      name: "jgd-shortlist",
+      name: "jgd-watchlist",
       storage: createJSONStorage(() => localStorage),
     },
   ),

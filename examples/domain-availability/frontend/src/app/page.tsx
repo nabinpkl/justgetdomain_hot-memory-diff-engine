@@ -3,7 +3,6 @@ import {
   Bookmark,
   Box,
   Check,
-  Circle,
   CircleDot,
   Clock3,
   Code2,
@@ -11,7 +10,6 @@ import {
   Database,
   Droplet,
   ExternalLink,
-  GitBranch,
   Layers3,
   RefreshCw,
   Search,
@@ -110,14 +108,49 @@ export default function Home() {
 }
 
 const shelves = [
-  { icon: Layers3, label: "All available", count: "6.8M", active: true, color: "green" },
-  { icon: "Aa", label: "Short names", count: "6.1M", color: "amber" },
-  { icon: Code2, label: "Developer TLDs", count: "1.3M", color: "blue" },
-  { icon: Circle, label: "One-word", count: "947K", color: "violet" },
-  { icon: GitBranch, label: "Tech & brandable", count: "2.1M", color: "cyan" },
-  { icon: Sparkles, label: "AI & modern", count: "982K", color: "pink" },
-  { icon: Clock3, label: "Fresh from snapshot", count: "72K", dot: true, color: "slate" },
-  { icon: Bookmark, label: "Watchlist", count: "342", color: "slate" },
+  {
+    href: "/explore/all",
+    icon: Layers3,
+    label: "All available",
+    count: "6.8M",
+    active: true,
+    color: "green",
+  },
+  {
+    href: "/explore/shortnames",
+    icon: "Aa",
+    label: "Short names",
+    count: "3.8M",
+    color: "amber",
+  },
+  {
+    href: "/explore/developer",
+    icon: Code2,
+    label: "Developer TLDs",
+    count: "1.9K",
+    color: "blue",
+  },
+  {
+    href: "/explore/tech",
+    icon: Box,
+    label: "Tech",
+    count: "109",
+    color: "cyan",
+  },
+  {
+    href: "/explore/ai",
+    icon: Sparkles,
+    label: "AI",
+    count: "488",
+    color: "pink",
+  },
+  {
+    href: "/explore",
+    icon: Bookmark,
+    label: "Watchlist",
+    count: "local",
+    color: "slate",
+  },
 ];
 
 const domains = [
@@ -146,8 +179,9 @@ function DomainWorkbench() {
         <div className="flex items-center gap-7 px-5 text-[0.92rem] font-semibold text-[#697286]">
           <Tab icon={Layers3} label="Explore" active />
           <Tab icon={Box} label="Short" />
-          <Tab icon={Layers3} label="TLD map" />
-          <Tab icon={Droplet} label="Fresh" dot />
+          <Tab icon={Code2} label=".dev" />
+          <Tab icon={Droplet} label="Tech" />
+          <Tab icon={Sparkles} label="AI" dot />
         </div>
         <div className="hidden items-center justify-end gap-6 px-6 text-[0.89rem] font-semibold text-[#596176] lg:flex">
           {statItems.map((item, index) => {
@@ -181,9 +215,12 @@ function DomainWorkbench() {
               <ShelfItem key={shelf.label} {...shelf} />
             ))}
           </div>
-          <button className="mt-6 flex h-[43px] w-full items-center justify-center gap-4 rounded-[7px] border border-[#dbe1eb] bg-white text-[0.94rem] font-medium text-[#1f2937] shadow-[0_1px_1px_rgba(14,22,36,0.025)]">
+          <Link
+            href="/explore"
+            className="mt-6 flex h-[43px] w-full items-center justify-center gap-4 rounded-[7px] border border-[#dbe1eb] bg-white text-[0.94rem] font-medium text-[#1f2937] shadow-[0_1px_1px_rgba(14,22,36,0.025)]"
+          >
             View all shelves <span className="text-[1.4rem] leading-none">→</span>
-          </button>
+          </Link>
         </aside>
 
         <div className="p-5">
