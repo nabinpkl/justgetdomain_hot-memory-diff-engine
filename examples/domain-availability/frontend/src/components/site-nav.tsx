@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname } from "next/navigation";
 
 export function SiteNav() {
@@ -10,16 +9,16 @@ export function SiteNav() {
     <nav
       role="navigation"
       aria-label="Main"
-      className="sticky top-0 z-50 h-14 flex justify-between items-center px-6 sm:px-8 text-[0.75rem] tracking-[1.5px] uppercase backdrop-blur-[16px] bg-jgd-nav border-b border-jgd-border relative"
+      className="sticky top-0 z-50 flex h-[62px] items-center justify-between border-b border-[#d9dee7] bg-[#fbfbfa]/95 px-6 text-[0.9rem] font-medium text-[#111318] backdrop-blur-[16px] sm:px-8"
     >
       <Link
         href="/"
-        className="flex items-center gap-1.5 text-jgd-accent font-bold transition-opacity hover:opacity-80"
+        className="flex items-center gap-4 text-[#087d36] transition-opacity hover:opacity-80"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
-          className="w-8 h-8 shrink-0"
+          className="h-8 w-8 shrink-0"
           aria-hidden
         >
           <text
@@ -35,27 +34,41 @@ export function SiteNav() {
           </text>
           <circle cx="385" cy="375" r="20" fill="currentColor" />
         </svg>
-        <span>
-          JustGetDomain<span className="text-jgd-accent">.</span>
+        <span className="text-[1.25rem] font-bold uppercase tracking-[0.05em] text-black">
+          JustGetDomain
         </span>
       </Link>
 
       <p
-        className="hidden md:block absolute left-1/2 -translate-x-1/2 text-[0.68rem] normal-case tracking-[0.5px] text-jgd-muted max-w-[440px] text-center leading-tight"
+        className="absolute left-1/2 hidden max-w-[520px] -translate-x-1/2 text-center text-[0.82rem] font-semibold leading-tight tracking-[0.08em] text-[#7b8395] md:block"
         role="note"
       >
-        Proof of concept - real data, but{" "}
-        <span className="text-jgd-dim">availability is not guaranteed</span>.
+        Proof of concept · real data, availability not guaranteed.
       </p>
 
-      <div className="flex items-center gap-4">
+      <div className="flex h-full items-center gap-7">
         <Link
           href="/explore"
-          className={`text-[0.75rem] tracking-[1.5px] uppercase transition-opacity hover:opacity-100 ${pathname === "/explore" ? "text-jgd-accent" : "text-jgd-text opacity-75"}`}
+          className={`flex h-full items-center border-b-[3px] px-1 pt-[3px] transition-opacity hover:opacity-100 ${
+            pathname === "/" || pathname === "/explore"
+              ? "border-[#087d36] text-black"
+              : "border-transparent text-[#4f586b]"
+          }`}
         >
-          Explore Domains
+          Explore
         </Link>
-        <ThemeToggle />
+        <Link href="/explore" className="hidden text-[#4f586b] sm:block">
+          Shelves
+        </Link>
+        <Link href="/api/search" className="hidden text-[#4f586b] sm:block">
+          API
+        </Link>
+        <Link
+          href="https://github.com/nabinpkl/justgetdomain.com"
+          className="hidden items-center gap-1.5 text-[#4f586b] sm:flex"
+        >
+          Source on GitHub <span aria-hidden>↗</span>
+        </Link>
       </div>
     </nav>
   );
