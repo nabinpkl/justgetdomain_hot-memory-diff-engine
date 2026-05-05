@@ -147,14 +147,7 @@ export default function Home() {
                 >
                   many TLDs
                 </button>
-                <button
-                  type="button"
-                  aria-pressed={filters.available === "1"}
-                  onClick={() => setAvailableFilter("1")}
-                  className={filterChipClass(filters.available === "1")}
-                >
-                  rare open
-                </button>
+    
               </div>
             </div>
           </section>
