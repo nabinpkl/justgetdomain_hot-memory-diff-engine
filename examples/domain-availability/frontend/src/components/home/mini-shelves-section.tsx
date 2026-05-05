@@ -11,7 +11,7 @@ import {
 
 /**
  * Shelf configs are the single source of truth (see shelf-configs.ts) so
- * the homepage teaser and `/explore` can't drift apart.
+ * homepage shelf teasers use the same filters as the live browser.
  */
 function HomepageShelf({ config }: { config: ShelfConfig }) {
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
@@ -59,7 +59,7 @@ export function MiniShelvesSection() {
         ))}
 
         <Link
-          href="/explore"
+          href="/"
           className="inline-flex items-center mt-2 px-7 py-3 rounded-sm border border-jgd-accent/30 bg-jgd-accent-dim text-jgd-accent text-[0.82rem] font-medium transition-colors hover:bg-jgd-accent-mid hover:border-jgd-accent/50"
         >
           Explore all domains &rarr;

@@ -1,25 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Bookmark,
   Box,
   Check,
-  CircleDot,
-  Clock3,
   Code2,
   Copy,
-  Database,
-  Droplet,
   ExternalLink,
   Layers3,
-  RefreshCw,
   Search,
   SlidersHorizontal,
   Sparkles,
   Star,
-  Zap,
 } from "lucide-react";
 import { useShelfData } from "@/hooks/use-shelf-data";
 import { useShortlist } from "@/stores/use-shortlist";
@@ -42,6 +37,8 @@ const jsonLd = {
 };
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <>
       <script
@@ -50,8 +47,8 @@ export default function Home() {
       />
       <div className="min-h-screen overflow-x-clip bg-[#fbfbfa] text-[#111318] font-sans font-medium">
         <main className="mx-auto w-full max-w-[1500px] px-[clamp(20px,3vw,48px)] pb-6 pt-[46px]">
-          <section className="grid grid-cols-1 items-start gap-x-10 gap-y-7 lg:grid-cols-[500px_1fr]">
-            <div className="pl-3 pt-2">
+          <section className="grid grid-cols-1 items-start gap-x-10 gap-y-7 lg:grid-cols-[500px_minmax(0,1fr)]">
+            <div className="min-w-0 pl-3 pt-2">
               <h1 className="font-serif text-[clamp(2.1rem,2.75vw,2.68rem)] font-normal leading-[1.05] tracking-[0] text-black">
                 Browse names that are still{" "}
                 <span className="text-[#087d36]">open.</span>
@@ -61,7 +58,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="space-y-[18px]">
+            <div className="min-w-0 space-y-[18px] lg:max-w-[900px]">
               <div className="relative h-[54px] rounded-[8px] border border-[#d8dee8] bg-white shadow-[0_1px_2px_rgba(14,22,36,0.04)]">
                 <Search
                   size={25}
@@ -71,7 +68,15 @@ export default function Home() {
                 />
                 <input
                   aria-label="Search domains"
-                  placeholder="try prism, vault, signal, .dev"
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(
+                      event.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9.-]/g, ""),
+                    )
+                  }
+                  placeholder="search available domains faster"
                   className="h-full w-full rounded-[8px] bg-transparent pl-[70px] pr-[78px] text-[1.05rem] font-medium text-[#111318] outline-none placeholder:text-[#949aab]"
                 />
                 <kbd className="absolute right-4 top-1/2 flex h-8 -translate-y-1/2 items-center rounded-[7px] border border-[#dce2ec] bg-white px-3 text-[0.92rem] font-semibold text-[#434b5d] shadow-[0_1px_1px_rgba(14,22,36,0.03)]">
@@ -83,7 +88,7 @@ export default function Home() {
                 {[".sh", ".dev", ".ai", ".space"].map((filter) => (
                   <button
                     key={filter}
-                    className="h-[38px] min-w-[66px] rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)]"
+                    className="h-[38px] min-w-[66px] cursor-pointer rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
                   >
                     {filter}
                   </button>
@@ -92,19 +97,22 @@ export default function Home() {
                 {["4 letters", "short", "one-word", "fresh"].map((filter) => (
                   <button
                     key={filter}
-                    className="h-[38px] min-w-fit rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)]"
+                    className="h-[38px] min-w-fit cursor-pointer rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
                   >
                     {filter}
                   </button>
                 ))}
-                <button className="ml-auto flex h-[38px] min-w-fit items-center gap-3 rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)]">
+                <button className="ml-auto flex h-[38px] min-w-fit cursor-pointer items-center gap-3 rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25">
                   More filters <SlidersHorizontal size={16} aria-hidden />
                 </button>
               </div>
             </div>
           </section>
 
-          <DomainWorkbench />
+          <DomainWorkbench
+            searchQuery={searchQuery}
+            onClearSearch={() => setSearchQuery("")}
+          />
           <WhyBuilt />
         </main>
       </div>
@@ -162,20 +170,30 @@ const shelves = [
   },
 ];
 
-const statItems = [
-  { icon: CircleDot, label: "6,834,492 combos", color: "text-[#0a873f]" },
-  { icon: Database, label: "1,012 TLDs" },
-  { icon: Zap, label: "p99 858 μs" },
-  { icon: Clock3, label: "updated 11h ago" },
-  { icon: RefreshCw, label: "" },
-];
+const DOMAIN_CARD_ROW_HEIGHT = 148;
+const DOMAIN_CARD_GAP = 16;
+const DOMAIN_GRID_VISIBLE_ROWS = 3;
 
-function DomainWorkbench() {
+function DomainWorkbench({
+  searchQuery,
+  onClearSearch,
+}: {
+  searchQuery: string;
+  onClearSearch: () => void;
+}) {
   const [activeShelfId, setActiveShelfId] = useState("all");
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
   const shortlist = useShortlist();
-  const activeShelf = shelves.find((shelf) => shelf.id === activeShelfId) ?? shelves[0];
+  const normalizedQuery = searchQuery.trim();
+  const isSearching = normalizedQuery.length > 0;
+  const activeShelf =
+    shelves.find((shelf) => shelf.id === (isSearching ? "all" : activeShelfId)) ?? shelves[0];
   const isWatchlist = activeShelf.id === "watchlist";
+
+  useEffect(() => {
+    if (isSearching) setActiveShelfId("all");
+  }, [isSearching]);
+
   const {
     domains: apiDomains,
     total,
@@ -188,6 +206,7 @@ function DomainWorkbench() {
     tlds: activeShelf.tlds,
     lengths: activeShelf.lengths,
     categories: activeShelf.categories,
+    q: normalizedQuery || undefined,
     seed,
     limit: 18,
   });
@@ -207,41 +226,19 @@ function DomainWorkbench() {
 
   const visibleDomains = isWatchlist ? watchlistDomains : apiDomains;
   const featuredDomain = visibleDomains[0] ?? null;
+  const resultCountLabel = isWatchlist
+    ? `${shortlist.items.length} saved`
+    : isLoading
+      ? "Loading"
+      : isSearching
+        ? `${total.toLocaleString()} results`
+        : `${total.toLocaleString()} names`;
+  const shelfSearchLabel = isSearching && isLoading ? "Searching" : "Search results";
 
   return (
-    <section className="mt-5 overflow-hidden rounded-[10px] border border-[#dce2ea] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)]">
-      <div className="grid min-h-[50px] grid-cols-1 border-b border-[#dfe4ec] lg:grid-cols-[292px_1fr]">
-        <div className="flex items-center gap-7 px-5 text-[0.92rem] font-semibold text-[#697286]">
-          <Tab icon={Layers3} label="Explore" active />
-          <Tab icon={Box} label="Short" />
-          <Tab icon={Code2} label=".dev" />
-          <Tab icon={Droplet} label="Tech" />
-          <Tab icon={Sparkles} label="AI" dot />
-        </div>
-        <div className="hidden items-center justify-end gap-6 px-6 text-[0.89rem] font-semibold text-[#596176] lg:flex">
-          {statItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div key={`${item.label}-${index}`} className="flex items-center gap-2.5">
-                <Icon
-                  size={18}
-                  strokeWidth={1.9}
-                  className={item.color ?? "text-[#6a7285]"}
-                  fill={index === 0 ? "currentColor" : "none"}
-                  aria-hidden
-                />
-                {item.label && <span>{item.label}</span>}
-                {index < statItems.length - 1 && (
-                  <span className="ml-3 h-5 w-px bg-[#dfe4ec]" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+    <section className="mt-5 overflow-hidden rounded-[10px] border border-[#dce2ea] bg-white shadow-[0_10px_34px_rgba(15,23,42,0.055)]">
       <div className="grid lg:grid-cols-[292px_1fr_330px]">
-        <aside className="border-b border-[#dfe4ec] px-4 py-5 lg:border-b-0 lg:border-r">
+        <aside className="border-b border-[#dfe4ec] bg-[#fbfcfd] px-4 py-5 lg:border-b-0 lg:border-r">
           <p className="mb-4 px-2 text-[0.78rem] font-bold uppercase tracking-[0.08em] text-[#71798c]">
             Shelves
           </p>
@@ -250,10 +247,17 @@ function DomainWorkbench() {
               <ShelfItem
                 key={shelf.label}
                 {...shelf}
-                active={shelf.id === activeShelfId}
+                label={shelf.id === "all" && isSearching ? shelfSearchLabel : shelf.label}
+                active={shelf.id === activeShelf.id}
                 count={
-                  shelf.id === activeShelfId && !isWatchlist && totalCombos > 0
-                    ? formatCompact(totalCombos)
+                  shelf.id === activeShelf.id && !isWatchlist
+                    ? isSearching
+                      ? isLoading
+                        ? "..."
+                        : formatCompact(total)
+                      : totalCombos > 0
+                        ? formatCompact(totalCombos)
+                        : shelf.count
                     : shelf.id === "watchlist"
                       ? String(shortlist.items.length)
                       : shelf.count
@@ -273,36 +277,45 @@ function DomainWorkbench() {
           </button>
         </aside>
 
-        <div className="p-5">
+        <div className="border-b border-[#dfe4ec] p-5 lg:border-b-0">
           <div className="mb-4 flex items-baseline justify-between gap-4">
-            <h2 className="text-[1.05rem] font-bold text-black">{activeShelf.label}</h2>
-            <span className="text-[0.78rem] font-semibold text-[#687187]">
-              {isWatchlist
-                ? `${shortlist.items.length} saved`
-                : isLoading
-                  ? "Loading"
-                  : `${total.toLocaleString()} names`}
+            <div className="flex min-w-0 items-baseline gap-3">
+              <h2 className="text-[1.05rem] font-bold text-black">
+                {isSearching ? shelfSearchLabel : activeShelf.label}
+              </h2>
+              {isSearching && (
+                <button
+                  type="button"
+                  onClick={onClearSearch}
+                  className="rounded-[6px] border border-[#dfe4ed] bg-white px-2.5 py-1 text-[0.72rem] font-bold text-[#566077] transition-colors hover:border-[#b8c2d2] hover:text-black"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <span className="shrink-0 text-[0.78rem] font-semibold text-[#687187]">
+              {resultCountLabel}
             </span>
           </div>
           {isLoading && !isWatchlist ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 9 }).map((_, index) => (
                 <div
                   key={index}
-                  className="min-h-[116px] rounded-[7px] border border-[#dfe4ec] bg-[#f7f8fa]"
+                  className="h-[132px] rounded-[7px] border border-[#dfe4ec] bg-[#f7f8fa]"
                 />
               ))}
             </div>
           ) : visibleDomains.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {visibleDomains.map((domain) => (
-                <DomainCard
-                  key={`${domain.name}.${domain.tld}`}
-                  {...domain}
-                  tags={tagsForDomain(domain, activeShelf.id)}
-                />
-              ))}
-            </div>
+            <DomainGrid
+              key={`${activeShelf.id}-${normalizedQuery}`}
+              domains={visibleDomains}
+              total={isWatchlist ? visibleDomains.length : total}
+              shelfId={activeShelf.id}
+              canFetchMore={!isWatchlist && hasNextPage}
+              isFetchingMore={isFetchingNextPage}
+              fetchMore={fetchNextPage}
+            />
           ) : (
             <div className="flex min-h-[260px] items-center justify-center rounded-[7px] border border-dashed border-[#dfe4ec] text-[0.92rem] font-semibold text-[#687187]">
               {isWatchlist ? "Your watchlist is empty." : "No domains found."}
@@ -313,6 +326,103 @@ function DomainWorkbench() {
         <DomainDetail domain={featuredDomain} shelfLabel={activeShelf.label} />
       </div>
     </section>
+  );
+}
+
+function DomainGrid({
+  domains,
+  total,
+  shelfId,
+  canFetchMore,
+  isFetchingMore,
+  fetchMore,
+}: {
+  domains: { name: string; tld: string }[];
+  total: number;
+  shelfId: string;
+  canFetchMore: boolean;
+  isFetchingMore: boolean;
+  fetchMore: () => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [cols, setCols] = useState(3);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => {
+      const width = el.clientWidth;
+      setCols(width >= 900 ? 3 : width >= 600 ? 2 : 1);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const rowCount = Math.ceil(total / cols);
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => DOMAIN_CARD_ROW_HEIGHT + DOMAIN_CARD_GAP,
+    overscan: 3,
+  });
+
+  const virtualRows = virtualizer.getVirtualItems();
+  const lastVirtualRow = virtualRows.at(-1)?.index ?? 0;
+
+  useEffect(() => {
+    const neededIndex = (lastVirtualRow + 3) * cols;
+    if (canFetchMore && !isFetchingMore && neededIndex >= domains.length) {
+      fetchMore();
+    }
+  }, [canFetchMore, cols, domains.length, fetchMore, isFetchingMore, lastVirtualRow]);
+
+  return (
+    <div
+      ref={scrollRef}
+      className="h-[calc(148px*3+16px*2)] overflow-y-auto pr-2"
+    >
+      <div
+        className="relative"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
+        {virtualRows.map((row) => {
+          const rowStart = row.index * cols;
+          return (
+            <div
+              key={row.key}
+              className="absolute left-0 right-0 grid gap-4"
+              style={{
+                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                transform: `translateY(${row.start}px)`,
+              }}
+            >
+              {Array.from({ length: cols }, (_, col) => {
+                const index = rowStart + col;
+                if (index >= total) return <div key={col} />;
+                const domain = domains[index];
+                if (!domain) {
+                  return (
+                    <div
+                      key={index}
+                      className="h-[132px] rounded-[7px] border border-[#dfe4ec] bg-[#f7f8fa]"
+                    />
+                  );
+                }
+                return (
+                  <DomainCard
+                    key={`${domain.name}.${domain.tld}`}
+                    {...domain}
+                    tags={tagsForDomain(domain, shelfId)}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -330,31 +440,6 @@ function tagsForDomain(domain: { name: string; tld: string }, shelfId: string): 
   if (domain.tld === "tech") tags.push("tech");
   if (shelfId === "tech") tags.push("brandable");
   return Array.from(new Set(tags)).slice(0, 3);
-}
-
-function Tab({
-  icon: Icon,
-  label,
-  active,
-  dot,
-}: {
-  icon: typeof Layers3;
-  label: string;
-  active?: boolean;
-  dot?: boolean;
-}) {
-  return (
-    <button
-      className={`relative flex h-[52px] items-center gap-2.5 text-[0.91rem] ${
-        active ? "text-[#0a7839]" : "text-[#687187]"
-      }`}
-    >
-      <Icon size={18} strokeWidth={1.8} aria-hidden />
-      {label}
-      {dot && <span className="size-2 rounded-full bg-[#ffa51f]" />}
-      {active && <span className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-[#0b823d]" />}
-    </button>
-  );
 }
 
 function ShelfItem({
@@ -388,13 +473,15 @@ function ShelfItem({
     <button
       type="button"
       onClick={onSelect}
-      className={`flex h-[35px] w-full items-center gap-3 rounded-[7px] px-2.5 text-left text-[0.95rem] ${
+      className={`group flex h-[35px] w-full cursor-pointer items-center gap-3 rounded-[7px] px-2.5 text-left text-[0.95rem] outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-[#0b873f]/25 ${
         active
-          ? "bg-[#e8f5ec] font-semibold text-[#087d36]"
-          : "bg-transparent font-medium text-[#334155]"
+          ? "bg-[#e8f5ec] font-semibold text-[#087d36] shadow-[inset_0_0_0_1px_rgba(11,135,63,0.08)]"
+          : "bg-transparent font-medium text-[#334155] hover:bg-white hover:shadow-[inset_0_0_0_1px_rgba(216,222,232,0.9),0_1px_2px_rgba(14,22,36,0.035)]"
       }`}
     >
-      <span className={`flex size-[28px] items-center justify-center rounded-[6px] ${colorClass}`}>
+      <span
+        className={`flex size-[28px] items-center justify-center rounded-[6px] transition-transform duration-150 group-hover:scale-[1.04] ${colorClass}`}
+      >
         {typeof Icon === "string" ? (
           <span className="text-[0.82rem] font-bold">{Icon}</span>
         ) : (
@@ -402,7 +489,9 @@ function ShelfItem({
         )}
       </span>
       <span className="min-w-0 flex-1">{label}</span>
-      <span className="text-[0.89rem] font-medium text-[#566077]">{count}</span>
+      <span className="text-[0.89rem] font-medium text-[#566077] transition-colors group-hover:text-[#1f2937]">
+        {count}
+      </span>
     </button>
   );
 }
@@ -424,7 +513,7 @@ function DomainCard({
   };
 
   return (
-    <article className="min-h-[116px] rounded-[7px] border border-[#dfe4ec] bg-white p-4 shadow-[0_1px_2px_rgba(14,22,36,0.025)]">
+    <article className="group h-[132px] cursor-pointer rounded-[7px] border border-[#dfe4ec] bg-white p-4 shadow-[0_1px_2px_rgba(14,22,36,0.025)] transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:shadow-[0_8px_20px_rgba(15,23,42,0.07)]">
       <div className="flex items-start justify-between gap-4">
         <h2 className="text-[1.33rem] font-bold leading-none tracking-[0] text-black">
           {name}.<span className="text-[#087d36]">{tld}</span>
@@ -433,7 +522,7 @@ function DomainCard({
           type="button"
           onClick={toggleSaved}
           aria-label={saved ? `Remove ${fullDomain} from watchlist` : `Save ${fullDomain} to watchlist`}
-          className="rounded-[6px] p-1 text-[#697286] transition-colors hover:bg-[#f2f5f9] hover:text-[#087d36]"
+          className="rounded-[6px] p-1 text-[#697286] transition-colors hover:bg-[#f2f5f9] hover:text-[#087d36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
         >
           <Star
             size={21}
@@ -459,7 +548,7 @@ function DomainCard({
       <Copy
         size={17}
         strokeWidth={1.8}
-        className="float-right -mt-5 text-[#697286]"
+        className="float-right -mt-5 text-[#697286] transition-colors group-hover:text-[#334155]"
         aria-hidden
       />
     </article>
@@ -527,7 +616,7 @@ function DomainDetail({
           {related.map((name) => (
             <Link
               key={name}
-              href="/explore"
+              href="/"
               className="flex items-center justify-between text-[0.8rem] font-semibold text-[#1f2937]"
             >
               <span>
@@ -551,7 +640,7 @@ function DomainDetail({
 
 function WhyBuilt() {
   return (
-    <section className="mt-3 grid min-w-0 items-center gap-5 overflow-hidden rounded-[10px] border border-[#dce2ea] bg-white px-6 py-5 shadow-[0_5px_18px_rgba(15,23,42,0.035)] xl:grid-cols-[270px_minmax(480px,1fr)_minmax(190px,230px)_minmax(190px,230px)]">
+    <section className="mt-3 grid min-w-0 items-center gap-6 overflow-hidden rounded-[10px] border border-[#dce2ea] bg-white px-6 py-5 shadow-[0_5px_18px_rgba(15,23,42,0.035)] lg:grid-cols-[340px_1fr]">
       <div className="min-w-0">
         <h2 className="font-serif text-[1.55rem] font-normal leading-none text-black">
           Why I built it
@@ -570,34 +659,6 @@ function WhyBuilt() {
         <Step icon={Check} n="3" title="browse" text="Browse what's open" success />
       </div>
 
-      <div className="flex min-w-0 items-center gap-4 border-t border-[#dfe4ec] pt-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
-        <Database size={32} strokeWidth={1.6} className="shrink-0 text-[#2f3a4c]" aria-hidden />
-        <p className="min-w-0 text-[0.8rem] leading-[1.45] text-[#334155]">
-          Built on hot-index
-          <br />+ streaming-set-diff
-        </p>
-      </div>
-
-      <Link
-        href="https://github.com/nabinpkl/justgetdomain.com"
-        className="flex min-w-0 items-center gap-4 border-t border-[#dfe4ec] pt-4 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="size-[32px] shrink-0 fill-black text-black"
-          aria-hidden
-        >
-          <path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.14c-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67.42.36.78 1.06.78 2.14v3.14c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z" />
-        </svg>
-        <span className="min-w-0 text-[0.8rem] leading-[1.45] text-[#334155]">
-          <b className="text-black">Source on GitHub</b>{" "}
-          <ExternalLink size={13} className="inline text-[#697286]" aria-hidden />
-          <br />
-          <span className="block truncate font-semibold text-[#087d36]">
-            github.com/justgetdomain
-          </span>
-        </span>
-      </Link>
     </section>
   );
 }

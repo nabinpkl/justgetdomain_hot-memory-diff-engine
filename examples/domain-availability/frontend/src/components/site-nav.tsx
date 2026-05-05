@@ -48,17 +48,14 @@ export function SiteNav() {
 
       <div className="flex h-full items-center gap-7">
         <Link
-          href="/explore"
+          href="/"
           className={`flex h-full items-center border-b-[3px] px-1 pt-[3px] transition-opacity hover:opacity-100 ${
-            pathname === "/" || pathname === "/explore"
+            pathname === "/"
               ? "border-[#087d36] text-black"
               : "border-transparent text-[#4f586b]"
           }`}
         >
           Explore
-        </Link>
-        <Link href="/explore" className="hidden text-[#4f586b] sm:block">
-          Shelves
         </Link>
         <Link href="/api/search" className="hidden text-[#4f586b] sm:block">
           API

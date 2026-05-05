@@ -65,7 +65,7 @@ export function MiniShelf({
               </div>
             ))}
             <Link
-              href={`/explore/${shelfId}`}
+              href="/"
               className="shrink-0 px-4 py-2.5 rounded-sm border border-dashed border-jgd-accent/40 flex items-center text-[0.75rem] text-jgd-accent/80 font-mono hover:bg-jgd-accent-dim hover:border-jgd-accent/70 transition-colors"
             >
               View all &rarr;

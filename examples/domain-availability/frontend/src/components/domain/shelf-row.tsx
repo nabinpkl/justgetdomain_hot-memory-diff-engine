@@ -62,7 +62,7 @@ export function ShelfRow({ config, q }: ShelfRowProps) {
       <div className="flex items-baseline justify-between mb-1 px-6 sm:px-10">
         <div className="flex items-baseline gap-3 flex-wrap">
           <Link
-            href={`/explore/${config.id}`}
+            href="/"
             className="group inline-flex items-center gap-1.5 text-[1rem] font-semibold text-jgd-text hover:text-jgd-accent transition-colors"
           >
             <h3>{config.title}</h3>
