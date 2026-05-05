@@ -1,4 +1,4 @@
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 use tracing::info;
 
@@ -34,6 +34,7 @@ pub struct DomainIndex {
     by_tld_count: Vec<usize>,
     by_shortest: Vec<usize>,
     total_available: usize,
+    precomputed_combo_totals: FxHashMap<String, usize>,
 }
 
 #[derive(Debug)]
@@ -63,7 +64,7 @@ pub enum SortMode {
     Random(u64),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AvailableBand {
     Single, // exactly 1 TLD available (after TLD filter)
     Few,    // 2-3
@@ -156,10 +157,12 @@ impl DomainIndex {
                 .then_with(|| entries[a].word.cmp(&entries[b].word))
         });
 
+        let precomputed_combo_totals = build_precomputed_combo_totals(&entries, &all_tlds);
         let count = entries.len();
         let total_available: usize = entries.iter().map(|e| e.available_count).sum();
         let elapsed = start.elapsed();
-        info!(count, tld_count, total_available, ?elapsed, "domain index built");
+        let precomputed_totals = precomputed_combo_totals.len();
+        info!(count, tld_count, total_available, precomputed_totals, ?elapsed, "domain index built");
 
         Self {
             entries,
@@ -168,6 +171,7 @@ impl DomainIndex {
             by_tld_count,
             by_shortest,
             total_available,
+            precomputed_combo_totals,
         }
     }
 
@@ -365,6 +369,21 @@ impl DomainIndex {
         offset: usize,
         limit: usize,
     ) -> (usize, usize, Vec<SearchResult>) {
+        if offset == 0 && limit <= 18 {
+            if let Some(total) = self.precomputed_combo_total(params) {
+                if total == 0 {
+                    return (0, 0, Vec::new());
+                }
+                if let SortMode::Random(seed) = params.sort {
+                    return (
+                        total,
+                        total,
+                        self.fast_first_combo_page(params, seed, limit),
+                    );
+                }
+            }
+        }
+
         let random_indices: Vec<usize>;
         let indices: &[usize] = match &params.sort {
             SortMode::Random(seed) => {
@@ -522,6 +541,95 @@ impl DomainIndex {
         (total_combos, total_combos, results)
     }
 
+    fn precomputed_combo_total(&self, params: &SearchParams) -> Option<usize> {
+        combo_total_key(params)
+            .and_then(|key| self.precomputed_combo_totals.get(&key).copied())
+    }
+
+    fn fast_first_combo_page(
+        &self,
+        params: &SearchParams,
+        seed: u64,
+        limit: usize,
+    ) -> Vec<SearchResult> {
+        let tld_filter: Option<FxHashSet<&str>> = params
+            .tlds
+            .as_ref()
+            .map(|t| t.iter().map(|s| s.as_str()).collect());
+        let length_filter: Option<FxHashSet<usize>> =
+            params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let category_filter: Option<FxHashSet<&str>> = params
+            .categories
+            .as_ref()
+            .map(|c| c.iter().map(|s| s.as_str()).collect());
+
+        let mut results = Vec::with_capacity(limit);
+        let mut attempts = 0usize;
+        let max_attempts = self.entries.len().saturating_mul(2).max(limit);
+        let multiplier = Self::combo_multiplier(seed, self.entries.len());
+        let addend = Self::combo_addend(seed, self.entries.len());
+
+        while results.len() < limit && attempts < max_attempts {
+            let idx = (attempts.wrapping_mul(multiplier).wrapping_add(addend)) % self.entries.len();
+            attempts += 1;
+
+            let entry = &self.entries[idx];
+            if !Self::word_matches(
+                entry,
+                &None,
+                &length_filter,
+                &None,
+                &category_filter,
+            ) {
+                continue;
+            }
+
+            let tlds = self.matching_tlds(entry, &tld_filter, &None);
+            if tlds.is_empty() || !band_matches(tlds.len(), &params.available_band) {
+                continue;
+            }
+
+            if let Some(tld) = tlds.iter().copied().find(|tld| is_surfaced_tld(tld)) {
+                results.push(SearchResult {
+                    name: entry.word.clone(),
+                    tlds: vec![tld.to_string()],
+                    length: entry.length,
+                    match_count: 1,
+                });
+            }
+        }
+
+        if results.len() < limit {
+            for entry in &self.entries {
+                if results.len() >= limit {
+                    break;
+                }
+                if !Self::word_matches(entry, &None, &length_filter, &None, &category_filter) {
+                    continue;
+                }
+                let tlds = self.matching_tlds(entry, &tld_filter, &None);
+                if tlds.is_empty() || !band_matches(tlds.len(), &params.available_band) {
+                    continue;
+                }
+                if let Some(tld) = tlds
+                    .iter()
+                    .copied()
+                    .find(|tld| is_surfaced_tld(tld))
+                    .or_else(|| tlds.first().copied())
+                {
+                    results.push(SearchResult {
+                        name: entry.word.clone(),
+                        tlds: vec![tld.to_string()],
+                        length: entry.length,
+                        match_count: 1,
+                    });
+                }
+            }
+        }
+
+        results
+    }
+
     fn combo_at(
         &self,
         ordinal: usize,
@@ -671,6 +779,240 @@ fn band_matches(count: usize, band: &Option<AvailableBand>) -> bool {
         Some(AvailableBand::Few) => count >= 2 && count <= 3,
         Some(AvailableBand::Many) => count >= 4,
     }
+}
+
+fn build_precomputed_combo_totals(
+    entries: &[IndexedEntry],
+    all_tlds: &[String],
+) -> FxHashMap<String, usize> {
+    let shelf_filters = [
+        (None, None::<Vec<&str>>),
+        (Some(vec![3, 4, 5]), None),
+        (None, Some(vec![".dev"])),
+        (None, Some(vec![".ai"])),
+    ];
+    let tech_shelf = (
+        None::<Vec<usize>>,
+        Some(vec![".dev", ".tech", ".ai"]),
+        Some(vec!["tech"]),
+    );
+    let tld_chips = [".ai", ".sh", ".dev", ".tech", ".me", ".site", ".space"];
+    let length_filters = [None, Some(vec![4]), Some(vec![3, 4, 5])];
+    let bands = [
+        None,
+        Some(AvailableBand::Single),
+        Some(AvailableBand::Few),
+        Some(AvailableBand::Many),
+    ];
+    let mut totals = FxHashMap::default();
+
+    for tld_mask in 0..(1usize << tld_chips.len()) {
+        let chip_tlds: Option<Vec<&str>> = if tld_mask == 0 {
+            None
+        } else {
+            Some(
+                tld_chips
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, tld)| {
+                        if tld_mask & (1usize << idx) == 0 {
+                            None
+                        } else {
+                            Some(*tld)
+                        }
+                    })
+                    .collect(),
+            )
+        };
+
+        for (shelf_lengths, shelf_tlds) in shelf_filters.iter() {
+            for length_filter in &length_filters {
+                for band in &bands {
+                    let lengths = length_filter
+                        .clone()
+                        .or_else(|| shelf_lengths.clone());
+                    let tlds = merge_tld_slices(shelf_tlds.as_deref(), chip_tlds.as_deref());
+                    insert_precomputed_total(
+                        &mut totals,
+                        entries,
+                        all_tlds,
+                        lengths,
+                        tlds,
+                        *band,
+                        None,
+                    );
+                }
+            }
+        }
+
+        for length_filter in &length_filters {
+            for band in &bands {
+                let tlds = merge_tld_slices(tech_shelf.1.as_deref(), chip_tlds.as_deref());
+                insert_precomputed_total(
+                    &mut totals,
+                    entries,
+                    all_tlds,
+                    length_filter.clone(),
+                    tlds,
+                    *band,
+                    tech_shelf.2.clone(),
+                );
+            }
+        }
+    }
+
+    totals
+}
+
+fn insert_precomputed_total(
+    totals: &mut FxHashMap<String, usize>,
+    entries: &[IndexedEntry],
+    all_tlds: &[String],
+    lengths: Option<Vec<usize>>,
+    tlds: Option<Vec<&str>>,
+    available_band: Option<AvailableBand>,
+    categories: Option<Vec<&str>>,
+) {
+    let params = SearchParams {
+        query: None,
+        tlds: tlds
+            .as_ref()
+            .map(|items| items.iter().map(|item| (*item).to_string()).collect()),
+        tld_prefix: None,
+        lengths,
+        min_length: None,
+        available_band,
+        sort: SortMode::Alpha,
+        categories: categories
+            .as_ref()
+            .map(|items| items.iter().map(|item| (*item).to_string()).collect()),
+    };
+    let Some(key) = combo_total_key(&params) else {
+        return;
+    };
+    if totals.contains_key(&key) {
+        return;
+    }
+    totals.insert(key, count_combo_total(entries, all_tlds, &params));
+}
+
+fn count_combo_total(entries: &[IndexedEntry], all_tlds: &[String], params: &SearchParams) -> usize {
+    let tld_filter = params
+        .tlds
+        .as_ref()
+        .map(|items| items.iter().map(String::as_str).collect::<Vec<_>>());
+    let length_filter = params
+        .lengths
+        .as_ref()
+        .map(|items| items.iter().copied().collect::<FxHashSet<_>>());
+    let category_filter = params
+        .categories
+        .as_ref()
+        .map(|items| items.iter().map(String::as_str).collect::<FxHashSet<_>>());
+
+    entries
+        .iter()
+        .filter_map(|entry| {
+            if !DomainIndex::word_matches(
+                entry,
+                &None,
+                &length_filter,
+                &None,
+                &category_filter,
+            ) {
+                return None;
+            }
+
+            let count = if let Some(tlds) = &tld_filter {
+                tlds.iter()
+                    .filter(|tld| !entry.registered_tlds.contains(**tld))
+                    .count()
+            } else {
+                let registered = entry.registered_tlds.len();
+                all_tlds.len().saturating_sub(registered)
+            };
+            if count == 0 || !band_matches(count, &params.available_band) {
+                None
+            } else {
+                Some(count)
+            }
+        })
+        .sum()
+}
+
+fn merge_tld_slices<'a>(
+    shelf_tlds: Option<&[&'a str]>,
+    chip_tlds: Option<&[&'a str]>,
+) -> Option<Vec<&'a str>> {
+    match (shelf_tlds, chip_tlds) {
+        (None, None) => None,
+        (Some(shelf), None) => Some(shelf.to_vec()),
+        (None, Some(chips)) => Some(chips.to_vec()),
+        (Some(shelf), Some(chips)) => {
+            let shelf_set: FxHashSet<&str> = shelf.iter().copied().collect();
+            let merged: Vec<&str> = chips
+                .iter()
+                .copied()
+                .filter(|tld| shelf_set.contains(tld))
+                .collect();
+            if merged.is_empty() {
+                Some(vec!["__none__"])
+            } else {
+                Some(merged)
+            }
+        }
+    }
+}
+
+fn combo_total_key(params: &SearchParams) -> Option<String> {
+    if params.query.is_some() || params.tld_prefix.is_some() || params.min_length.is_some() {
+        return None;
+    }
+
+    let mut parts = Vec::new();
+    if let Some(tlds) = &params.tlds {
+        let mut normalized = tlds.clone();
+        normalized.sort();
+        normalized.dedup();
+        parts.push(format!("tlds={}", normalized.join(",")));
+    } else {
+        parts.push("tlds=*".to_string());
+    }
+
+    if let Some(lengths) = &params.lengths {
+        let mut normalized = lengths.clone();
+        normalized.sort_unstable();
+        normalized.dedup();
+        parts.push(format!(
+            "lengths={}",
+            normalized
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(",")
+        ));
+    } else {
+        parts.push("lengths=*".to_string());
+    }
+
+    let band = match params.available_band {
+        None => "*",
+        Some(AvailableBand::Single) => "1",
+        Some(AvailableBand::Few) => "2-3",
+        Some(AvailableBand::Many) => "4+",
+    };
+    parts.push(format!("available={band}"));
+
+    if let Some(categories) = &params.categories {
+        let mut normalized = categories.clone();
+        normalized.sort();
+        normalized.dedup();
+        parts.push(format!("categories={}", normalized.join(",")));
+    } else {
+        parts.push("categories=*".to_string());
+    }
+
+    Some(parts.join("|"))
 }
 
 fn is_surfaced_tld(tld: &str) -> bool {
