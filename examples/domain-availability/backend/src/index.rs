@@ -5,12 +5,15 @@ use tracing::info;
 use crate::categories::Categories;
 use crate::snapshot::Snapshot;
 
+/// TLDs the product wants to surface first in combo/grid results.
+const SURFACED_TLDS: &[&str] = &[".ai", ".sh", ".dev", ".tech", ".me", ".site", ".space"];
+
 /// TLDs shown individually in the UI, in priority sort order.
 /// Index position = sort rank. Everything else comes after, alphabetically.
 pub const DISPLAY_TLDS: &[&str] = &[
-    ".com", ".dev", ".io", ".ai", ".app", ".sh", ".xyz", ".net", ".org", ".tech", ".studio",
-    ".space", ".academy", ".desgin", ".bio", ".work", ".to", ".tube", ".online", ".one", ".new",
-    ".name", ".me", ".inc", ".host", ".fun", ".fm", ".food",
+    ".ai", ".sh", ".dev", ".tech", ".me", ".site", ".space", ".com", ".io", ".app", ".xyz",
+    ".net", ".org", ".studio", ".academy", ".desgin", ".bio", ".work", ".to", ".tube",
+    ".online", ".one", ".new", ".name", ".inc", ".host", ".fun", ".fm", ".food",
 ];
 
 #[derive(Debug)]
@@ -206,6 +209,43 @@ impl DomainIndex {
         v
     }
 
+    fn combo_multiplier(seed: u64, total: usize) -> usize {
+        use std::hash::Hasher;
+
+        if total <= 1 {
+            return 1;
+        }
+
+        let mut h = rustc_hash::FxHasher::default();
+        h.write_u64(seed);
+        h.write_u64(0x9e37_79b9_7f4a_7c15);
+
+        let mut candidate = ((h.finish() as usize) | 1) % total;
+        if candidate == 0 {
+            candidate = 1;
+        }
+        while gcd(candidate, total) != 1 {
+            candidate = (candidate + 2) % total;
+            if candidate == 0 {
+                candidate = 1;
+            }
+        }
+        candidate
+    }
+
+    fn combo_addend(seed: u64, total: usize) -> usize {
+        use std::hash::Hasher;
+
+        if total == 0 {
+            return 0;
+        }
+
+        let mut h = rustc_hash::FxHasher::default();
+        h.write_u64(seed);
+        h.write_u64(0xbf58_476d_1ce4_e5b9);
+        (h.finish() as usize) % total
+    }
+
     /// Get the list of TLDs to emit for an entry, respecting filters.
     fn matching_tlds(
         &self,
@@ -313,6 +353,207 @@ impl DomainIndex {
         }
 
         (total, total_combos, results)
+    }
+
+    /// Paginated combo search. Each row = one available name+TLD pair.
+    /// Random mode uses an affine permutation over the filtered combo ordinal
+    /// space, so pagination can jump through millions of pairs without
+    /// materializing and sorting every pair.
+    pub fn search_combos(
+        &self,
+        params: &SearchParams,
+        offset: usize,
+        limit: usize,
+    ) -> (usize, usize, Vec<SearchResult>) {
+        let random_indices: Vec<usize>;
+        let indices: &[usize] = match &params.sort {
+            SortMode::Random(seed) => {
+                random_indices = self.random_ordering(*seed);
+                &random_indices
+            }
+            other => self.sorted_indices(other),
+        };
+        let query_lower = params.query.as_ref().map(|q| q.to_lowercase());
+        let tld_filter: Option<FxHashSet<&str>> = params
+            .tlds
+            .as_ref()
+            .map(|t| t.iter().map(|s| s.as_str()).collect());
+        let length_filter: Option<FxHashSet<usize>> =
+            params.lengths.as_ref().map(|l| l.iter().copied().collect());
+        let min_length = params.min_length;
+        let category_filter: Option<FxHashSet<&str>> = params
+            .categories
+            .as_ref()
+            .map(|c| c.iter().map(|s| s.as_str()).collect());
+
+        let mut surfaced_matching = Vec::new();
+        let mut surfaced_cumulative = Vec::new();
+        let mut other_matching = Vec::new();
+        let mut other_cumulative = Vec::new();
+        let mut total_names = 0usize;
+        let mut total_combos = 0usize;
+        let mut surfaced_combos = 0usize;
+        let mut other_combos = 0usize;
+
+        for &idx in indices {
+            let entry = &self.entries[idx];
+
+            if !Self::word_matches(
+                entry,
+                &query_lower,
+                &length_filter,
+                &min_length,
+                &category_filter,
+            ) {
+                continue;
+            }
+
+            let tlds = self.matching_tlds(entry, &tld_filter, &params.tld_prefix);
+            if tlds.is_empty() {
+                continue;
+            }
+
+            if !band_matches(tlds.len(), &params.available_band) {
+                continue;
+            }
+
+            total_names += 1;
+            total_combos += tlds.len();
+
+            let surfaced_count = tlds
+                .iter()
+                .filter(|tld| is_surfaced_tld(tld))
+                .count();
+            let other_count = tlds.len() - surfaced_count;
+            if surfaced_count > 0 {
+                surfaced_combos += surfaced_count;
+                surfaced_matching.push(idx);
+                surfaced_cumulative.push(surfaced_combos);
+            }
+            if other_count > 0 {
+                other_combos += other_count;
+                other_matching.push(idx);
+                other_cumulative.push(other_combos);
+            }
+        }
+
+        if total_combos == 0 || offset >= total_combos {
+            return (total_combos, total_combos, Vec::new());
+        }
+
+        let start = offset;
+        let end = (offset + limit).min(total_combos);
+        let mut results = Vec::with_capacity(end - start);
+
+        match &params.sort {
+            SortMode::Random(seed) => {
+                for ordinal in start..end {
+                    let (pool_ordinal, pool_total, matching, cumulative, surfaced_only) =
+                        if ordinal < surfaced_combos {
+                            (
+                                ordinal,
+                                surfaced_combos,
+                                surfaced_matching.as_slice(),
+                                surfaced_cumulative.as_slice(),
+                                true,
+                            )
+                        } else {
+                            (
+                                ordinal - surfaced_combos,
+                                other_combos,
+                                other_matching.as_slice(),
+                                other_cumulative.as_slice(),
+                                false,
+                            )
+                        };
+                    let multiplier = Self::combo_multiplier(*seed, pool_total);
+                    let addend = Self::combo_addend(*seed, pool_total);
+                    let permuted = (pool_ordinal
+                        .wrapping_mul(multiplier)
+                        .wrapping_add(addend))
+                        % pool_total;
+                    if let Some(result) = self.combo_at(
+                        permuted,
+                        matching,
+                        cumulative,
+                        &tld_filter,
+                        params,
+                        surfaced_only,
+                    )
+                    {
+                        results.push(result);
+                    }
+                }
+            }
+            _ => {
+                for ordinal in start..end {
+                    let (pool_ordinal, matching, cumulative, surfaced_only) =
+                        if ordinal < surfaced_combos {
+                            (
+                                ordinal,
+                                surfaced_matching.as_slice(),
+                                surfaced_cumulative.as_slice(),
+                                true,
+                            )
+                        } else {
+                            (
+                                ordinal - surfaced_combos,
+                                other_matching.as_slice(),
+                                other_cumulative.as_slice(),
+                                false,
+                            )
+                        };
+                    if let Some(result) = self.combo_at(
+                        pool_ordinal,
+                        matching,
+                        cumulative,
+                        &tld_filter,
+                        params,
+                        surfaced_only,
+                    )
+                    {
+                        results.push(result);
+                    }
+                }
+            }
+        }
+
+        debug_assert!(total_names <= total_combos);
+        (total_combos, total_combos, results)
+    }
+
+    fn combo_at(
+        &self,
+        ordinal: usize,
+        matching: &[usize],
+        cumulative: &[usize],
+        tld_filter: &Option<FxHashSet<&str>>,
+        params: &SearchParams,
+        surfaced_only: bool,
+    ) -> Option<SearchResult> {
+        let entry_pos = cumulative.partition_point(|&end| end <= ordinal);
+        let entry_idx = *matching.get(entry_pos)?;
+        let entry = &self.entries[entry_idx];
+        let previous_end = if entry_pos == 0 {
+            0
+        } else {
+            cumulative[entry_pos - 1]
+        };
+        let tld_offset = ordinal - previous_end;
+        let tld = self
+            .matching_tlds(entry, tld_filter, &params.tld_prefix)
+            .into_iter()
+            .filter(|tld| is_surfaced_tld(tld) == surfaced_only)
+            .collect::<Vec<_>>()
+            .get(tld_offset)?
+            .to_string();
+
+        Some(SearchResult {
+            name: entry.word.clone(),
+            tlds: vec![tld],
+            length: entry.length,
+            match_count: 1,
+        })
     }
 
     /// Streaming grouped search.
@@ -430,4 +671,17 @@ fn band_matches(count: usize, band: &Option<AvailableBand>) -> bool {
         Some(AvailableBand::Few) => count >= 2 && count <= 3,
         Some(AvailableBand::Many) => count >= 4,
     }
+}
+
+fn is_surfaced_tld(tld: &str) -> bool {
+    SURFACED_TLDS.contains(&tld)
+}
+
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    while b != 0 {
+        let next = a % b;
+        a = b;
+        b = next;
+    }
+    a
 }

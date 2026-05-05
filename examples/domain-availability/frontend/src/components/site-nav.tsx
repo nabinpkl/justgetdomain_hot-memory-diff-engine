@@ -62,6 +62,8 @@ export function SiteNav() {
         </Link>
         <Link
           href="https://github.com/nabinpkl/justgetdomain.com"
+          target="_blank"
+          rel="noopener noreferrer"
           className="hidden items-center gap-1.5 text-[#4f586b] sm:flex"
         >
           Source on GitHub <span aria-hidden>↗</span>

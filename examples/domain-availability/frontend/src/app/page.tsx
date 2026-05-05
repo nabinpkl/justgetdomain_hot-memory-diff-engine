@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Bookmark,
@@ -9,14 +9,12 @@ import {
   Check,
   Code2,
   Copy,
-  ExternalLink,
   Layers3,
   Search,
-  SlidersHorizontal,
   Sparkles,
   Star,
 } from "lucide-react";
-import { useShelfData } from "@/hooks/use-shelf-data";
+import { useVirtualShelfData } from "@/hooks/use-shelf-data";
 import { useShortlist } from "@/stores/use-shortlist";
 
 const jsonLd = {
@@ -38,6 +36,34 @@ const jsonLd = {
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFilters>({
+    tlds: [],
+    length: null,
+    available: null,
+  });
+
+  const toggleTldFilter = (tld: string) => {
+    setFilters((current) => ({
+      ...current,
+      tlds: current.tlds.includes(tld)
+        ? current.tlds.filter((item) => item !== tld)
+        : [...current.tlds, tld],
+    }));
+  };
+
+  const setLengthFilter = (length: SearchFilters["length"]) => {
+    setFilters((current) => ({
+      ...current,
+      length: current.length === length ? null : length,
+    }));
+  };
+
+  const setAvailableFilter = (available: SearchFilters["available"]) => {
+    setFilters((current) => ({
+      ...current,
+      available: current.available === available ? null : available,
+    }));
+  };
 
   return (
     <>
@@ -88,22 +114,46 @@ export default function Home() {
                 {[".sh", ".dev", ".ai", ".space"].map((filter) => (
                   <button
                     key={filter}
-                    className="h-[38px] min-w-[66px] cursor-pointer rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
+                    type="button"
+                    aria-pressed={filters.tlds.includes(filter)}
+                    onClick={() => toggleTldFilter(filter)}
+                    className={filterChipClass(filters.tlds.includes(filter))}
                   >
                     {filter}
                   </button>
                 ))}
                 <span className="h-[36px] w-px shrink-0 bg-[#dfe4ed]" />
-                {["4 letters", "short", "one-word", "fresh"].map((filter) => (
-                  <button
-                    key={filter}
-                    className="h-[38px] min-w-fit cursor-pointer rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
-                  >
-                    {filter}
-                  </button>
-                ))}
-                <button className="ml-auto flex h-[38px] min-w-fit cursor-pointer items-center gap-3 rounded-[7px] border border-[#dfe4ed] bg-white px-5 text-[0.86rem] font-semibold text-black shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:bg-[#fbfcfd] hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25">
-                  More filters <SlidersHorizontal size={16} aria-hidden />
+                <button
+                  type="button"
+                  aria-pressed={filters.length === "4"}
+                  onClick={() => setLengthFilter("4")}
+                  className={filterChipClass(filters.length === "4")}
+                >
+                  4 letters
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={filters.length === "short"}
+                  onClick={() => setLengthFilter("short")}
+                  className={filterChipClass(filters.length === "short")}
+                >
+                  short
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={filters.available === "4+"}
+                  onClick={() => setAvailableFilter("4+")}
+                  className={filterChipClass(filters.available === "4+")}
+                >
+                  many TLDs
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={filters.available === "1"}
+                  onClick={() => setAvailableFilter("1")}
+                  className={filterChipClass(filters.available === "1")}
+                >
+                  rare open
                 </button>
               </div>
             </div>
@@ -111,6 +161,7 @@ export default function Home() {
 
           <DomainWorkbench
             searchQuery={searchQuery}
+            filters={filters}
             onClearSearch={() => setSearchQuery("")}
           />
           <WhyBuilt />
@@ -118,6 +169,20 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+type SearchFilters = {
+  tlds: string[];
+  length: "4" | "short" | null;
+  available: "1" | "2-3" | "4+" | null;
+};
+
+function filterChipClass(active: boolean): string {
+  return `h-[38px] min-w-fit cursor-pointer rounded-[7px] border px-5 text-[0.86rem] font-semibold shadow-[0_1px_1px_rgba(14,22,36,0.025)] outline-none transition-all duration-150 hover:-translate-y-px hover:shadow-[0_5px_14px_rgba(15,23,42,0.06)] focus-visible:ring-2 focus-visible:ring-[#0b873f]/25 ${
+    active
+      ? "border-[#b7d9bf] bg-[#e8f5ec] text-[#087d36]"
+      : "border-[#dfe4ed] bg-white text-black hover:border-[#b8c2d2] hover:bg-[#fbfcfd]"
+  }`;
 }
 
 const shelves = [
@@ -173,22 +238,42 @@ const shelves = [
 const DOMAIN_CARD_ROW_HEIGHT = 148;
 const DOMAIN_CARD_GAP = 16;
 const DOMAIN_GRID_VISIBLE_ROWS = 3;
+const DOMAIN_GRID_INITIAL_PAGE_SIZE = 18;
+const DOMAIN_GRID_PAGE_SIZE = 200;
+const DOMAIN_GRID_PREFETCH_PAGES = 10;
+const DOMAIN_GRID_RENDER_BUFFER_ITEMS = 200;
+const TLD_LIST_ROW_HEIGHT = 34;
+const TLD_LIST_INITIAL_PAGE_SIZE = 24;
+const TLD_LIST_PAGE_SIZE = 200;
+const TLD_LIST_PREFETCH_PAGES = 10;
+const TLD_LIST_RENDER_BUFFER_ITEMS = 200;
 
 function DomainWorkbench({
   searchQuery,
+  filters,
   onClearSearch,
 }: {
   searchQuery: string;
+  filters: SearchFilters;
   onClearSearch: () => void;
 }) {
   const [activeShelfId, setActiveShelfId] = useState("all");
   const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
+  const [selectedDomainKey, setSelectedDomainKey] = useState<string | null>(null);
   const shortlist = useShortlist();
   const normalizedQuery = searchQuery.trim();
   const isSearching = normalizedQuery.length > 0;
   const activeShelf =
     shelves.find((shelf) => shelf.id === (isSearching ? "all" : activeShelfId)) ?? shelves[0];
   const isWatchlist = activeShelf.id === "watchlist";
+  const filterTlds = filters.tlds.length > 0 ? filters.tlds.join(",") : undefined;
+  const queryTlds = mergeTldFilters(activeShelf.tlds, filterTlds);
+  const queryLengths =
+    filters.length === "4"
+      ? "4"
+      : filters.length === "short"
+        ? "3,4,5"
+        : activeShelf.lengths;
 
   useEffect(() => {
     if (isSearching) setActiveShelfId("all");
@@ -199,16 +284,18 @@ function DomainWorkbench({
     total,
     totalCombos,
     isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useShelfData({
-    tlds: activeShelf.tlds,
-    lengths: activeShelf.lengths,
+    isFetchingRange,
+    requestRange,
+  } = useVirtualShelfData({
+    tlds: queryTlds,
+    lengths: queryLengths,
+    available: filters.available ?? undefined,
     categories: activeShelf.categories,
     q: normalizedQuery || undefined,
     seed,
-    limit: 18,
+    initialLimit: DOMAIN_GRID_INITIAL_PAGE_SIZE,
+    pageLimit: DOMAIN_GRID_PAGE_SIZE,
+    mode: "combos",
   });
 
   const watchlistDomains = useMemo(
@@ -225,7 +312,12 @@ function DomainWorkbench({
   );
 
   const visibleDomains = isWatchlist ? watchlistDomains : apiDomains;
-  const featuredDomain = visibleDomains[0] ?? null;
+  const selectedDomain =
+    visibleDomains.find(
+      (domain) => domain && domainKey(domain) === selectedDomainKey,
+    ) ??
+    visibleDomains.find(Boolean) ??
+    null;
   const resultCountLabel = isWatchlist
     ? `${shortlist.items.length} saved`
     : isLoading
@@ -234,6 +326,10 @@ function DomainWorkbench({
         ? `${total.toLocaleString()} results`
         : `${total.toLocaleString()} names`;
   const shelfSearchLabel = isSearching && isLoading ? "Searching" : "Search results";
+
+  useEffect(() => {
+    setSelectedDomainKey(null);
+  }, [activeShelf.id, filters.available, filters.length, filterTlds, normalizedQuery]);
 
   return (
     <section className="mt-5 overflow-hidden rounded-[10px] border border-[#dce2ea] bg-white shadow-[0_10px_34px_rgba(15,23,42,0.055)]">
@@ -266,15 +362,6 @@ function DomainWorkbench({
               />
             ))}
           </div>
-          <button
-            type="button"
-            onClick={fetchNextPage}
-            disabled={isWatchlist || !hasNextPage || isFetchingNextPage}
-            className="mt-6 flex h-[43px] w-full items-center justify-center gap-4 rounded-[7px] border border-[#dbe1eb] bg-white text-[0.94rem] font-medium text-[#1f2937] shadow-[0_1px_1px_rgba(14,22,36,0.025)]"
-          >
-            {isFetchingNextPage ? "Loading" : "Load more"}{" "}
-            <span className="text-[1.4rem] leading-none">→</span>
-          </button>
         </aside>
 
         <div className="border-b border-[#dfe4ec] p-5 lg:border-b-0">
@@ -298,7 +385,7 @@ function DomainWorkbench({
             </span>
           </div>
           {isLoading && !isWatchlist ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 9 }).map((_, index) => (
                 <div
                   key={index}
@@ -312,9 +399,14 @@ function DomainWorkbench({
               domains={visibleDomains}
               total={isWatchlist ? visibleDomains.length : total}
               shelfId={activeShelf.id}
-              canFetchMore={!isWatchlist && hasNextPage}
-              isFetchingMore={isFetchingNextPage}
-              fetchMore={fetchNextPage}
+              selectedKey={selectedDomain ? domainKey(selectedDomain) : null}
+              onSelect={(domain) => setSelectedDomainKey(domainKey(domain))}
+              isFetchingRange={!isWatchlist && isFetchingRange}
+              requestRange={
+                isWatchlist
+                  ? () => {}
+                  : requestRange
+              }
             />
           ) : (
             <div className="flex min-h-[260px] items-center justify-center rounded-[7px] border border-dashed border-[#dfe4ec] text-[0.92rem] font-semibold text-[#687187]">
@@ -323,7 +415,7 @@ function DomainWorkbench({
           )}
         </div>
 
-        <DomainDetail domain={featuredDomain} shelfLabel={activeShelf.label} />
+        <DomainDetail domain={selectedDomain} loading={isLoading && !isWatchlist} />
       </div>
     </section>
   );
@@ -333,16 +425,18 @@ function DomainGrid({
   domains,
   total,
   shelfId,
-  canFetchMore,
-  isFetchingMore,
-  fetchMore,
+  selectedKey,
+  onSelect,
+  isFetchingRange,
+  requestRange,
 }: {
-  domains: { name: string; tld: string }[];
+  domains: ({ name: string; tld: string } | undefined)[];
   total: number;
   shelfId: string;
-  canFetchMore: boolean;
-  isFetchingMore: boolean;
-  fetchMore: () => void;
+  selectedKey: string | null;
+  onSelect: (domain: { name: string; tld: string }) => void;
+  isFetchingRange: boolean;
+  requestRange: (start: number, end: number, options?: { immediate?: boolean }) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [cols, setCols] = useState(3);
@@ -352,7 +446,7 @@ function DomainGrid({
     if (!el) return;
     const update = () => {
       const width = el.clientWidth;
-      setCols(width >= 900 ? 3 : width >= 600 ? 2 : 1);
+      setCols(width >= 680 ? 3 : width >= 460 ? 2 : 1);
     };
     update();
     const observer = new ResizeObserver(update);
@@ -361,22 +455,35 @@ function DomainGrid({
   }, []);
 
   const rowCount = Math.ceil(total / cols);
+  const rowsPerPage = Math.ceil(DOMAIN_GRID_PAGE_SIZE / cols);
+  const renderRowBuffer = Math.ceil(DOMAIN_GRID_RENDER_BUFFER_ITEMS / cols);
+  const prefetchRowBuffer = rowsPerPage * DOMAIN_GRID_PREFETCH_PAGES;
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => DOMAIN_CARD_ROW_HEIGHT + DOMAIN_CARD_GAP,
-    overscan: 3,
+    overscan: renderRowBuffer,
   });
 
   const virtualRows = virtualizer.getVirtualItems();
-  const lastVirtualRow = virtualRows.at(-1)?.index ?? 0;
 
   useEffect(() => {
-    const neededIndex = (lastVirtualRow + 3) * cols;
-    if (canFetchMore && !isFetchingMore && neededIndex >= domains.length) {
-      fetchMore();
+    if (virtualRows.length === 0) return;
+
+    const firstRow = virtualRows[0]?.index ?? 0;
+    const lastRow = virtualRows.at(-1)?.index ?? firstRow;
+    const start = Math.max(0, (firstRow - prefetchRowBuffer) * cols);
+    const end = Math.min(total - 1, (lastRow + prefetchRowBuffer + 1) * cols - 1);
+    if (end >= start) {
+      requestRange(start, end);
     }
-  }, [canFetchMore, cols, domains.length, fetchMore, isFetchingMore, lastVirtualRow]);
+  }, [
+    cols,
+    prefetchRowBuffer,
+    requestRange,
+    total,
+    virtualRows,
+  ]);
 
   return (
     <div
@@ -387,6 +494,9 @@ function DomainGrid({
         className="relative"
         style={{ height: virtualizer.getTotalSize() }}
       >
+        {isFetchingRange && (
+          <div className="pointer-events-none sticky top-2 z-10 ml-auto mr-2 h-2 w-2 rounded-full bg-[#0b873f]/55" />
+        )}
         {virtualRows.map((row) => {
           const rowStart = row.index * cols;
           return (
@@ -415,6 +525,8 @@ function DomainGrid({
                     key={`${domain.name}.${domain.tld}`}
                     {...domain}
                     tags={tagsForDomain(domain, shelfId)}
+                    selected={domainKey(domain) === selectedKey}
+                    onSelect={() => onSelect(domain)}
                   />
                 );
               })}
@@ -440,6 +552,43 @@ function tagsForDomain(domain: { name: string; tld: string }, shelfId: string): 
   if (domain.tld === "tech") tags.push("tech");
   if (shelfId === "tech") tags.push("brandable");
   return Array.from(new Set(tags)).slice(0, 3);
+}
+
+function domainKey(domain: { name: string; tld: string }): string {
+  return `${domain.name}.${domain.tld}`;
+}
+
+function stripDot(tld: string): string {
+  return tld.startsWith(".") ? tld.slice(1) : tld;
+}
+
+async function copyToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+}
+
+function mergeTldFilters(shelfTlds?: string, chipTlds?: string): string | undefined {
+  if (!shelfTlds) return chipTlds;
+  if (!chipTlds) return shelfTlds;
+
+  const shelf = new Set(shelfTlds.split(",").map((tld) => tld.trim()));
+  const merged = chipTlds
+    .split(",")
+    .map((tld) => tld.trim())
+    .filter((tld) => shelf.has(tld));
+  return merged.length > 0 ? merged.join(",") : "__none__";
 }
 
 function ShelfItem({
@@ -500,20 +649,32 @@ function DomainCard({
   name,
   tld,
   tags,
+  selected,
+  onSelect,
 }: {
   name: string;
   tld: string;
   tags: string[];
+  selected: boolean;
+  onSelect: () => void;
 }) {
   const shortlist = useShortlist();
   const fullDomain = `${name}.${tld}`;
   const saved = shortlist.items.includes(fullDomain);
-  const toggleSaved = () => {
+  const toggleSaved = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     saved ? shortlist.remove(fullDomain) : shortlist.add(fullDomain);
   };
 
   return (
-    <article className="group h-[132px] cursor-pointer rounded-[7px] border border-[#dfe4ec] bg-white p-4 shadow-[0_1px_2px_rgba(14,22,36,0.025)] transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:shadow-[0_8px_20px_rgba(15,23,42,0.07)]">
+    <article
+      onClick={onSelect}
+      className={`group h-[132px] cursor-pointer rounded-[7px] border bg-white p-4 shadow-[0_1px_2px_rgba(14,22,36,0.025)] transition-all duration-150 hover:-translate-y-px hover:border-[#b8c2d2] hover:shadow-[0_8px_20px_rgba(15,23,42,0.07)] ${
+        selected
+          ? "border-[#9bcfaa] shadow-[0_8px_20px_rgba(15,23,42,0.07),inset_0_0_0_1px_rgba(11,135,63,0.12)]"
+          : "border-[#dfe4ec]"
+      }`}
+    >
       <div className="flex items-start justify-between gap-4">
         <h2 className="text-[1.33rem] font-bold leading-none tracking-[0] text-black">
           {name}.<span className="text-[#087d36]">{tld}</span>
@@ -532,10 +693,7 @@ function DomainCard({
           />
         </button>
       </div>
-      <div className="mt-3 flex items-center gap-2 text-[0.84rem] text-[#687187]">
-        <span className="size-2.5 rounded-full bg-[#0b873f]" /> available
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         {tags.map((tag) => (
           <span
             key={tag}
@@ -555,17 +713,113 @@ function DomainCard({
   );
 }
 
+type TldApiResponse = {
+  name: string;
+  total: number;
+  tlds: string[];
+};
+
+function useAvailableTlds(name: string | null) {
+  const query = useInfiniteQuery({
+    queryKey: ["available-tlds", name],
+    enabled: Boolean(name),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }) => {
+      const offset = pageParam as number;
+      const limit =
+        offset === 0 ? TLD_LIST_INITIAL_PAGE_SIZE : TLD_LIST_PAGE_SIZE;
+      const params = new URLSearchParams({
+        name: name ?? "",
+        limit: String(limit),
+        offset: String(offset),
+      });
+      const response = await fetch(`/api/tlds-for?${params.toString()}`, {
+        signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return (await response.json()) as TldApiResponse;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.tlds.length, 0);
+      if (loaded >= lastPage.total) return undefined;
+      return loaded;
+    },
+  });
+
+  const tlds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          query.data?.pages.flatMap((page) => page.tlds.map(stripDot)) ?? [],
+        ),
+      ),
+    [query.data],
+  );
+
+  return {
+    tlds,
+    total: query.data?.pages[0]?.total ?? 0,
+    isLoading: query.isPending,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) {
+        query.fetchNextPage();
+      }
+    },
+  };
+}
+
 function DomainDetail({
   domain,
-  shelfLabel,
+  loading,
 }: {
   domain: { name: string; tld: string } | null;
-  shelfLabel: string;
+  loading: boolean;
 }) {
-  const name = domain?.name ?? "count";
-  const tld = domain?.tld ?? "space";
-  const extensions = [`.${tld}`, ".dev", ".tech", ".ai", ".app", ".xyz", ".io", ".space"];
-  const related = [`${name}s.${tld}`, `${name}er.${tld}`, `${name}able.${tld}`, `${name}less.${tld}`];
+  if (!domain) {
+    return <DomainDetailPlaceholder loading={loading} />;
+  }
+
+  return <DomainDetailContent domain={domain} />;
+}
+
+function DomainDetailContent({
+  domain,
+}: {
+  domain: { name: string; tld: string };
+}) {
+  const name = domain.name;
+  const tld = domain.tld;
+  const fullDomain = `${name}.${tld}`;
+  const [copied, setCopied] = useState(false);
+  const {
+    tlds,
+    total,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useAvailableTlds(domain?.name ?? null);
+  const availableDomains = useMemo(() => {
+    const ordered = [tld, ...tlds.filter((ext) => ext !== tld)];
+    return Array.from(new Set(ordered));
+  }, [tld, tlds]);
+  const availableCount = Math.max(total, availableDomains.length);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [fullDomain]);
+
+  const copySelectedDomain = async () => {
+    try {
+      await copyToClipboard(fullDomain);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <aside className="border-t border-[#dfe4ec] px-4 pb-1 pt-6 lg:border-l lg:border-t-0">
@@ -584,57 +838,175 @@ function DomainDetail({
         <div className="mt-3 flex items-center gap-2 text-[0.86rem] text-[#4d586d]">
           <span className="size-2.5 rounded-full bg-[#0b873f]" /> available
         </div>
-        <button className="mt-3 flex h-9 w-full overflow-hidden rounded-[6px] bg-[#0b873f] text-[0.95rem] font-bold text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.16)]">
-          <span className="flex flex-1 items-center justify-center">Copy {name}.{tld}</span>
+        <button
+          type="button"
+          onClick={copySelectedDomain}
+          className="mt-3 flex h-9 w-full overflow-hidden rounded-[6px] bg-[#0b873f] text-[0.95rem] font-bold text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.16)] transition-colors hover:bg-[#087d36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b873f]/25"
+        >
+          <span className="flex flex-1 items-center justify-center">
+            {copied ? "Copied" : `Copy ${fullDomain}`}
+          </span>
           <span className="flex w-10 items-center justify-center border-l border-white/55">
-            <Copy size={17} aria-hidden />
+            {copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />}
           </span>
         </button>
 
-        <p className="mt-4 text-[0.76rem] font-bold uppercase tracking-[0.08em] text-[#71798c]">
-          {shelfLabel}
-        </p>
-        <div className="mt-3 grid grid-cols-4 gap-2.5">
-          {extensions.map((ext, index) => (
-            <span
-              key={ext}
-              className={`rounded-[6px] border px-2 py-1.5 text-center text-[0.7rem] font-bold ${
-                index === 0
-                  ? "border-[#b7d9bf] bg-[#e8f5ec] text-[#087d36]"
-                  : "border-[#dde3ed] bg-white text-[#566077]"
-              }`}
-            >
-              {ext}
-            </span>
-          ))}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[0.76rem] font-bold uppercase tracking-[0.08em] text-[#71798c]">
+            Available domains
+          </p>
+          <span className="text-[0.68rem] font-bold text-[#697286]">
+            {isLoading ? "Loading" : `${availableCount.toLocaleString()} open`}
+          </span>
         </div>
+        <AvailableDomainList
+          name={name}
+          currentTld={tld}
+          tlds={availableDomains}
+          total={availableCount}
+          isLoading={isLoading}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+        />
 
-        <p className="mt-4 text-[0.76rem] font-bold uppercase tracking-[0.08em] text-[#71798c]">
-          Related names
-        </p>
-        <div className="mt-2 space-y-1.5">
-          {related.map((name) => (
-            <Link
-              key={name}
-              href="/"
-              className="flex items-center justify-between text-[0.8rem] font-semibold text-[#1f2937]"
-            >
-              <span>
-                {name.split(".")[0]}.<span className="text-[#087d36]">{tld}</span>
-              </span>
-              <ExternalLink size={14} strokeWidth={1.8} className="text-[#697286]" />
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-2 grid grid-cols-4 border-t border-[#dfe4ec] pt-2 text-[0.62rem] font-semibold text-[#7a8395]">
+        <div className="mt-2 grid grid-cols-2 border-t border-[#dfe4ec] pt-2 text-[0.62rem] font-semibold text-[#7a8395]">
           <span>Length</span>
-          <span>5</span>
-          <span>Checked&nbsp;&nbsp;<b className="text-[#1f2937]">11h ago</b></span>
-          <span>Source&nbsp;&nbsp;<b className="text-[#1f2937]">Live snapshot</b></span>
+          <span>Checked</span>
+          <b className="text-[#1f2937]">{name.length}</b>
+          <b className="text-[#1f2937]">11h ago</b>
         </div>
       </section>
     </aside>
+  );
+}
+
+function DomainDetailPlaceholder({ loading }: { loading: boolean }) {
+  return (
+    <aside className="border-t border-[#dfe4ec] px-4 pb-1 pt-6 lg:border-l lg:border-t-0">
+      <section className="rounded-[8px] border border-[#dfe4ec] bg-white px-5 py-3 shadow-[0_1px_2px_rgba(14,22,36,0.025)]">
+        {loading ? (
+          <div className="space-y-4">
+            <div className="h-8 w-44 rounded-[6px] bg-[#eef2f7]" />
+            <div className="flex items-center gap-2">
+              <span className="size-2.5 rounded-full bg-[#d8dee8]" />
+              <div className="h-4 w-24 rounded-[5px] bg-[#eef2f7]" />
+            </div>
+            <div className="h-9 rounded-[6px] bg-[#e2e8f0]" />
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-36 rounded-[5px] bg-[#eef2f7]" />
+              <div className="h-3 w-14 rounded-[5px] bg-[#eef2f7]" />
+            </div>
+            <div className="h-[190px] rounded-[7px] border border-[#dfe4ec] bg-[#fbfcfd] p-1.5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="mb-1 h-[30px] rounded-[6px] bg-white"
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 border-t border-[#dfe4ec] pt-2">
+              <div className="h-3 w-12 rounded-[5px] bg-[#eef2f7]" />
+              <div className="h-3 w-14 rounded-[5px] bg-[#eef2f7]" />
+              <div className="mt-2 h-4 w-5 rounded-[5px] bg-[#eef2f7]" />
+              <div className="mt-2 h-4 w-14 rounded-[5px] bg-[#eef2f7]" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-[330px] items-center justify-center text-center text-[0.82rem] font-semibold text-[#687187]">
+            Select a domain to inspect it.
+          </div>
+        )}
+      </section>
+    </aside>
+  );
+}
+
+function AvailableDomainList({
+  name,
+  currentTld,
+  tlds,
+  total,
+  isLoading,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+}: {
+  name: string;
+  currentTld: string;
+  tlds: string[];
+  total: number;
+  isLoading: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowCount = isLoading ? 8 : Math.max(total, tlds.length);
+  const prefetchRowBuffer = TLD_LIST_PAGE_SIZE * TLD_LIST_PREFETCH_PAGES;
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => TLD_LIST_ROW_HEIGHT,
+    overscan: TLD_LIST_RENDER_BUFFER_ITEMS,
+  });
+  const virtualRows = virtualizer.getVirtualItems();
+  const lastVirtualRow = virtualRows.at(-1)?.index ?? 0;
+
+  useEffect(() => {
+    const neededIndex = lastVirtualRow + prefetchRowBuffer;
+    if (hasNextPage && !isFetchingNextPage && neededIndex >= tlds.length) {
+      fetchNextPage();
+    }
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    lastVirtualRow,
+    prefetchRowBuffer,
+    tlds.length,
+  ]);
+
+  return (
+    <div
+      ref={scrollRef}
+      className="mt-2 h-[190px] overflow-y-auto rounded-[7px] border border-[#dfe4ec] bg-[#fbfcfd] p-1.5"
+    >
+      <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+        {virtualRows.map((row) => {
+          const ext = tlds[row.index];
+          return (
+            <div
+              key={row.key}
+              className="absolute left-0 right-0"
+              style={{ transform: `translateY(${row.start}px)` }}
+            >
+              {ext ? (
+                <button
+                  type="button"
+                  className={`flex h-[30px] w-full items-center justify-between rounded-[6px] px-2.5 text-left text-[0.78rem] font-semibold transition-colors ${
+                    ext === currentTld
+                      ? "bg-[#e8f5ec] text-[#087d36]"
+                      : "text-[#1f2937] hover:bg-white hover:shadow-[inset_0_0_0_1px_rgba(216,222,232,0.9)]"
+                  }`}
+                >
+                  <span className="min-w-0 truncate">
+                    {name}.<span className="text-[#087d36]">{ext}</span>
+                  </span>
+                  {ext === currentTld && (
+                    <span className="ml-2 shrink-0 text-[0.62rem] font-bold uppercase tracking-[0.05em]">
+                      selected
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <div className="h-[30px] rounded-[6px] bg-white" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

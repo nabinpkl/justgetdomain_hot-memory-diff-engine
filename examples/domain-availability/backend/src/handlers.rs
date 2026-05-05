@@ -76,6 +76,9 @@ pub struct SearchQuery {
     pub seed: Option<u64>,
     pub offset: Option<usize>,
     pub limit: Option<usize>,
+    /// `combos` returns one available name+TLD pair per row. Default groups
+    /// rows by name and includes a capped list of TLDs.
+    pub mode: Option<String>,
     /// Comma-separated category IDs (see `/categories`). OR-semantics.
     pub categories: Option<String>,
 }
@@ -100,7 +103,12 @@ pub async fn search_handler(
     let offset = query.offset.unwrap_or(0);
     let limit = query.limit.unwrap_or(50).min(200);
 
-    let (total, total_combos, results) = index.search(&params, offset, limit);
+    let combo_mode = query.mode.as_deref() == Some("combos");
+    let (total, total_combos, results) = if combo_mode {
+        index.search_combos(&params, offset, limit)
+    } else {
+        index.search(&params, offset, limit)
+    };
     Json(SearchResponse {
         total,
         total_combos,
